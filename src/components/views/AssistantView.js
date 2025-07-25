@@ -314,7 +314,7 @@ export class AssistantView extends LitElement {
             font-size: 12px;
             color: var(--description-color);
             white-space: nowrap;
-            min-width: 60px;
+            min-width: 15px;
             text-align: center;
         }
 
