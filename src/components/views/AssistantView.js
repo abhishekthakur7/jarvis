@@ -1050,7 +1050,7 @@ export class AssistantView extends LitElement {
 
     
     _handleKeydown(event) {
-        console.log('Keyboard event detected:', event.key, 'autoScrollEnabled:', this.autoScrollEnabled);
+        //console.log('Keyboard event detected:', event.key, 'autoScrollEnabled:', this.autoScrollEnabled);
         
         // Toggle off auto-scroll on any keyboard interaction
         if (this.autoScrollEnabled) {
