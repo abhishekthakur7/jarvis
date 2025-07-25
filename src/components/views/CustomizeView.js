@@ -417,6 +417,11 @@ export class CustomizeView extends LitElement {
         onFocusModeChange: { type: Function },
         advancedMode: { type: Boolean },
         onAdvancedModeChange: { type: Function },
+        // OpenRouter properties
+        openRouterEnabled: { type: Boolean },
+        openRouterApiKey: { type: String },
+        openRouterModel: { type: String },
+        openRouterModels: { type: Array },
     };
 
     constructor() {
@@ -448,11 +453,19 @@ export class CustomizeView extends LitElement {
         // Font size default (in pixels)
         this.fontSize = 12;
 
+        // OpenRouter defaults
+        this.openRouterEnabled = false;
+        this.openRouterApiKey = '';
+        this.openRouterModel = 'qwen/qwen3-coder';
+        this.openRouterModels = [];
+
         this.loadKeybinds();
         this.loadGoogleSearchSettings();
         this.loadAdvancedModeSettings();
         this.loadBackgroundTransparency();
         this.loadFontSize();
+        this.loadOpenRouterSettings();
+        this.loadOpenRouterModels();
     }
 
     connectedCallback() {
@@ -854,6 +867,58 @@ export class CustomizeView extends LitElement {
         root.style.setProperty('--response-font-size', `${this.fontSize}px`);
     }
 
+    // OpenRouter methods
+    loadOpenRouterSettings() {
+        const enabled = localStorage.getItem('openRouterEnabled');
+        if (enabled !== null) {
+            this.openRouterEnabled = enabled === 'true';
+        }
+        
+        const apiKey = localStorage.getItem('openRouterApiKey');
+        if (apiKey !== null) {
+            this.openRouterApiKey = apiKey;
+        }
+        
+        const model = localStorage.getItem('openRouterModel');
+        if (model !== null) {
+            this.openRouterModel = model;
+        }
+    }
+
+    loadOpenRouterModels() {
+        // Define available OpenRouter models
+        this.openRouterModels = [
+            { id: 'qwen/qwen-2-vl-72b-instruct', name: 'Qwen2-VL 72B Instruct', supportsVision: true },
+            { id: 'qwen/qwen-2-vl-7b-instruct', name: 'Qwen2-VL 7B Instruct', supportsVision: true },
+            { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', supportsVision: true },
+            { id: 'anthropic/claude-3-haiku', name: 'Claude 3 Haiku', supportsVision: true },
+            { id: 'openai/gpt-4o', name: 'GPT-4o', supportsVision: true },
+            { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', supportsVision: true },
+            { id: 'google/gemini-pro-1.5', name: 'Gemini Pro 1.5', supportsVision: true },
+            { id: 'meta-llama/llama-3.2-90b-vision-instruct', name: 'Llama 3.2 90B Vision', supportsVision: true },
+            { id: 'meta-llama/llama-3.2-11b-vision-instruct', name: 'Llama 3.2 11B Vision', supportsVision: true },
+            { id: 'qwen/qwen3-coder', name: 'Qwen3 Coder', supportsVision: false }
+        ];
+    }
+
+    handleOpenRouterEnabledChange(e) {
+        this.openRouterEnabled = e.target.checked;
+        localStorage.setItem('openRouterEnabled', this.openRouterEnabled.toString());
+        this.requestUpdate();
+    }
+
+    handleOpenRouterApiKeyChange(e) {
+        this.openRouterApiKey = e.target.value;
+        localStorage.setItem('openRouterApiKey', this.openRouterApiKey);
+        this.requestUpdate();
+    }
+
+    handleOpenRouterModelChange(e) {
+        this.openRouterModel = e.target.value;
+        localStorage.setItem('openRouterModel', this.openRouterModel);
+        this.requestUpdate();
+    }
+
     render() {
         const profiles = this.getProfiles();
         const languages = this.getLanguages();
@@ -1085,6 +1150,66 @@ export class CustomizeView extends LitElement {
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- AI Provider Settings Section -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>AI Provider Settings</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="checkbox-group">
+                            <input
+                                type="checkbox"
+                                class="checkbox-input"
+                                id="openrouter-enabled"
+                                .checked=${this.openRouterEnabled}
+                                @change=${this.handleOpenRouterEnabledChange}
+                            />
+                            <label for="openrouter-enabled" class="checkbox-label">Enable OpenRouter</label>
+                        </div>
+                        <div class="form-description" style="margin-left: 24px; margin-top: -8px;">
+                            Use OpenRouter API instead of Gemini for "Ask Next Step" (Shift+Alt+4) requests
+                            <br /><strong>Note:</strong> Requires OpenRouter API key and will fallback to Gemini on errors
+                        </div>
+
+                        ${this.openRouterEnabled ? html`
+                            <div class="form-group full-width" style="margin-top: 16px;">
+                                <label class="form-label">OpenRouter API Key</label>
+                                <input
+                                    type="password"
+                                    class="form-control"
+                                    placeholder="Enter your OpenRouter API key"
+                                    .value=${this.openRouterApiKey}
+                                    @input=${this.handleOpenRouterApiKeyChange}
+                                />
+                                <div class="form-description">
+                                    Get your API key from <a href="https://openrouter.ai/keys" target="_blank" style="color: var(--accent-color);">OpenRouter Dashboard</a>
+                                </div>
+                            </div>
+
+                            <div class="form-group full-width">
+                                <label class="form-label">
+                                    Model Selection
+                                    <span class="current-selection">${this.openRouterModels.find(m => m.id === this.openRouterModel)?.name || 'Unknown'}</span>
+                                </label>
+                                <select class="form-control" .value=${this.openRouterModel} @change=${this.handleOpenRouterModelChange}>
+                                    ${this.openRouterModels.map(
+                                        model => html`
+                                            <option value=${model.id} ?selected=${this.openRouterModel === model.id}>
+                                                ${model.name} ${model.supportsVision ? '(Vision)' : '(Text Only)'}
+                                            </option>
+                                        `
+                                    )}
+                                </select>
+                                <div class="form-description">
+                                    Choose the AI model for processing screenshot and context requests
+                                    <br /><strong>Vision models</strong> can analyze screenshots, <strong>text-only models</strong> will receive context without images
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
 

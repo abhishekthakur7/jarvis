@@ -384,6 +384,11 @@ async function captureScreenshot(imageQuality = 'medium', isManual = false) {
         offscreenCanvas.width = hiddenVideo.videoWidth;
         offscreenCanvas.height = hiddenVideo.videoHeight;
         offscreenContext = offscreenCanvas.getContext('2d');
+        
+        // Update global window references
+        window.hiddenVideo = hiddenVideo;
+        window.offscreenCanvas = offscreenCanvas;
+        window.offscreenContext = offscreenContext;
     }
 
     // Check if video is ready
@@ -574,6 +579,11 @@ function stopCapture() {
     }
     offscreenCanvas = null;
     offscreenContext = null;
+    
+    // Clear global window references
+    window.hiddenVideo = null;
+    window.offscreenCanvas = null;
+    window.offscreenContext = null;
 }
 
 // Send text message to Gemini
@@ -904,3 +914,8 @@ cheddar.attemptReconnection = attemptReconnection;
 
 // Make it globally available
 window.cheddar = cheddar;
+
+// Expose screenshot elements to global scope for main process access
+window.hiddenVideo = hiddenVideo;
+window.offscreenCanvas = offscreenCanvas;
+window.offscreenContext = offscreenContext;

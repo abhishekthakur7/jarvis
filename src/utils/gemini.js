@@ -4,6 +4,7 @@ const { spawn } = require('child_process');
 const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
 const { getMultipleNotionContents } = require('./notion');
+const { getOpenRouterSettings, processContextWithOpenRouter } = require('./openrouter');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -947,9 +948,9 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        console.log('Sending text before:', text);
+        //console.log('Sending text before:', text);
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
-        console.log('Sending text after:', text);
+        //console.log('Sending text after:', text);
         try {
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return { success: false, error: 'Invalid text message' };
@@ -973,9 +974,61 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             .sort((a, b) => a.timestamp - b.timestamp);
     }
 
-    ipcMain.handle('process-context-with-screenshot', async (event) => {
-        if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
+    // Helper function to get current screenshot from renderer
+    async function getCurrentScreenshot() {
         try {
+            const windows = BrowserWindow.getAllWindows();
+            if (windows.length === 0) {
+                return null;
+            }
+            
+            const screenshotData = await windows[0].webContents.executeJavaScript(`
+                (function() {
+                    try {
+                        // Check if we have the necessary elements for screenshot capture
+                        if (!window.offscreenCanvas || !window.offscreenContext || !window.hiddenVideo) {
+                            console.log('Screenshot elements not available');
+                            return null;
+                        }
+                        
+                        // Check if video is ready
+                        if (window.hiddenVideo.readyState < 2) {
+                            console.log('Video not ready for screenshot');
+                            return null;
+                        }
+                        
+                        // Capture current frame to canvas
+                        window.offscreenContext.drawImage(
+                            window.hiddenVideo, 
+                            0, 0, 
+                            window.offscreenCanvas.width, 
+                            window.offscreenCanvas.height
+                        );
+                        
+                        // Convert to base64
+                        const dataURL = window.offscreenCanvas.toDataURL('image/jpeg', 0.7);
+                        const base64Data = dataURL.split(',')[1];
+                        
+                        return base64Data;
+                    } catch (e) {
+                        console.error('Error capturing screenshot:', e);
+                        return null;
+                    }
+                })()
+            `);
+            
+            return screenshotData;
+        } catch (error) {
+            console.error('Error getting current screenshot:', error);
+            return null;
+        }
+    }
+
+    ipcMain.handle('process-context-with-screenshot', async (event) => {
+        try {
+            // Check OpenRouter settings first
+            const openRouterSettings = await getOpenRouterSettings();
+            
             let completeTranscription = '\n';
 
             // Get recent transcriptions (last 1 minute only)
@@ -1063,16 +1116,46 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 `
             }
 
-            console.log('\nSending context-with-screenshot:', completeTranscription);
+            // Try OpenRouter first if enabled
+            if (openRouterSettings.enabled && openRouterSettings.apiKey) {
+                try {
+                    console.log('\nUsing OpenRouter for context-with-screenshot');
+                    
+                    // Get current screenshot
+                    const screenshotData = await getCurrentScreenshot();
+                    
+                    // Process with OpenRouter
+                    const result = await processContextWithOpenRouter(
+                        completeTranscription.trim(),
+                        screenshotData
+                    );
+                    
+                    // Store the complete transcription for saving after AI response
+                    global.pendingContextTranscription = completeTranscription.trim();
+                    isProcessingTextMessage = true;
+                    
+                    return { success: true, provider: 'openrouter' };
+                } catch (openRouterError) {
+                    console.error('\nOpenRouter failed, falling back to Gemini:', openRouterError);
+                    // Continue to Gemini fallback below
+                }
+            }
+
+            // Fallback to Gemini (original behavior)
+            if (!geminiSessionRef.current) {
+                return { success: false, error: 'No active Gemini session and OpenRouter failed' };
+            }
+
+            console.log('\nUsing Gemini for context-with-screenshot:', completeTranscription);
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
             
             // Store the complete transcription for saving after AI response
             global.pendingContextTranscription = completeTranscription.trim();
             
             await geminiSessionRef.current.sendRealtimeInput({ text: completeTranscription.trim() });
-            return { success: true };
+            return { success: true, provider: 'gemini' };
         } catch (error) {
-            console.error('\nError sending context-with-screenshot:', error);
+            console.error('\nError in process-context-with-screenshot:', error);
             isProcessingTextMessage = false; // Reset flag on error
             return { success: false, error: error.message };
         }
