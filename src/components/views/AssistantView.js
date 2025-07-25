@@ -244,6 +244,12 @@ export class AssistantView extends LitElement {
             background: var(--scrollbar-thumb-hover);
         }
 
+        /* Orange highlighting for last 2 sentences when conversation is saved */
+        .response-container .last-sentence-highlight {
+            color: orange !important;
+            font-weight: 500;
+        }
+
         .text-input-container {
             display: flex;
             gap: 10px;
@@ -745,6 +751,121 @@ export class AssistantView extends LitElement {
         }
     }
 
+    highlightLastSentences() {
+          const container = this.shadowRoot.querySelector('.response-container');
+          if (!container) return;
+
+          // Get all text content from the container
+          const textContent = container.textContent || container.innerText || '';
+          
+          // Split into sentences using proper sentence detection
+          // Sentences end with . ! ? followed by space and capital letter (or end of text)
+          const sentenceRegex = /[.!?]\s+(?=[A-Z])|[.!?]$/g;
+          const sentences = [];
+          let lastIndex = 0;
+          let match;
+          
+          while ((match = sentenceRegex.exec(textContent)) !== null) {
+              const sentence = textContent.substring(lastIndex, match.index + match[0].length).trim();
+              if (sentence.length > 0) {
+                  sentences.push(sentence);
+              }
+              lastIndex = match.index + match[0].length;
+          }
+          
+          // Add the last part if it doesn't end with punctuation
+          if (lastIndex < textContent.length) {
+              const lastPart = textContent.substring(lastIndex).trim();
+              if (lastPart.length > 0) {
+                  sentences.push(lastPart);
+              }
+          }
+          
+          if (sentences.length < 2) return;
+           
+           // Get the last 2 sentences
+           const lastTwoSentences = sentences.slice(-2);
+           
+           // Find and highlight these sentences in the DOM
+           this._highlightSentencesInDOM(container, lastTwoSentences);
+           
+           console.log('Highlighted last 2 sentences:', lastTwoSentences);
+      }
+
+    _highlightSentencesInDOM(container, sentencesToHighlight) {
+           // Get all word spans created by wrapWordsInSpans
+           const wordSpans = container.querySelectorAll('[data-word]');
+           if (wordSpans.length === 0) return;
+           
+           // Get the full text content
+           const fullText = container.textContent || container.innerText || '';
+           
+           // Find each sentence in the full text and highlight corresponding spans
+           sentencesToHighlight.forEach(sentence => {
+               const trimmedSentence = sentence.trim();
+               if (trimmedSentence) {
+                   // Find the sentence in the full text (use indexOf for first occurrence, then check if it's actually the last)
+                   let sentenceIndex = fullText.indexOf(trimmedSentence);
+                   
+                   // If multiple occurrences, find the last one
+                   let lastOccurrence = sentenceIndex;
+                   while (sentenceIndex !== -1) {
+                       lastOccurrence = sentenceIndex;
+                       sentenceIndex = fullText.indexOf(trimmedSentence, sentenceIndex + 1);
+                   }
+                   
+                   if (lastOccurrence !== -1) {
+                       const sentenceStart = lastOccurrence;
+                       const sentenceEnd = lastOccurrence + trimmedSentence.length;
+                       
+                       // Build a map of character positions to word spans
+                       let currentPos = 0;
+                       const positionMap = [];
+                       
+                       wordSpans.forEach(span => {
+                           const spanText = span.textContent;
+                           const spanStart = currentPos;
+                           const spanEnd = currentPos + spanText.length;
+                           
+                           positionMap.push({
+                               span: span,
+                               start: spanStart,
+                               end: spanEnd
+                           });
+                           
+                           currentPos = spanEnd;
+                           
+                           // Account for spaces between words
+                           const nextSibling = span.nextSibling;
+                           if (nextSibling && nextSibling.nodeType === Node.TEXT_NODE) {
+                               currentPos += nextSibling.textContent.length;
+                           }
+                       });
+                       
+                       // Highlight all spans that fall within the sentence boundaries
+                       positionMap.forEach(({ span, start, end }) => {
+                           // Check if this span is completely or partially within the sentence
+                           if ((start >= sentenceStart && start < sentenceEnd) || 
+                               (end > sentenceStart && end <= sentenceEnd) ||
+                               (start < sentenceStart && end > sentenceEnd)) {
+                               span.classList.add('last-sentence-highlight');
+                           }
+                       });
+                   }
+               }
+           });
+       }
+
+     _clearSentenceHighlights(container) {
+          if (!container) return;
+          
+          // Remove highlight class from all word spans
+          const highlightedSpans = container.querySelectorAll('[data-word].last-sentence-highlight');
+          highlightedSpans.forEach(span => {
+              span.classList.remove('last-sentence-highlight');
+          });
+      }
+
     loadFontSize() {
         const fontSize = localStorage.getItem('fontSize');
         if (fontSize !== null) {
@@ -1173,6 +1294,11 @@ export class AssistantView extends LitElement {
             const currentResponse = this.getCurrentResponse();
             const renderedResponse = this.renderMarkdown(currentResponse);
             container.innerHTML = renderedResponse;
+            
+            // Only clear highlights if this is a new response (not a streaming update)
+            if (isNewResponse) {
+                this._clearSentenceHighlights(container);
+            }
             
             // Always reset scroll position to top after content update
             requestAnimationFrame(() => {

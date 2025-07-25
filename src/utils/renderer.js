@@ -684,6 +684,16 @@ ipcRenderer.on('save-conversation-turn', async (event, data) => {
     try {
         await saveConversationSession(data.sessionId, data.fullHistory);
         console.log('Conversation session saved:', data.sessionId);
+        
+        // Signal to the AssistantView that conversation is saved
+        // This will trigger orange styling for the last 2 sentences
+        const app = cheddar.element();
+        if (app && app.shadowRoot) {
+            const jarvisView = app.shadowRoot.querySelector('jarvis-view');
+            if (jarvisView && jarvisView.highlightLastSentences) {
+                jarvisView.highlightLastSentences();
+            }
+        }
     } catch (error) {
         console.error('Error saving conversation session:', error);
     }
