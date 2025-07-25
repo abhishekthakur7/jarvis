@@ -947,9 +947,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        console.log('Sending text before:', text);
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
-        console.log('Sending text after:', text);
         try {
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return { success: false, error: 'Invalid text message' };
