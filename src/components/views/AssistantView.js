@@ -781,15 +781,15 @@ export class AssistantView extends LitElement {
               }
           }
           
-          if (sentences.length < 2) return;
+          if (sentences.length === 0) return;
            
-           // Get the last 2 sentences
-           const lastTwoSentences = sentences.slice(-2);
+           // Get the last 2 sentences (or just 1 if only 1 sentence exists)
+           const lastSentences = sentences.length === 1 ? sentences : sentences.slice(-2);
            
            // Find and highlight these sentences in the DOM
-           this._highlightSentencesInDOM(container, lastTwoSentences);
+           this._highlightSentencesInDOM(container, lastSentences);
            
-           console.log('Highlighted last 2 sentences:', lastTwoSentences);
+           console.log('Highlighted sentences:', lastSentences);
       }
 
     _highlightSentencesInDOM(container, sentencesToHighlight) {
