@@ -755,6 +755,9 @@ export class AssistantView extends LitElement {
           const container = this.shadowRoot.querySelector('.response-container');
           if (!container) return;
 
+          // First, replace pronouns in the complete response
+          this.replacePronounsInResponse();
+
           // Get all text content from the container
           const textContent = container.textContent || container.innerText || '';
           
@@ -790,7 +793,7 @@ export class AssistantView extends LitElement {
            this._highlightSentencesInDOM(container, lastSentences);
            
            console.log('Highlighted sentences:', lastSentences);
-      }
+       }
 
     _highlightSentencesInDOM(container, sentencesToHighlight) {
            // Get all word spans created by wrapWordsInSpans
@@ -864,7 +867,45 @@ export class AssistantView extends LitElement {
           highlightedSpans.forEach(span => {
               span.classList.remove('last-sentence-highlight');
           });
-      }
+       }
+
+       replacePronounsInResponse() {
+           const container = this.shadowRoot.querySelector('.response-container');
+           if (!container) return;
+
+           // Get all word spans created by wrapWordsInSpans
+           const wordSpans = container.querySelectorAll('[data-word]');
+           if (wordSpans.length === 0) return;
+
+           // Replace pronouns in each word span
+           wordSpans.forEach(span => {
+               const originalText = span.textContent;
+               let replacedText = originalText;
+
+               // Replace "you" (case insensitive) with "we"
+               replacedText = replacedText.replace(/\byou\b/gi, (match) => {
+                   // Preserve the original case
+                   if (match === 'YOU') return 'WE';
+                   if (match === 'You') return 'We';
+                   return 'we';
+               });
+
+               // Replace "your" (case insensitive) with "our"
+               replacedText = replacedText.replace(/\byour\b/gi, (match) => {
+                   // Preserve the original case
+                   if (match === 'YOUR') return 'OUR';
+                   if (match === 'Your') return 'Our';
+                   return 'our';
+               });
+
+               // Update the span content if it changed
+               if (replacedText !== originalText) {
+                   span.textContent = replacedText;
+               }
+           });
+
+           console.log('Pronouns replaced in response');
+       }
 
     loadFontSize() {
         const fontSize = localStorage.getItem('fontSize');
