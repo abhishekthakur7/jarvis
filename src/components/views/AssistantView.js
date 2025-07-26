@@ -888,9 +888,9 @@ export class AssistantView extends LitElement {
                // Replace "you" (case insensitive) with "we"
                replacedText = replacedText.replace(/\byou\b/gi, (match) => {
                    // Preserve the original case
-                   if (match === 'YOU') return 'WE';
-                   if (match === 'You') return 'We';
-                   return 'we';
+                   if (match === 'YOU') return 'WE/US';
+                   if (match === 'You') return 'We/Us';
+                   return 'we/us';
                });
 
                // Replace "your" (case insensitive) with "our"
