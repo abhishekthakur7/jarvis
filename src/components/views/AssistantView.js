@@ -284,12 +284,12 @@ export class AssistantView extends LitElement {
         .response-container .pace-slow {
             font-weight: 500;
             letter-spacing: 0.5px;
-            color: #F5F5F5; /* Slow pace: The most prominent off-white for deliberate delivery */
+            color:rgb(108, 108, 225); /* Slow pace: The most prominent off-white for deliberate delivery */
         }
 
         .response-container .pace-fast {
             letter-spacing: -0.4px;
-            color: #BDBDBD; /* Fast pace: Slightly less prominent than primary text */
+            color:rgb(15, 150, 13); /* Fast pace: Slightly less prominent than primary text */
         }
 
         .response-container .aside {

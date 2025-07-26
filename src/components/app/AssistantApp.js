@@ -980,7 +980,12 @@ export class AssistantApp extends LitElement {
             const normalAutoScroll = localStorage.getItem('normalAutoScroll');
             const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
             
-            root.style.setProperty('--background-opacity', normalTransparency);
+            // Apply transparency using the correct CSS variables
+            if (normalTransparency !== null) {
+                const transparency = parseFloat(normalTransparency);
+                this.updateTransparency(transparency);
+            }
+            
             root.style.setProperty('--response-font-size', `${normalFontSize}px`);
             
             // Update auto-scroll setting
@@ -998,7 +1003,12 @@ export class AssistantApp extends LitElement {
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
             const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
             
-            root.style.setProperty('--background-opacity', compactTransparency);
+            // Apply transparency using the correct CSS variables
+            if (compactTransparency !== null) {
+                const transparency = parseFloat(compactTransparency);
+                this.updateTransparency(transparency);
+            }
+            
             root.style.setProperty('--response-font-size', `${compactFontSize}px`);
             
             // Update auto-scroll setting
@@ -1009,6 +1019,21 @@ export class AssistantApp extends LitElement {
             this.scrollSpeed = parseInt(compactScrollSpeed, 10);
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
+    }
+
+    updateTransparency(transparency) {
+        const root = document.documentElement;
+        root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparency})`);
+        root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparency})`);
+        root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparency * 0.05})`);
+        root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparency * 0.375})`);
+        root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
+        root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
+        root.style.setProperty('--preview-video-background', `rgba(0, 0, 0, ${transparency * 1.125})`);
+        root.style.setProperty('--screen-option-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
+        root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
+        root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
+        root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
     }
 
     async handleLayoutModeChange(layoutMode) {
