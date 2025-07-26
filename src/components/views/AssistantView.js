@@ -250,6 +250,53 @@ export class AssistantView extends LitElement {
             font-weight: 500;
         }
 
+        /* Enhanced text formatting styles for dark theme */
+        .response-container p,
+        .response-container li {
+            line-height: 1.6;
+            font-family: Arial, sans-serif;
+        }
+
+        .response-container .chunk-a {
+            color: #EAEAEA; /* Primary text: Light grey, not pure white */
+        }
+
+        .response-container .chunk-b {
+            color:rgb(194, 110, 110); /* Secondary text: A readable but distinct grey */
+        }
+
+        .response-container strong {
+            font-weight: 600;
+            color: #80BFFF; /* Emphasis: A soft, vibrant blue that pops on dark backgrounds */
+        }
+
+        .response-container .filler {
+            font-style: italic;
+            color: #B0B0B0; /* Filler text: A distinct but non-intrusive light grey */
+        }
+
+        .response-container .connector {
+            text-decoration: underline;
+            text-decoration-color: #777; /* Underline: A subtle grey */
+            text-decoration-thickness: 1px;
+        }
+
+        .response-container .pace-slow {
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            color: #F5F5F5; /* Slow pace: The most prominent off-white for deliberate delivery */
+        }
+
+        .response-container .pace-fast {
+            letter-spacing: -0.4px;
+            color: #BDBDBD; /* Fast pace: Slightly less prominent than primary text */
+        }
+
+        .response-container .aside {
+            font-size: 0.9em;
+            color: #888888; /* Aside: The least prominent color, for parenthetical comments */
+        }
+
         .text-input-container {
             display: flex;
             gap: 8px;
