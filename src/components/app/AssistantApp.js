@@ -156,6 +156,9 @@ export class AssistantApp extends LitElement {
 
         // Apply layout mode to document root
         this.updateLayoutMode();
+        
+        // Apply layout-specific settings
+        this.applyLayoutSpecificSettings(this.layoutMode);
     }
 
     connectedCallback() {
@@ -964,10 +967,60 @@ export class AssistantApp extends LitElement {
         }
     }
 
+    applyLayoutSpecificSettings(layoutMode) {
+        const root = document.documentElement;
+        
+        if (layoutMode === 'normal') {
+            // Apply normal layout settings
+            const normalTransparency = localStorage.getItem('normalTransparency') || '0.45';
+            const normalFontSize = localStorage.getItem('normalFontSize') || '14';
+            const normalAutoScroll = localStorage.getItem('normalAutoScroll') !== 'false';
+            
+            root.style.setProperty('--background-opacity', normalTransparency);
+            root.style.setProperty('--response-font-size', `${normalFontSize}px`);
+            
+            // Update auto-scroll setting
+            this.autoScrollEnabled = normalAutoScroll;
+            localStorage.setItem('autoScrollEnabled', normalAutoScroll.toString());
+            
+            // Update scroll speed
+            const normalScrollSpeed = localStorage.getItem('normalScrollSpeed') || '2';
+            this.scrollSpeed = parseInt(normalScrollSpeed, 10);
+            localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
+            
+        } else if (layoutMode === 'compact') {
+            // Apply compact layout settings
+            const compactTransparency = localStorage.getItem('compactTransparency') || '0.65';
+            const compactFontSize = localStorage.getItem('compactFontSize') || '13';
+            const compactAutoScroll = localStorage.getItem('compactAutoScroll') !== 'false';
+            
+            root.style.setProperty('--background-opacity', compactTransparency);
+            root.style.setProperty('--response-font-size', `${compactFontSize}px`);
+            
+            // Update auto-scroll setting
+            this.autoScrollEnabled = compactAutoScroll;
+            localStorage.setItem('autoScrollEnabled', compactAutoScroll.toString());
+            
+            // Update scroll speed
+            const compactScrollSpeed = localStorage.getItem('compactScrollSpeed') || '2';
+            this.scrollSpeed = parseInt(compactScrollSpeed, 10);
+            localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
+        }
+    }
+
     async handleLayoutModeChange(layoutMode) {
         this.layoutMode = layoutMode;
         localStorage.setItem('layoutMode', layoutMode);
         this.updateLayoutMode();
+        
+        // Apply layout-specific settings
+        this.applyLayoutSpecificSettings(layoutMode);
+        
+        // Notify AssistantView about layout mode change
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            ipcRenderer.send('layout-mode-changed', layoutMode);
+        }
 
         // Notify main process about layout change for window resizing
         if (window.require) {

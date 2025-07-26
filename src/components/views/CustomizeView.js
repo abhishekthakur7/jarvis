@@ -409,6 +409,15 @@ export class CustomizeView extends LitElement {
         googleSearchEnabled: { type: Boolean },
         backgroundTransparency: { type: Number },
         fontSize: { type: Number },
+        // Layout-specific settings
+        normalTransparency: { type: Number },
+        normalFontSize: { type: Number },
+        normalAutoScroll: { type: Boolean },
+        normalScrollSpeed: { type: Number },
+        compactTransparency: { type: Number },
+        compactFontSize: { type: Number },
+        compactAutoScroll: { type: Boolean },
+        compactScrollSpeed: { type: Number },
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
         onScreenshotIntervalChange: { type: Function },
@@ -448,11 +457,22 @@ export class CustomizeView extends LitElement {
         // Font size default (in pixels)
         this.fontSize = 12;
 
+        // Layout-specific defaults
+        this.normalTransparency = 0.45;
+        this.normalFontSize = 14;
+        this.normalAutoScroll = true;
+        this.normalScrollSpeed = 2;
+        this.compactTransparency = 0.65;
+        this.compactFontSize = 13;
+        this.compactAutoScroll = false;
+        this.compactScrollSpeed = 2;
+
         this.loadKeybinds();
         this.loadGoogleSearchSettings();
         this.loadAdvancedModeSettings();
         this.loadBackgroundTransparency();
         this.loadFontSize();
+        this.loadLayoutSpecificSettings();
     }
 
     connectedCallback() {
@@ -854,6 +874,92 @@ export class CustomizeView extends LitElement {
         root.style.setProperty('--response-font-size', `${this.fontSize}px`);
     }
 
+    loadLayoutSpecificSettings() {
+        // Load normal layout settings
+        const normalTransparency = localStorage.getItem('normalTransparency');
+        if (normalTransparency !== null) {
+            this.normalTransparency = parseFloat(normalTransparency) || 0.45;
+        }
+        const normalFontSize = localStorage.getItem('normalFontSize');
+        if (normalFontSize !== null) {
+            this.normalFontSize = parseInt(normalFontSize, 10) || 14;
+        }
+        const normalAutoScroll = localStorage.getItem('normalAutoScroll');
+        if (normalAutoScroll !== null) {
+            this.normalAutoScroll = normalAutoScroll === 'true';
+        }
+        const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
+        if (normalScrollSpeed !== null) {
+            this.normalScrollSpeed = parseInt(normalScrollSpeed, 10) || 2;
+        }
+
+        // Load compact layout settings
+        const compactTransparency = localStorage.getItem('compactTransparency');
+        if (compactTransparency !== null) {
+            this.compactTransparency = parseFloat(compactTransparency) || 0.65;
+        }
+        const compactFontSize = localStorage.getItem('compactFontSize');
+        if (compactFontSize !== null) {
+            this.compactFontSize = parseInt(compactFontSize, 10) || 13;
+        }
+        const compactAutoScroll = localStorage.getItem('compactAutoScroll');
+        if (compactAutoScroll !== null) {
+            this.compactAutoScroll = compactAutoScroll === 'true';
+        }
+        const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
+        if (compactScrollSpeed !== null) {
+            this.compactScrollSpeed = parseInt(compactScrollSpeed, 10) || 2;
+        }
+    }
+
+    handleNormalTransparencyChange(e) {
+        this.normalTransparency = parseFloat(e.target.value);
+        localStorage.setItem('normalTransparency', this.normalTransparency.toString());
+        this.requestUpdate();
+    }
+
+    handleNormalFontSizeChange(e) {
+        this.normalFontSize = parseInt(e.target.value, 10);
+        localStorage.setItem('normalFontSize', this.normalFontSize.toString());
+        this.requestUpdate();
+    }
+
+    handleNormalAutoScrollChange(e) {
+        this.normalAutoScroll = e.target.checked;
+        localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
+        this.requestUpdate();
+    }
+
+    handleNormalScrollSpeedChange(e) {
+        this.normalScrollSpeed = parseInt(e.target.value, 10);
+        localStorage.setItem('normalScrollSpeed', this.normalScrollSpeed.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactTransparencyChange(e) {
+        this.compactTransparency = parseFloat(e.target.value);
+        localStorage.setItem('compactTransparency', this.compactTransparency.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactFontSizeChange(e) {
+        this.compactFontSize = parseInt(e.target.value, 10);
+        localStorage.setItem('compactFontSize', this.compactFontSize.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactAutoScrollChange(e) {
+        this.compactAutoScroll = e.target.checked;
+        localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactScrollSpeedChange(e) {
+        this.compactScrollSpeed = parseInt(e.target.value, 10);
+        localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
+        this.requestUpdate();
+    }
+
     render() {
         const profiles = this.getProfiles();
         const languages = this.getLanguages();
@@ -977,11 +1083,22 @@ export class CustomizeView extends LitElement {
                             </div>
                         </div>
 
+
+                    </div>
+                </div>
+
+                <!-- Normal Layout Settings Section -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>Normal Layout Settings</span>
+                    </div>
+
+                    <div class="form-grid">
                         <div class="form-group full-width">
                             <div class="slider-container">
                                 <div class="slider-header">
                                     <label class="form-label">Background Transparency</label>
-                                    <span class="slider-value">${Math.round(this.backgroundTransparency * 100)}%</span>
+                                    <span class="slider-value">${Math.round(this.normalTransparency * 100)}%</span>
                                 </div>
                                 <input
                                     type="range"
@@ -989,15 +1106,15 @@ export class CustomizeView extends LitElement {
                                     min="0"
                                     max="1"
                                     step="0.01"
-                                    .value=${this.backgroundTransparency}
-                                    @input=${this.handleBackgroundTransparencyChange}
+                                    .value=${this.normalTransparency}
+                                    @input=${this.handleNormalTransparencyChange}
                                 />
                                 <div class="slider-labels">
                                     <span>Transparent</span>
                                     <span>Opaque</span>
                                 </div>
                                 <div class="form-description">
-                                    Adjust the transparency of the interface background elements
+                                    Background transparency when in normal layout mode
                                 </div>
                             </div>
                         </div>
@@ -1005,8 +1122,8 @@ export class CustomizeView extends LitElement {
                         <div class="form-group full-width">
                             <div class="slider-container">
                                 <div class="slider-header">
-                                    <label class="form-label">Response Font Size</label>
-                                    <span class="slider-value">${this.fontSize}px</span>
+                                    <label class="form-label">Font Size</label>
+                                    <span class="slider-value">${this.normalFontSize}px</span>
                                 </div>
                                 <input
                                     type="range"
@@ -1014,20 +1131,163 @@ export class CustomizeView extends LitElement {
                                     min="12"
                                     max="32"
                                     step="1"
-                                    .value=${this.fontSize}
-                                    @input=${this.handleFontSizeChange}
+                                    .value=${this.normalFontSize}
+                                    @input=${this.handleNormalFontSizeChange}
                                 />
                                 <div class="slider-labels">
                                     <span>12px</span>
                                     <span>32px</span>
                                 </div>
                                 <div class="form-description">
-                                    Adjust the font size of AI response text in the jarvis view
+                                    Font size for AI responses when in normal layout mode
                                 </div>
                             </div>
                         </div>
 
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="normal-auto-scroll"
+                                        class="checkbox-input"
+                                        .checked=${this.normalAutoScroll}
+                                        @change=${this.handleNormalAutoScrollChange}
+                                    />
+                                    <label for="normal-auto-scroll" class="checkbox-label">Auto Scroll</label>
+                                </div>
+                                <div class="form-description">
+                                    Automatically scroll to new content when in normal layout mode
+                                </div>
+                            </div>
+                        </div>
 
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Auto Scroll Speed</label>
+                                    <span class="slider-value">${this.normalScrollSpeed}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="1"
+                                    max="10"
+                                    step="1"
+                                    .value=${this.normalScrollSpeed}
+                                    @input=${this.handleNormalScrollSpeedChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>Slow</span>
+                                    <span>Fast</span>
+                                </div>
+                                <div class="form-description">
+                                    Speed of automatic scrolling when in normal layout mode
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compact Layout Settings Section -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>Compact Layout Settings</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Background Transparency</label>
+                                    <span class="slider-value">${Math.round(this.compactTransparency * 100)}%</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    .value=${this.compactTransparency}
+                                    @input=${this.handleCompactTransparencyChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>Transparent</span>
+                                    <span>Opaque</span>
+                                </div>
+                                <div class="form-description">
+                                    Background transparency when in compact layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Font Size</label>
+                                    <span class="slider-value">${this.compactFontSize}px</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="12"
+                                    max="32"
+                                    step="1"
+                                    .value=${this.compactFontSize}
+                                    @input=${this.handleCompactFontSizeChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>12px</span>
+                                    <span>32px</span>
+                                </div>
+                                <div class="form-description">
+                                    Font size for AI responses when in compact layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="compact-auto-scroll"
+                                        class="checkbox-input"
+                                        .checked=${this.compactAutoScroll}
+                                        @change=${this.handleCompactAutoScrollChange}
+                                    />
+                                    <label for="compact-auto-scroll" class="checkbox-label">Auto Scroll</label>
+                                </div>
+                                <div class="form-description">
+                                    Automatically scroll to new content when in compact layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Auto Scroll Speed</label>
+                                    <span class="slider-value">${this.compactScrollSpeed}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="1"
+                                    max="10"
+                                    step="1"
+                                    .value=${this.compactScrollSpeed}
+                                    @input=${this.handleCompactScrollSpeedChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>Slow</span>
+                                    <span>Fast</span>
+                                </div>
+                                <div class="form-description">
+                                    Speed of automatic scrolling when in compact layout mode
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

@@ -519,8 +519,10 @@ export class AssistantView extends LitElement {
         this._lastAnimatedWordCount = 0;
         this.microphoneEnabled = false;
         this.microphoneState = 'off'; // 'off', 'recording', 'speaking'
-        this.autoScrollEnabled = true;
-        this.scrollSpeed = 3;
+        
+        // Initialize with layout-specific defaults
+        this.loadLayoutSpecificSettings();
+        
         this._autoScrollPaused = false;
         this._autoScrollAnimationId = null;
         this._userInteractionTimeout = null;
@@ -916,26 +918,70 @@ export class AssistantView extends LitElement {
         }
     }
 
+    loadLayoutSpecificSettings() {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        
+        if (layoutMode === 'normal') {
+            // Load normal layout settings
+            this.autoScrollEnabled = localStorage.getItem('normalAutoScroll') !== 'false';
+            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
+        } else if (layoutMode === 'compact') {
+            // Load compact layout settings
+            this.autoScrollEnabled = localStorage.getItem('compactAutoScroll') !== 'false';
+            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
+        } else {
+            // Default fallback
+            this.autoScrollEnabled = true;
+            this.scrollSpeed = 2;
+        }
+    }
+
     increaseFontSize() {
-        const currentFontSize = parseInt(localStorage.getItem('fontSize')) || 18;
-        const newFontSize = Math.min(currentFontSize + 1, 18); // Max font size 32px
-        localStorage.setItem('fontSize', newFontSize.toString());
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const currentFontSize = this.getCurrentFontSize();
+        const newFontSize = Math.min(currentFontSize + 1, 32); // Max font size 32px
+        
+        if (layoutMode === 'normal') {
+            localStorage.setItem('normalFontSize', newFontSize.toString());
+        } else if (layoutMode === 'compact') {
+            localStorage.setItem('compactFontSize', newFontSize.toString());
+        } else {
+            localStorage.setItem('fontSize', newFontSize.toString());
+        }
+        
         const root = document.documentElement;
         root.style.setProperty('--response-font-size', `${newFontSize}px`);
         this.requestUpdate(); // Trigger re-render to update font size display
     }
 
     decreaseFontSize() {
-        const currentFontSize = parseInt(localStorage.getItem('fontSize')) || 18;
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const currentFontSize = this.getCurrentFontSize();
         const newFontSize = Math.max(currentFontSize - 1, 12); // Min font size 12px
-        localStorage.setItem('fontSize', newFontSize.toString());
+        
+        if (layoutMode === 'normal') {
+            localStorage.setItem('normalFontSize', newFontSize.toString());
+        } else if (layoutMode === 'compact') {
+            localStorage.setItem('compactFontSize', newFontSize.toString());
+        } else {
+            localStorage.setItem('fontSize', newFontSize.toString());
+        }
+        
         const root = document.documentElement;
         root.style.setProperty('--response-font-size', `${newFontSize}px`);
         this.requestUpdate(); // Trigger re-render to update font size display
     }
 
     getCurrentFontSize() {
-        return parseInt(localStorage.getItem('fontSize')) || 16;
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        
+        if (layoutMode === 'normal') {
+            return parseInt(localStorage.getItem('normalFontSize'), 10) || 14;
+        } else if (layoutMode === 'compact') {
+            return parseInt(localStorage.getItem('compactFontSize'), 10) || 13;
+        } else {
+            return parseInt(localStorage.getItem('fontSize')) || 16;
+        }
     }
 
     connectedCallback() {
@@ -970,6 +1016,15 @@ export class AssistantView extends LitElement {
             ipcRenderer.on('navigate-next-response', this.handleNextResponse);
             ipcRenderer.on('scroll-response-up', this.handleScrollUp);
             ipcRenderer.on('scroll-response-down', this.handleScrollDown);
+            
+            // Listen for layout mode changes to reload settings
+            this.handleLayoutModeChange = () => {
+                console.log('[AssistantView] Layout mode changed, reloading settings');
+                this.loadLayoutSpecificSettings();
+                this.requestUpdate();
+            };
+            
+            ipcRenderer.on('layout-mode-changed', this.handleLayoutModeChange);
         }
     }
 
@@ -990,6 +1045,9 @@ export class AssistantView extends LitElement {
             }
             if (this.handleScrollDown) {
                 ipcRenderer.removeListener('scroll-response-down', this.handleScrollDown);
+            }
+            if (this.handleLayoutModeChange) {
+                ipcRenderer.removeListener('layout-mode-changed', this.handleLayoutModeChange);
             }
         }
         
@@ -1051,6 +1109,15 @@ export class AssistantView extends LitElement {
     increaseScrollSpeed() {
         if (this.scrollSpeed < 10) {
             this.scrollSpeed += 1;
+            
+            // Save to layout-specific setting
+            const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+            if (layoutMode === 'normal') {
+                localStorage.setItem('normalScrollSpeed', this.scrollSpeed.toString());
+            } else if (layoutMode === 'compact') {
+                localStorage.setItem('compactScrollSpeed', this.scrollSpeed.toString());
+            }
+            
             this.requestUpdate(); // Trigger re-render to update scroll speed display
             this.dispatchEvent(new CustomEvent('scroll-speed-change', {
                 detail: { speed: this.scrollSpeed },
@@ -1063,6 +1130,15 @@ export class AssistantView extends LitElement {
     decreaseScrollSpeed() {
         if (this.scrollSpeed > 1) {
             this.scrollSpeed -= 1;
+            
+            // Save to layout-specific setting
+            const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+            if (layoutMode === 'normal') {
+                localStorage.setItem('normalScrollSpeed', this.scrollSpeed.toString());
+            } else if (layoutMode === 'compact') {
+                localStorage.setItem('compactScrollSpeed', this.scrollSpeed.toString());
+            }
+            
             this.requestUpdate(); // Trigger re-render to update scroll speed display
             this.dispatchEvent(new CustomEvent('scroll-speed-change', {
                 detail: { speed: this.scrollSpeed },
@@ -1075,6 +1151,14 @@ export class AssistantView extends LitElement {
     toggleAutoScroll() {
         // Toggle the local state
         this.autoScrollEnabled = !this.autoScrollEnabled;
+        
+        // Save to layout-specific setting
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (layoutMode === 'normal') {
+            localStorage.setItem('normalAutoScroll', this.autoScrollEnabled.toString());
+        } else if (layoutMode === 'compact') {
+            localStorage.setItem('compactAutoScroll', this.autoScrollEnabled.toString());
+        }
         
         // If disabling auto-scroll, stop any current animation
         if (!this.autoScrollEnabled) {
