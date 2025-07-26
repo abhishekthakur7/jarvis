@@ -90,6 +90,54 @@ export class AppHeader extends LitElement {
             font-size: 12px;
             margin: 0px;
         }
+
+        .interview-mode-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            -webkit-app-region: no-drag;
+        }
+
+        .interview-mode-label {
+            font-size: var(--header-font-size-small);
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .interview-mode-checkbox {
+            width: 16px;
+            height: 16px;
+            margin-right: 12px;
+            border: 1px solid var(--button-border);
+            border-radius: 3px;
+            background: var(--button-background);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .interview-mode-checkbox:hover {
+            background: var(--hover-background);
+        }
+
+        .interview-mode-checkbox.checked {
+            background: var(--accent-color, #007aff);
+            border-color: var(--accent-color, #007aff);
+        }
+
+        .interview-mode-checkbox svg {
+            width: 10px;
+            height: 10px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .interview-mode-checkbox.checked svg {
+            opacity: 1;
+        }
     `;
 
     static properties = {
@@ -105,6 +153,8 @@ export class AppHeader extends LitElement {
         isClickThrough: { type: Boolean, reflect: true },
         advancedMode: { type: Boolean },
         onAdvancedClick: { type: Function },
+        interviewMode: { type: Boolean },
+        onInterviewModeToggle: { type: Function },
     };
 
     constructor() {
@@ -121,6 +171,8 @@ export class AppHeader extends LitElement {
         this.isClickThrough = false;
         this.advancedMode = false;
         this.onAdvancedClick = () => {};
+        this.interviewMode = false;
+        this.onInterviewModeToggle = () => {};
         this._timerInterval = null;
     }
 
@@ -224,6 +276,17 @@ export class AppHeader extends LitElement {
         return html`
             <div class="header">
                 <div class="header-title">${this.getViewTitle()}</div>
+                <div class="interview-mode-container">
+                    <span class="interview-mode-label">Interview Mode</span>
+                    <div 
+                        class="interview-mode-checkbox ${this.interviewMode ? 'checked' : ''}"
+                        @click=${this.onInterviewModeToggle}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
                 <div class="header-actions">
                     ${this.currentView === 'jarvis'
                         ? html`

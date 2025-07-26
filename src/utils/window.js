@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const os = require('os');
 
 let mouseEventsIgnored = false;
+let interviewMode = false;
 let windowResizing = false;
 let resizeAnimation = null;
 const RESIZE_ANIMATION_DURATION = 500; // milliseconds
@@ -38,6 +39,7 @@ function createWindow(sendToRenderer, geminiSessionRef) {
         alwaysOnTop: true,
         skipTaskbar: true,
         hiddenInMissionControl: true,
+        focusable: true,
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false, // TODO: change to true
@@ -401,6 +403,31 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
                 mainWindow.setIgnoreMouseEvents(false);
             }
         }
+    });
+
+    // IPC handler for toggling interview mode
+    ipcMain.handle('toggle-interview-mode', (event, enabled) => {
+        if (mainWindow) {
+            interviewMode = enabled;
+            mainWindow.setFocusable(!enabled);
+            
+            // Sync with existing click-through functionality
+            mouseEventsIgnored = enabled;
+            if (enabled) {
+                mainWindow.setIgnoreMouseEvents(true, { forward: true });
+            } else {
+                mainWindow.setIgnoreMouseEvents(false);
+            }
+            
+            // Notify renderer about click-through state change
+            mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
+        }
+        return interviewMode;
+    });
+
+    // IPC handler for getting interview mode state
+    ipcMain.handle('get-interview-mode', () => {
+        return interviewMode;
     });
 
     ipcMain.handle('window-minimize', () => {

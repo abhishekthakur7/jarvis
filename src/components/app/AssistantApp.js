@@ -116,6 +116,7 @@ export class AssistantApp extends LitElement {
         layoutMode: { type: String },
         focusMode: { type: Boolean },
         advancedMode: { type: Boolean },
+        interviewMode: { type: Boolean },
         _viewInstances: { type: Object, state: true },
         _isClickThrough: { state: true },
         _awaitingNewResponse: { state: true },
@@ -138,6 +139,7 @@ export class AssistantApp extends LitElement {
         this.layoutMode = localStorage.getItem('layoutMode') || 'normal';
         this.focusMode = localStorage.getItem('focusMode') === 'true';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
+        this.interviewMode = false;
         this.responses = [];
         this.currentResponseIndex = -1;
         this._viewInstances = new Map();
@@ -932,6 +934,7 @@ export class AssistantApp extends LitElement {
                         .statusText=${this.statusText}
                         .startTime=${this.startTime}
                         .advancedMode=${this.advancedMode}
+                        .interviewMode=${this.interviewMode}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}
@@ -939,6 +942,7 @@ export class AssistantApp extends LitElement {
                         .onCloseClick=${() => this.handleClose()}
                         .onBackClick=${() => this.handleBackClick()}
                         .onHideToggleClick=${() => this.handleHideToggle()}
+                        .onInterviewModeToggle=${() => this.handleInterviewModeToggle()}
                         ?isClickThrough=${this._isClickThrough}
                     ></app-header>
                     <div class="${mainContentClass}">
@@ -1048,6 +1052,18 @@ export class AssistantApp extends LitElement {
 
     handleFocusModeChange(focusMode) {
         this.focusMode = focusMode;
+        this.requestUpdate();
+    }
+
+    async handleInterviewModeToggle() {
+        this.interviewMode = !this.interviewMode;
+        
+        // Communicate with main process to toggle interview mode
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            await ipcRenderer.invoke('toggle-interview-mode', this.interviewMode);
+        }
+        
         this.requestUpdate();
     }
 }
