@@ -459,13 +459,16 @@ export class CustomizeView extends LitElement {
 
         // Layout-specific defaults
         this.normalTransparency = 0.45;
-        this.normalFontSize = 14;
-        this.normalAutoScroll = true;
+        this.normalFontSize = 13;
+        this.normalAutoScroll = false;
         this.normalScrollSpeed = 2;
-        this.compactTransparency = 0.65;
-        this.compactFontSize = 13;
-        this.compactAutoScroll = false;
+        this.compactTransparency = 0.60;
+        this.compactFontSize = 12;
+        this.compactAutoScroll = true;
         this.compactScrollSpeed = 2;
+
+        // Initialize defaults in localStorage if they don't exist
+        this.initializeDefaultsInLocalStorage();
 
         this.loadKeybinds();
         this.loadGoogleSearchSettings();
@@ -874,15 +877,45 @@ export class CustomizeView extends LitElement {
         root.style.setProperty('--response-font-size', `${this.fontSize}px`);
     }
 
+    initializeDefaultsInLocalStorage() {
+        // Initialize normal layout defaults if they don't exist
+        if (localStorage.getItem('normalTransparency') === null) {
+            localStorage.setItem('normalTransparency', this.normalTransparency.toString());
+        }
+        if (localStorage.getItem('normalFontSize') === null) {
+            localStorage.setItem('normalFontSize', this.normalFontSize.toString());
+        }
+        if (localStorage.getItem('normalAutoScroll') === null) {
+            localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
+        }
+        if (localStorage.getItem('normalScrollSpeed') === null) {
+            localStorage.setItem('normalScrollSpeed', this.normalScrollSpeed.toString());
+        }
+
+        // Initialize compact layout defaults if they don't exist
+        if (localStorage.getItem('compactTransparency') === null) {
+            localStorage.setItem('compactTransparency', this.compactTransparency.toString());
+        }
+        if (localStorage.getItem('compactFontSize') === null) {
+            localStorage.setItem('compactFontSize', this.compactFontSize.toString());
+        }
+        if (localStorage.getItem('compactAutoScroll') === null) {
+            localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
+        }
+        if (localStorage.getItem('compactScrollSpeed') === null) {
+            localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
+        }
+    }
+
     loadLayoutSpecificSettings() {
         // Load normal layout settings
         const normalTransparency = localStorage.getItem('normalTransparency');
         if (normalTransparency !== null) {
-            this.normalTransparency = parseFloat(normalTransparency) || 0.45;
+            this.normalTransparency = parseFloat(normalTransparency);
         }
         const normalFontSize = localStorage.getItem('normalFontSize');
         if (normalFontSize !== null) {
-            this.normalFontSize = parseInt(normalFontSize, 10) || 14;
+            this.normalFontSize = parseInt(normalFontSize, 10);
         }
         const normalAutoScroll = localStorage.getItem('normalAutoScroll');
         if (normalAutoScroll !== null) {
@@ -890,17 +923,17 @@ export class CustomizeView extends LitElement {
         }
         const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
         if (normalScrollSpeed !== null) {
-            this.normalScrollSpeed = parseInt(normalScrollSpeed, 10) || 2;
+            this.normalScrollSpeed = parseInt(normalScrollSpeed, 10);
         }
 
         // Load compact layout settings
         const compactTransparency = localStorage.getItem('compactTransparency');
         if (compactTransparency !== null) {
-            this.compactTransparency = parseFloat(compactTransparency) || 0.65;
+            this.compactTransparency = parseFloat(compactTransparency);
         }
         const compactFontSize = localStorage.getItem('compactFontSize');
         if (compactFontSize !== null) {
-            this.compactFontSize = parseInt(compactFontSize, 10) || 13;
+            this.compactFontSize = parseInt(compactFontSize, 10);
         }
         const compactAutoScroll = localStorage.getItem('compactAutoScroll');
         if (compactAutoScroll !== null) {
@@ -908,7 +941,7 @@ export class CustomizeView extends LitElement {
         }
         const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
         if (compactScrollSpeed !== null) {
-            this.compactScrollSpeed = parseInt(compactScrollSpeed, 10) || 2;
+            this.compactScrollSpeed = parseInt(compactScrollSpeed, 10);
         }
     }
 

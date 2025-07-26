@@ -14,7 +14,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container {
-            height: calc(100% - 60px);
+            height: calc(100% - 5px);
             overflow-y: auto;
             border-radius: 5px;
             font-size: var(--response-font-size, 18px);
@@ -108,7 +108,7 @@ export class AssistantView extends LitElement {
             padding: 1em;
             white-space: pre-wrap;
             word-break: break-word;
-            margin: 1em 0;
+            margin: 0px;
         }
 
         .response-container pre code {
@@ -252,9 +252,10 @@ export class AssistantView extends LitElement {
 
         .text-input-container {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            gap: 8px;
             align-items: center;
+            transform: scale(0.78);
+            transform-origin: left center;
         }
 
         .text-input-container input {
@@ -262,15 +263,15 @@ export class AssistantView extends LitElement {
             background: var(--input-background);
             color: var(--text-color);
             border: 1px solid var(--button-border);
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 14px;
+            padding: 6px 8px;
+            border-radius: 5px;
+            font-size: 8px;
         }
 
         .text-input-container input:focus {
             outline: none;
             border-color: var(--focus-border-color);
-            box-shadow: 0 0 0 3px var(--focus-box-shadow);
+            box-shadow: 0 0 0 2px var(--focus-box-shadow);
             background: var(--input-focus-background);
         }
 
@@ -923,16 +924,14 @@ export class AssistantView extends LitElement {
         
         if (layoutMode === 'normal') {
             // Load normal layout settings
-            this.autoScrollEnabled = localStorage.getItem('normalAutoScroll') !== 'false';
-            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
+            const normalAutoScroll = localStorage.getItem('normalAutoScroll');
+            this.autoScrollEnabled = normalAutoScroll === 'true';
+            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10);
         } else if (layoutMode === 'compact') {
             // Load compact layout settings
-            this.autoScrollEnabled = localStorage.getItem('compactAutoScroll') !== 'false';
-            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
-        } else {
-            // Default fallback
-            this.autoScrollEnabled = true;
-            this.scrollSpeed = 2;
+            const compactAutoScroll = localStorage.getItem('compactAutoScroll');
+            this.autoScrollEnabled = compactAutoScroll === 'true';
+            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10);
         }
     }
 
@@ -976,9 +975,9 @@ export class AssistantView extends LitElement {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
         if (layoutMode === 'normal') {
-            return parseInt(localStorage.getItem('normalFontSize'), 10) || 14;
+            return parseInt(localStorage.getItem('normalFontSize'), 10);
         } else if (layoutMode === 'compact') {
-            return parseInt(localStorage.getItem('compactFontSize'), 10) || 13;
+            return parseInt(localStorage.getItem('compactFontSize'), 10);
         } else {
             return parseInt(localStorage.getItem('fontSize')) || 16;
         }

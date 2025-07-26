@@ -3,7 +3,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const os = require('os');
 
-let mouseEventsIgnored = true;
+let mouseEventsIgnored = false;
 let windowResizing = false;
 let resizeAnimation = null;
 const RESIZE_ANIMATION_DURATION = 500; // milliseconds
@@ -74,9 +74,9 @@ function createWindow(sendToRenderer, geminiSessionRef) {
         mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     }
 
-    // Set mouse events to be ignored by default
-    mainWindow.setIgnoreMouseEvents(true, { forward: true });
-    console.log('Mouse events ignored by default');
+    // Set mouse events to be enabled by default
+    mainWindow.setIgnoreMouseEvents(false);
+    console.log('Mouse events enabled by default');
 
     mainWindow.loadFile(path.join(__dirname, '../index.html'));
 
