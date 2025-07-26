@@ -105,12 +105,12 @@ export class AppHeader extends LitElement {
         }
 
         .interview-mode-checkbox {
-            width: 16px;
-            height: 16px;
+            width: 13px;
+            height: 13px;
             margin-right: 12px;
-            border: 1px solid var(--button-border);
-            border-radius: 3px;
-            background: var(--button-background);
+            border: 2px solid white;
+            border-radius: 2px;
+            background: white;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -124,7 +124,7 @@ export class AppHeader extends LitElement {
 
         .interview-mode-checkbox.checked {
             background: var(--accent-color, #007aff);
-            border-color: var(--accent-color, #007aff);
+            border: 3px solid white;
         }
 
         .interview-mode-checkbox svg {
@@ -137,6 +137,11 @@ export class AppHeader extends LitElement {
 
         .interview-mode-checkbox.checked svg {
             opacity: 1;
+            color: white !important;
+        }
+
+        .interview-mode-checkbox svg path {
+            stroke: white !important;
         }
     `;
 
