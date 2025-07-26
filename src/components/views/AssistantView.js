@@ -1549,13 +1549,13 @@ export class AssistantView extends LitElement {
                     <button class="scroll-speed-button" @click=${this.increaseScrollSpeed}>+</button>
                 </div>
 
-                <button class="auto-scroll-toggle ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll} title="Toggle Auto-scroll">
+                <button class="auto-scroll-toggle ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll}>
                     <svg class="auto-scroll-icon" viewBox="0 0 24 24">
                         <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
                     </svg>
                 </button>
 
-                <button class="microphone-button ${this.microphoneState}" @click=${this.toggleMicrophone} title="Toggle Microphone (Shift+Alt+8)">
+                <button class="microphone-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
                     <svg class="microphone-icon" viewBox="0 0 24 24">
                         <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
