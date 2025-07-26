@@ -343,7 +343,7 @@ export class AppHeader extends LitElement {
                               </button>
                               ${this.advancedMode
                                   ? html`
-                                        <button class="icon-button" @click=${this.onAdvancedClick} title="Advanced Tools">
+                                        <button class="icon-button" @click=${this.onAdvancedClick}>
                                             <?xml version="1.0" encoding="UTF-8"?><svg
                                                 width="24px"
                                                 stroke-width="1.7"
