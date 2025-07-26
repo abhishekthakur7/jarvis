@@ -101,6 +101,100 @@ export class HistoryView extends LitElement {
             border-radius: 0 4px 4px 0;
         }
 
+        /* Code highlighting styles */
+        .message code {
+            background: rgb(240 141 73 / 0%);
+            padding: 0.3em 0.4em;
+            border-radius: 3px;
+            font-family: Menlo, "Ubuntu Mono", monospace;
+            font-size: 1em;
+            color: gold;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .message pre {
+            background: var(--input-background);
+            border: 1px solid var(--button-border);
+            border-radius: 6px;
+            padding: 1em;
+            white-space: pre-wrap;
+            word-break: break-word;
+            margin: 1em 0;
+            overflow-x: auto;
+        }
+
+        .message pre code {
+            background: none;
+            padding: 0;
+            border-radius: 0;
+        }
+
+        /* Prism.js syntax highlighting overrides */
+        .message pre[class*="language-"] {
+            background: var(--code-block-background) !important;
+            color: #ccc !important;
+        }
+        
+        .message code[class*="language-"] {
+            color: #ccc !important;
+        }
+        
+        .message .token.comment,
+        .message .token.prolog,
+        .message .token.doctype,
+        .message .token.cdata {
+            color: #999 !important;
+        }
+        
+        .message .token.punctuation {
+            color: #ccc !important;
+        }
+        
+        .message .token.property,
+        .message .token.tag,
+        .message .token.boolean,
+        .message .token.number,
+        .message .token.constant,
+        .message .token.symbol,
+        .message .token.deleted {
+            color: #f08d49 !important;
+        }
+        
+        .message .token.selector,
+        .message .token.attr-name,
+        .message .token.string,
+        .message .token.char,
+        .message .token.builtin,
+        .message .token.inserted {
+            color: #7ec699 !important;
+        }
+        
+        .message .token.operator,
+        .message .token.entity,
+        .message .token.url,
+        .message .language-css .token.string,
+        .message .style .token.string {
+            color: #67cdcc !important;
+        }
+        
+        .message .token.atrule,
+        .message .token.attr-value,
+        .message .token.keyword {
+            color: #cc99cd !important;
+        }
+        
+        .message .token.function,
+        .message .token.class-name {
+            color: #f8c555 !important;
+        }
+        
+        .message .token.regex,
+        .message .token.important,
+        .message .token.variable {
+            color: #e2777a !important;
+        }
+
         .message.user {
             border-left-color: #5865f2; /* Discord blue */
         }
@@ -317,6 +411,80 @@ export class HistoryView extends LitElement {
         return preview.length > 100 ? preview.substring(0, 100) + '...' : preview;
     }
 
+    renderMarkdown(content) {
+        // Check if marked is available
+        if (typeof window !== 'undefined' && window.marked) {
+            try {
+                // Configure marked for better security and formatting
+                window.marked.setOptions({
+                    breaks: true,
+                    gfm: true,
+                    sanitize: false, // We trust the AI responses
+                });
+                let rendered = window.marked.parse(content);
+                rendered = this.highlightJavaCode(rendered);
+                return rendered;
+            } catch (error) {
+                console.warn('Error parsing markdown:', error);
+                return content; // Fallback to plain text
+            }
+        }
+
+        return content; // Fallback if marked is not available
+    }
+
+    highlightJavaCode(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const codeBlocks = doc.querySelectorAll('pre code');
+        
+        codeBlocks.forEach(codeBlock => {
+            const code = codeBlock.textContent;
+            if (this.isJavaCode(code)) {
+                codeBlock.className = 'language-java';
+                codeBlock.textContent = code;
+                
+                // Use Prism.js to highlight the code
+                if (window.Prism) {
+                    window.Prism.highlightElement(codeBlock);
+                }
+            }
+        });
+        
+        return doc.body.innerHTML;
+    }
+
+    isJavaCode(code) {
+        const javaKeywords = [
+            'public', 'private', 'protected', 'static', 'final', 'abstract',
+            'class', 'interface', 'extends', 'implements', 'package', 'import',
+            'void', 'int', 'String', 'boolean', 'double', 'float', 'long',
+            'System.out.println', 'new', 'this', 'super', 'return'
+        ];
+        
+        const javaPatterns = [
+            /\bpublic\s+class\s+\w+/,
+            /\bpublic\s+static\s+void\s+main/,
+            /\bSystem\.out\.println/,
+            /\bprivate\s+\w+\s+\w+/,
+            /\bpublic\s+\w+\s+\w+\s*\(/
+        ];
+        
+        // Check for Java-specific patterns
+        for (const pattern of javaPatterns) {
+            if (pattern.test(code)) {
+                return true;
+            }
+        }
+        
+        // Check for multiple Java keywords
+        const keywordCount = javaKeywords.filter(keyword => 
+            code.includes(keyword)
+        ).length;
+        
+        return keywordCount >= 2;
+    }
+
     handleSessionClick(session) {
         this.selectedSession = session;
     }
@@ -452,7 +620,14 @@ export class HistoryView extends LitElement {
             </div>
             <div class="conversation-view">
                 ${messages.length > 0
-                    ? messages.map(message => html` <div class="message ${message.type}">${message.content}</div> `)
+                    ? messages.map(message => html`
+                        <div class="message ${message.type}">
+                            ${message.type === 'ai' 
+                                ? html`<div .innerHTML="${this.renderMarkdown(message.content)}"></div>`
+                                : message.content
+                            }
+                        </div>
+                    `)
                     : html`<div class="empty-state">No conversation data available</div>`}
             </div>
         `;
