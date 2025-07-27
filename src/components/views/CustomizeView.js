@@ -1431,14 +1431,14 @@ export class CustomizeView extends LitElement {
                                     <input
                                         type="range"
                                         class="slider-input"
-                                        min="250"
+                                        min="150"
                                         max="500"
-                                        step="10"
+                                        step="5"
                                         .value=${this.compactWidth}
                                         @input=${this.handleCompactWidthChange}
                                     />
                                     <div class="slider-labels">
-                                        <span>250px</span>
+                                        <span>150px</span>
                                         <span>500px</span>
                                     </div>
                                     <div class="form-description">
@@ -1455,14 +1455,14 @@ export class CustomizeView extends LitElement {
                                     <input
                                         type="range"
                                         class="slider-input"
-                                        min="200"
+                                        min="150"
                                         max="500"
-                                        step="10"
+                                        step="5"
                                         .value=${this.compactHeight}
                                         @input=${this.handleCompactHeightChange}
                                     />
                                     <div class="slider-labels">
-                                        <span>200px</span>
+                                        <span>150px</span>
                                         <span>500px</span>
                                     </div>
                                     <div class="form-description">
