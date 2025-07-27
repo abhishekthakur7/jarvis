@@ -212,6 +212,7 @@ export class AssistantView extends LitElement {
             border-collapse: collapse;
             width: 100%;
             margin: 1em 0;
+            overflow-wrap: anywhere;
         }
 
         .response-container th,
