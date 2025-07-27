@@ -414,10 +414,14 @@ export class CustomizeView extends LitElement {
         normalFontSize: { type: Number },
         normalAutoScroll: { type: Boolean },
         normalScrollSpeed: { type: Number },
+        normalWidth: { type: Number },
+        normalHeight: { type: Number },
         compactTransparency: { type: Number },
         compactFontSize: { type: Number },
         compactAutoScroll: { type: Boolean },
         compactScrollSpeed: { type: Number },
+        compactWidth: { type: Number },
+        compactHeight: { type: Number },
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
         onScreenshotIntervalChange: { type: Function },
@@ -462,10 +466,14 @@ export class CustomizeView extends LitElement {
         this.normalFontSize = 13;
         this.normalAutoScroll = false;
         this.normalScrollSpeed = 2;
+        this.normalWidth = 550;
+        this.normalHeight = 500;
         this.compactTransparency = 0.60;
         this.compactFontSize = 12;
         this.compactAutoScroll = true;
         this.compactScrollSpeed = 2;
+        this.compactWidth = 350;
+        this.compactHeight = 300;
 
         // Initialize defaults in localStorage if they don't exist
         this.initializeDefaultsInLocalStorage();
@@ -925,6 +933,14 @@ export class CustomizeView extends LitElement {
         if (normalScrollSpeed !== null) {
             this.normalScrollSpeed = parseInt(normalScrollSpeed, 10);
         }
+        const normalWidth = localStorage.getItem('normalWidth');
+        if (normalWidth !== null) {
+            this.normalWidth = parseInt(normalWidth, 10);
+        }
+        const normalHeight = localStorage.getItem('normalHeight');
+        if (normalHeight !== null) {
+            this.normalHeight = parseInt(normalHeight, 10);
+        }
 
         // Load compact layout settings
         const compactTransparency = localStorage.getItem('compactTransparency');
@@ -942,6 +958,14 @@ export class CustomizeView extends LitElement {
         const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
         if (compactScrollSpeed !== null) {
             this.compactScrollSpeed = parseInt(compactScrollSpeed, 10);
+        }
+        const compactWidth = localStorage.getItem('compactWidth');
+        if (compactWidth !== null) {
+            this.compactWidth = parseInt(compactWidth, 10);
+        }
+        const compactHeight = localStorage.getItem('compactHeight');
+        if (compactHeight !== null) {
+            this.compactHeight = parseInt(compactHeight, 10);
         }
     }
 
@@ -969,6 +993,18 @@ export class CustomizeView extends LitElement {
         this.requestUpdate();
     }
 
+    handleNormalWidthChange(e) {
+        this.normalWidth = parseInt(e.target.value, 10);
+        localStorage.setItem('normalWidth', this.normalWidth.toString());
+        this.requestUpdate();
+    }
+
+    handleNormalHeightChange(e) {
+        this.normalHeight = parseInt(e.target.value, 10);
+        localStorage.setItem('normalHeight', this.normalHeight.toString());
+        this.requestUpdate();
+    }
+
     handleCompactTransparencyChange(e) {
         this.compactTransparency = parseFloat(e.target.value);
         localStorage.setItem('compactTransparency', this.compactTransparency.toString());
@@ -990,6 +1026,18 @@ export class CustomizeView extends LitElement {
     handleCompactScrollSpeedChange(e) {
         this.compactScrollSpeed = parseInt(e.target.value, 10);
         localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactWidthChange(e) {
+        this.compactWidth = parseInt(e.target.value, 10);
+        localStorage.setItem('compactWidth', this.compactWidth.toString());
+        this.requestUpdate();
+    }
+
+    handleCompactHeightChange(e) {
+        this.compactHeight = parseInt(e.target.value, 10);
+        localStorage.setItem('compactHeight', this.compactHeight.toString());
         this.requestUpdate();
     }
 
@@ -1219,6 +1267,57 @@ export class CustomizeView extends LitElement {
                                 </div>
                             </div>
                         </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Width</label>
+                                        <span class="slider-value">${this.normalWidth}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="400"
+                                        max="800"
+                                        step="10"
+                                        .value=${this.normalWidth}
+                                        @input=${this.handleNormalWidthChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>400px</span>
+                                        <span>800px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window width when in normal layout mode
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Height</label>
+                                        <span class="slider-value">${this.normalHeight}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="300"
+                                        max="700"
+                                        step="10"
+                                        .value=${this.normalHeight}
+                                        @input=${this.handleNormalHeightChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>300px</span>
+                                        <span>700px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window height when in normal layout mode
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -1318,6 +1417,57 @@ export class CustomizeView extends LitElement {
                                 </div>
                                 <div class="form-description">
                                     Speed of automatic scrolling when in compact layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Width</label>
+                                        <span class="slider-value">${this.compactWidth}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="250"
+                                        max="500"
+                                        step="10"
+                                        .value=${this.compactWidth}
+                                        @input=${this.handleCompactWidthChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>250px</span>
+                                        <span>500px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window width when in compact layout mode
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Height</label>
+                                        <span class="slider-value">${this.compactHeight}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="200"
+                                        max="500"
+                                        step="10"
+                                        .value=${this.compactHeight}
+                                        @input=${this.handleCompactHeightChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>200px</span>
+                                        <span>500px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window height when in compact layout mode
+                                    </div>
                                 </div>
                             </div>
                         </div>

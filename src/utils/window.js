@@ -568,9 +568,15 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
             let targetWidth, targetHeight;
 
-            // Determine base size from layout mode
-            const baseWidth = layoutMode === 'compact' ? 350 : 550;
-            const baseHeight = layoutMode === 'compact' ? 300 : 500;
+            // Determine base size from layout mode using stored values or defaults
+            let baseWidth, baseHeight;
+            if (layoutMode === 'compact') {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactWidth")')) || 350;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactHeight")')) || 300;
+            } else {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalWidth")')) || 550;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalHeight")')) || 500;
+            }
 
             // Adjust height based on view
             switch (viewName) {
