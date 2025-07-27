@@ -1083,6 +1083,27 @@ export class AssistantApp extends LitElement {
     async handleInterviewModeToggle() {
         this.interviewMode = !this.interviewMode;
         
+        // If enabling interview mode, automatically enable stealth mode (content protection) if not already enabled
+        if (this.interviewMode) {
+            const currentContentProtection = localStorage.getItem('contentProtection');
+            const isContentProtectionEnabled = currentContentProtection !== null ? currentContentProtection === 'true' : true;
+            
+            if (!isContentProtectionEnabled) {
+                // Enable content protection (stealth mode)
+                localStorage.setItem('contentProtection', 'true');
+                
+                // Update the window's content protection in real-time
+                if (window.require) {
+                    const { ipcRenderer } = window.require('electron');
+                    try {
+                        await ipcRenderer.invoke('update-content-protection', true);
+                    } catch (error) {
+                        console.error('Failed to update content protection:', error);
+                    }
+                }
+            }
+        }
+        
         // Communicate with main process to toggle interview mode
         if (window.require) {
             const { ipcRenderer } = window.require('electron');
