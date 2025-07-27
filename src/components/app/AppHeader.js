@@ -280,7 +280,6 @@ export class AppHeader extends LitElement {
 
         return html`
             <div class="header">
-                <div class="header-title">${this.getViewTitle()}</div>
                 <div class="interview-mode-container">
                     <span class="interview-mode-label">Interview Mode</span>
                     <div 
