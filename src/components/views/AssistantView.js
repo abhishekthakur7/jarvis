@@ -258,44 +258,93 @@ export class AssistantView extends LitElement {
         }
 
         .response-container .chunk-a {
-            color: #EAEAEA; /* Primary text: Light grey, not pure white */
-        }
-
+            color: #eaeaea;
+        } /* Primary text: Light grey, visible on black */
+        
         .response-container .chunk-b {
-            color:rgb(194, 110, 110); /* Secondary text: A readable but distinct grey */
-        }
-
+            color: #c26e6e;
+        } /* Secondary text: Soft red, high contrast */
+        
         .response-container strong {
             font-weight: 600;
-            color: #80BFFF; /* Emphasis: A soft, vibrant blue that pops on dark backgrounds */
-        }
-
+            color: #80bfff;
+        } /* Emphasis: Vibrant blue */
+        
         .response-container .filler {
             font-style: italic;
-            color: #B0B0B0; /* Filler text: A distinct but non-intrusive light grey */
-        }
-
+            color: #b0b0b0;
+        } /* Filler words */
+        
         .response-container .connector {
             text-decoration: underline;
-            text-decoration-color: #777; /* Underline: A subtle grey */
+            text-decoration-color: #777;
             text-decoration-thickness: 1px;
-        }
-
+        } /* Connectors */
+        
         .response-container .pace-slow {
             font-weight: 500;
             letter-spacing: 0.5px;
-            color:rgb(108, 108, 225); /* Slow pace: The most prominent off-white for deliberate delivery */
+            color: #f5f5f5;
         }
-
+        
         .response-container .pace-fast {
             letter-spacing: -0.4px;
-            color:rgb(15, 150, 13); /* Fast pace: Slightly less prominent than primary text */
+            color: #bdbdbd;
         }
-
+        
         .response-container .aside {
             font-size: 0.9em;
-            color: #888888; /* Aside: The least prominent color, for parenthetical comments */
-        }
+            color: #888888;
+        } /* Delivery enhancers */
+        
+        .response-container .pause {
+            letter-spacing: 0.1em;
+            color: #b0b0b0;
+        } /* Micro-pause marker "…" */
+        
+        .response-container .volume-loud {
+            font-size: 1.15em;
+            font-weight: 700;
+            color: #ffd35c;
+        } /* Louder pitch */
+        
+        .response-container .volume-soft {
+            font-size: 0.9em;
+            color: #c0c0c0;
+        } /* Softer pitch */
+        
+        .response-container .tone-warm {
+            color: #ffb366;
+        } /* Warm emotion */
+        
+        .response-container .tone-cool {
+            color: #66ccff;
+        } /* Cool/calming emotion */
+        
+        .response-container .closing-cue {
+            color: #f5f5f5;
+        } /* Final ♦ end cue */
+        
+        .response-container .closing-soon {
+            font-size: 1.1em;
+            color: #ffd35c;
+            font-weight: 600;
+        } /* Early wrap-up icon */
+        
+        .response-container .fade-out {
+            -webkit-mask-image: linear-gradient(180deg, #000 60%, transparent);
+            mask-image: linear-gradient(180deg, #000 60%, transparent);
+        } /* Gradual fade */
+        
+        #progress::after {
+            content: "";
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            background: #80bfff;
+            width: 0;
+        } /* Optional minimal progress bar */
 
         .text-input-container {
             display: flex;
