@@ -152,6 +152,7 @@ function getDefaultKeybinds() {
         scrollDown: isMac ? 'Shift+Alt+2' : 'Shift+Alt+2',
         toggleLayoutMode: 'Shift+Alt+/',
         toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
+        windowClose: 'Shift+Alt+;',
     };
 }
 
@@ -391,6 +392,33 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered toggleAutoScroll: ${keybinds.toggleAutoScroll}`);
         } catch (error) {
             console.error(`Failed to register toggleAutoScroll (${keybinds.toggleAutoScroll}):`, error);
+        }
+    }
+
+    // Register window close shortcut
+    if (keybinds.windowClose) {
+        try {
+            globalShortcut.register(keybinds.windowClose, () => {
+                console.log('Window close shortcut triggered');
+                // Trigger the close action by sending a message to the renderer
+                mainWindow.webContents.executeJavaScript(`
+                    (async () => {
+                        try {
+                            const appElement = document.querySelector('jarvis-app');
+                            if (appElement && appElement.handleClose) {
+                                await appElement.handleClose();
+                            }
+                        } catch (error) {
+                            console.error('Error in handleClose:', error);
+                        }
+                    })();
+                `).catch(error => {
+                    console.error('Error executing window close script:', error);
+                });
+            });
+            console.log(`Registered windowClose: ${keybinds.windowClose}`);
+        } catch (error) {
+            console.error(`Failed to register windowClose (${keybinds.windowClose}):`, error);
         }
     }
 }

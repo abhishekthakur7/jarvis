@@ -594,6 +594,7 @@ export class CustomizeView extends LitElement {
             scrollUp: 'Shift+Alt+1',
             scrollDown: 'Shift+Alt+2',
             toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
+            windowClose: 'Shift+Alt+;',
         };
     }
 
@@ -710,6 +711,11 @@ export class CustomizeView extends LitElement {
                 key: 'toggleAutoScroll',
                 name: 'Toggle Auto-Scroll',
                 description: 'Enable/disable automatic scrolling in jarvis view',
+            },
+            {
+                key: 'windowClose',
+                name: 'Close Window/Session',
+                description: 'Close the current session or application window',
             },
         ];
     }
