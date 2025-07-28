@@ -105,9 +105,9 @@ export class AppHeader extends LitElement {
         }
 
         .interview-mode-checkbox {
-            width: 13px;
-            height: 13px;
-            margin-right: 12px;
+            width: 10px;
+            height: 10px;
+            margin-right: 6px;
             border: 2px solid white;
             border-radius: 2px;
             background: white;

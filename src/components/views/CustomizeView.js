@@ -459,7 +459,7 @@ export class CustomizeView extends LitElement {
         this.backgroundTransparency = 0.45;
 
         // Font size default (in pixels)
-        this.fontSize = 12;
+        this.fontSize = 11;
 
         // Layout-specific defaults
         this.normalTransparency = 0.45;
@@ -469,7 +469,7 @@ export class CustomizeView extends LitElement {
         this.normalWidth = 550;
         this.normalHeight = 500;
         this.compactTransparency = 0.60;
-        this.compactFontSize = 12;
+        this.compactFontSize = 11;
         this.compactAutoScroll = true;
         this.compactScrollSpeed = 2;
         this.compactWidth = 350;

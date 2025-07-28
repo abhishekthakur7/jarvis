@@ -481,25 +481,23 @@ export class AssistantView extends LitElement {
         .scroll-speed-controls {
             display: -webkit-box;
             align-items: center;
-            gap: 4px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 2px;
-            margin-left: 10px;
+            border-radius: 4px;
+            margin-left: 5px;
         }
 
         .scroll-speed-controls button {
             background: transparent;
             color: white;
             border: none;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            font-size: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s ease;
-            min-width: 24px;
-            height: 24px;
+            min-width: 18px;
+            height: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -510,7 +508,7 @@ export class AssistantView extends LitElement {
         }
 
         .scroll-speed-controls span {
-            font-size: 12px;
+            font-size: 10px;
             padding: 0 4px;
             min-width: 100px;
             text-align: center;
@@ -519,24 +517,22 @@ export class AssistantView extends LitElement {
         .font-size-controls {
             display: flex;
             align-items: center;
-            gap: 4px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            padding: 2px;
+            border-radius: 4px;
         }
 
         .font-size-button {
             background: transparent;
             color: white;
             border: none;
-            padding: 4px 8px;
+            padding: 2px 4px;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 10px;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s ease;
-            min-width: 24px;
-            height: 24px;
+            min-width: 18px;
+            height: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
