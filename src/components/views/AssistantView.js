@@ -1035,7 +1035,7 @@ export class AssistantView extends LitElement {
     increaseFontSize() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.min(currentFontSize + 1, 32); // Max font size 32px
+        const newFontSize = Math.min(currentFontSize + 1, 16); // Max font size 32px
         
         if (layoutMode === 'normal') {
             localStorage.setItem('normalFontSize', newFontSize.toString());
@@ -1053,7 +1053,7 @@ export class AssistantView extends LitElement {
     decreaseFontSize() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.max(currentFontSize - 1, 12); // Min font size 12px
+        const newFontSize = Math.max(currentFontSize - 1, 10); // Min font size 12px
         
         if (layoutMode === 'normal') {
             localStorage.setItem('normalFontSize', newFontSize.toString());

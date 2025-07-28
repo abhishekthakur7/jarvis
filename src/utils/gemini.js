@@ -599,7 +599,7 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     }
 
                     if (message.serverContent?.turnComplete) {
-                        sendToRenderer('update-status', 'Listening...');
+                        sendToRenderer('update-status', 'Listen...');
                     }
                 },
                 onerror: function (e) {

@@ -1209,14 +1209,14 @@ export class CustomizeView extends LitElement {
                                 <input
                                     type="range"
                                     class="slider-input"
-                                    min="12"
+                                    min="10"
                                     max="32"
                                     step="1"
                                     .value=${this.normalFontSize}
                                     @input=${this.handleNormalFontSizeChange}
                                 />
                                 <div class="slider-labels">
-                                    <span>12px</span>
+                                    <span>10px</span>
                                     <span>32px</span>
                                 </div>
                                 <div class="form-description">
@@ -1362,14 +1362,14 @@ export class CustomizeView extends LitElement {
                                 <input
                                     type="range"
                                     class="slider-input"
-                                    min="12"
+                                    min="10"
                                     max="32"
                                     step="1"
                                     .value=${this.compactFontSize}
                                     @input=${this.handleCompactFontSizeChange}
                                 />
                                 <div class="slider-labels">
-                                    <span>12px</span>
+                                    <span>10px</span>
                                     <span>32px</span>
                                 </div>
                                 <div class="form-description">
