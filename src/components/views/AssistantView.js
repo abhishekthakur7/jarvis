@@ -291,7 +291,7 @@ export class AssistantView extends LitElement {
         
         .response-container .aside {
             font-size: 0.9em;
-            color: rgb(227 139 231;
+            color: rgb(227 139 231);
         } /* Delivery enhancers */
         
         .response-container .pause {
