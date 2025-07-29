@@ -20,7 +20,7 @@ export class AssistantView extends LitElement {
             font-size: var(--response-font-size, 18px);
             line-height: 1.2;
             background: var(--main-content-background);
-            padding: 5px;
+            padding: 2px;
         }
 
         /* Animated word-by-word reveal */
