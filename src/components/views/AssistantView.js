@@ -263,7 +263,7 @@ export class AssistantView extends LitElement {
         } /* Primary text: Light grey, visible on black */
         
         .response-container .chunk-b {
-            color: #c26e6e;
+            color:rgb(255, 122, 122);
         } /* Secondary text: Soft red, high contrast */
         
         .response-container strong {
