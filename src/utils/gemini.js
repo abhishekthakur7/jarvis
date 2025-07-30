@@ -61,15 +61,9 @@ let lastSessionParams = null;
 let isSuppressingRender = false;
 
 function sendToRenderer(channel, data) {
-    console.log('[DEBUG] sendToRenderer called with channel:', channel, 'data:', data);
     const windows = BrowserWindow.getAllWindows();
-    console.log('[DEBUG] Available windows:', windows.length);
     if (windows.length > 0) {
-        console.log('[DEBUG] Sending to window 0 webContents');
         windows[0].webContents.send(channel, data);
-        console.log('[DEBUG] webContents.send completed');
-    } else {
-        console.log('[DEBUG] No windows available to send to!');
     }
 }
 
