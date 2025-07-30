@@ -30,7 +30,26 @@ const MAX_MICROPHONE_WORDS = 200;
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 3000; // 2 seconds delay to wait for complete input
+const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input
+
+// Context and question queue management variables
+let contextAccumulator = '';
+let lastQuestionTime = null;
+let isAiResponding = false;
+let questionQueue = [];
+const CONTEXT_RESET_TIMEOUT = 60000; // 1 minute context window
+const QUESTION_WORDS = ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'can', 'could', 'would', 'should', 'is', 'are', 'do', 'does', 'did', 'will', 'have', 'has'];
+const REFERENCE_WORDS = ['it', 'this', 'that', 'they', 'them', 'these', 'those', 'also', 'and', 'but', 'however', 'moreover', 'furthermore'];
+
+// Response reconstruction variables
+let responseSegments = [];
+let lastValidSegment = '';
+let corruptionDetected = false;
+const SEGMENT_SIZE = 50; // Reduced size for more frequent backups to prevent corruption
+
+// Response timing tracking
+let requestStartTime = null;
+let lastResponseTime = null;
 
 // Reconnection tracking variables
 let reconnectionAttempts = 0;
@@ -42,9 +61,15 @@ let lastSessionParams = null;
 let isSuppressingRender = false;
 
 function sendToRenderer(channel, data) {
+    console.log('[DEBUG] sendToRenderer called with channel:', channel, 'data:', data);
     const windows = BrowserWindow.getAllWindows();
+    console.log('[DEBUG] Available windows:', windows.length);
     if (windows.length > 0) {
+        console.log('[DEBUG] Sending to window 0 webContents');
         windows[0].webContents.send(channel, data);
+        console.log('[DEBUG] webContents.send completed');
+    } else {
+        console.log('[DEBUG] No windows available to send to!');
     }
 }
 
@@ -59,6 +84,316 @@ function sanitizeText(text) {
                          .trim();
     
     return sanitized;
+}
+
+// Question detection and context management functions
+function isCompleteQuestion(text) {
+    if (!text || text.trim().length < 3) return false;
+    
+    const trimmedText = text.trim().toLowerCase();
+    
+    // Check for question marks or rising intonation indicators
+    if (trimmedText.includes('?')) return true;
+    
+    // Check for question words at the beginning
+    const words = trimmedText.split(/\s+/);
+    const firstWord = words[0];
+    
+    if (QUESTION_WORDS.includes(firstWord)) {
+        // Simple heuristic: question word + at least 3 more words
+        return words.length >= 4;
+    }
+    
+    return false;
+}
+
+function isFollowUpQuestion(text) {
+    if (!text || text.trim().length < 3) return false;
+    
+    const trimmedText = text.trim().toLowerCase();
+    const words = trimmedText.split(/\s+/);
+    
+    // Check for reference words that indicate follow-up
+    const hasReference = REFERENCE_WORDS.some(ref => words.includes(ref));
+    
+    // Check if it's also a complete question
+    const isQuestion = isCompleteQuestion(text);
+    
+    return hasReference && isQuestion;
+}
+
+function shouldResetContext() {
+    if (!lastQuestionTime) return false;
+    
+    const timeSinceLastQuestion = Date.now() - lastQuestionTime;
+    return timeSinceLastQuestion > CONTEXT_RESET_TIMEOUT;
+}
+
+function shouldInterrupt(newInput) {
+    // Only interrupt if AI is currently responding and new input is a complete question
+    return isAiResponding && isCompleteQuestion(newInput);
+}
+
+function processQuestionQueue(geminiSession) {
+    if (questionQueue.length === 0 || isAiResponding) return;
+    
+    console.log('🔍 [QUEUE_VALIDATION] Validating question queue before processing');
+    
+    // Enforce complete context boundary before processing new questions
+    enforceContextBoundary();
+    
+    // Validate and clean question queue
+    const validQuestions = questionQueue.filter(q => q && q.trim().length > 0);
+    if (validQuestions.length === 0) {
+        console.log('⚠️ [QUEUE_VALIDATION] No valid questions found in queue');
+        questionQueue = [];
+        return;
+    }
+    
+    // Combine all queued questions with proper separation
+    const combinedQuestions = validQuestions.join(' ').trim();
+    questionQueue = []; // Clear the queue
+    
+    console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
+    
+    // Send combined questions to AI
+    sendCombinedQuestionsToAI(combinedQuestions, geminiSession);
+}
+
+function sendCombinedQuestionsToAI(combinedText, geminiSession) {
+    if (!geminiSession || !combinedText.trim()) {
+        console.log('⚠️ [AI_REQUEST] Invalid session or empty text, aborting request');
+        return;
+    }
+    
+    console.log('🚀 [AI_REQUEST] Preparing to send new AI request with complete isolation');
+    
+    // Ensure complete buffer cleanup and context isolation
+    cleanupResponseBuffer();
+    
+    // Force messageBuffer to be completely empty to ensure new response counter
+    messageBuffer = '';
+    
+    // Force new response counter by sending new-response-starting event
+    if (!isSuppressingRender) {
+        sendToRenderer('new-response-starting');
+    }
+    
+    isAiResponding = true;
+    lastQuestionTime = Date.now();
+    
+    // Record request start time and log full transcript
+    requestStartTime = Date.now();
+    const timestamp = new Date(requestStartTime).toISOString();
+    console.log('🔄 [INTERRUPTION] Starting new AI request with complete context isolation');
+    console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+    console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
+    console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
+    
+    try {
+        // Send the combined text to Gemini
+        geminiSession.send(combinedText.trim());
+        console.log('✅ [AI_REQUEST] Successfully sent validated questions to AI');
+    } catch (error) {
+        console.error('❌ [AI_REQUEST_ERROR] Error sending combined questions to AI:', error);
+        isAiResponding = false;
+        requestStartTime = null; // Reset timing on error
+        // Reset state on error
+        enforceContextBoundary();
+    }
+}
+
+// Response buffer cleanup function
+function cleanupResponseBuffer() {
+    console.log('🧹 [BUFFER_CLEANUP] Starting comprehensive buffer isolation');
+    
+    if (messageBuffer && messageBuffer.trim()) {
+        console.log('🧹 [BUFFER_CLEANUP] Clearing interrupted response buffer:', messageBuffer.substring(0, 100) + '...');
+        messageBuffer = '';
+    }
+    
+    // Reset any partial response state
+    if (global.pendingContextTranscription) {
+        console.log('🧹 [BUFFER_CLEANUP] Clearing pending context transcription');
+        global.pendingContextTranscription = null;
+    }
+    
+    // Complete context isolation to prevent bleeding
+    resetReconstructionState();
+    
+    // Clear speaker transcription to prevent context contamination
+    if (speakerTranscription && speakerTranscription.trim()) {
+        console.log('🧹 [BUFFER_CLEANUP] Clearing speaker transcription to prevent context bleeding');
+        speakerTranscription = '';
+    }
+    
+    // Reset AI responding state
+    isAiResponding = false;
+    corruptionDetected = false;
+    
+    console.log('✅ [BUFFER_CLEANUP] Complete buffer isolation achieved');
+}
+
+// Response integrity check function
+function validateResponseIntegrity(responseText) {
+    if (!responseText || typeof responseText !== 'string') {
+        console.warn('⚠️ [INTEGRITY_CHECK] Invalid response type:', typeof responseText);
+        return { isValid: false, issues: ['Invalid response type'] };
+    }
+    
+    const issues = [];
+    
+    // Check for unclosed HTML spans
+    const openSpans = (responseText.match(/<span[^>]*>/g) || []).length;
+    const closeSpans = (responseText.match(/<\/span>/g) || []).length;
+    if (openSpans !== closeSpans) {
+        issues.push(`Mismatched span tags: ${openSpans} open, ${closeSpans} close`);
+    }
+    
+    // Check for malformed span attributes
+    const malformedSpans = responseText.match(/<span[^>]*class='[^']*<span/g);
+    if (malformedSpans) {
+        issues.push(`Malformed span attributes: ${malformedSpans.length} instances`);
+    }
+    
+    // Check for character encoding issues
+    const encodingIssues = responseText.match(/[ΓÖªαñ]/g);
+    if (encodingIssues) {
+        issues.push(`Character encoding issues: ${encodingIssues.length} corrupted characters`);
+    }
+    
+    // Check for abrupt content switches (incomplete sentences)
+    const abruptSwitches = responseText.match(/[a-z]<span class='chunk-[ab]'>[A-Z]/g);
+    if (abruptSwitches) {
+        issues.push(`Abrupt content switches: ${abruptSwitches.length} instances`);
+    }
+    
+    const isValid = issues.length === 0;
+    
+    if (!isValid) {
+        console.warn('⚠️ [INTEGRITY_CHECK] Response integrity issues detected:', issues);
+    } else {
+        console.log('✅ [INTEGRITY_CHECK] Response integrity validated successfully');
+    }
+    
+    return { isValid, issues };
+}
+
+// Response reconstruction functions
+function saveResponseSegment(text) {
+    // Save clean segments for reconstruction
+    if (text && text.length >= SEGMENT_SIZE) {
+        const integrity = validateResponseIntegrity(text);
+        if (integrity.isValid) {
+            lastValidSegment = text;
+            responseSegments.push({
+                content: text,
+                timestamp: Date.now(),
+                length: text.length
+            });
+            console.log('💾 [SEGMENT_BACKUP] Saved clean segment:', text.length, 'characters');
+        }
+    }
+}
+
+function detectStreamingCorruption(currentBuffer, newText) {
+    // Enhanced corruption detection for streaming responses
+    const combinedText = currentBuffer + newText;
+    
+    // Enhanced corruption patterns based on observed issues
+    const corruptionPatterns = [
+        // HTML structure corruption
+        /<span\s+class='chunk<span/,           // Nested span corruption
+        /<span\s+class="[^"]*<span/,          // Nested spans with quotes
+        /\w<span\s+class=/,                   // Missing space before span
+        /<spanclass=/,                        // Missing space in span tag
+        /<span[^>]*<span/,                    // Overlapping span tags
+        
+        // Missing spaces and word concatenation
+        /[a-z][A-Z]/,                         // camelCase without spaces
+        /[a-z]\d/,                            // letter followed by number
+        /\d[a-z]/,                            // number followed by letter
+        /[a-z]{2,}[A-Z][a-z]/,               // word concatenation patterns
+        /ends[A-Z]/,                          // specific pattern from logs
+        /cuta[A-Z]/,                          // specific pattern from logs
+        
+        // Malformed HTML attributes
+        /class="[^"]*[^"\s]</,               // incomplete class attributes
+        /span class="[^"]*$/,                 // incomplete span opening
+        /<span[^>]*$/,                        // incomplete span tags
+        
+        // Character encoding issues
+        /[ΓÖªαñ]/,                            // encoding corruption
+        /[\u0000-\u001F\u007F-\u009F]/,        // control characters
+        
+        // Context bleeding detection
+        /measure 45.*container/,              // mixing wire and container puzzles
+        /45.*minutes.*liter/,                 // mixing time and volume contexts
+        /wire.*burn.*pour/                    // mixing different problem contexts
+    ];
+    
+    for (const pattern of corruptionPatterns) {
+        if (pattern.test(combinedText)) {
+            console.warn('🚨 [CORRUPTION_DETECTED] Enhanced pattern found:', pattern.source);
+            console.warn('🚨 [CORRUPTION_CONTEXT] Buffer:', currentBuffer.substring(-50));
+            console.warn('🚨 [CORRUPTION_CONTEXT] New text:', newText);
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+function reconstructResponse() {
+    console.log('🔧 [RECONSTRUCTION] Starting response reconstruction');
+    
+    if (responseSegments.length === 0) {
+        console.warn('⚠️ [RECONSTRUCTION] No clean segments available for reconstruction');
+        return null;
+    }
+    
+    // Use the most recent valid segment as base
+    const latestSegment = responseSegments[responseSegments.length - 1];
+    console.log('🔧 [RECONSTRUCTION] Using latest clean segment:', latestSegment.length, 'characters');
+    
+    // Clear corruption flag
+    corruptionDetected = false;
+    
+    return latestSegment.content;
+}
+
+function resetReconstructionState() {
+    responseSegments = [];
+    lastValidSegment = '';
+    corruptionDetected = false;
+    console.log('🧹 [RECONSTRUCTION] Reset reconstruction state');
+}
+
+// Complete context isolation function to prevent context bleeding
+function enforceContextBoundary() {
+    console.log('🚧 [CONTEXT_BOUNDARY] Enforcing complete context isolation');
+    
+    // Clear all response-related buffers
+    messageBuffer = '';
+    
+    // Clear context accumulator to prevent question mixing
+    if (contextAccumulator && contextAccumulator.trim()) {
+        console.log('🚧 [CONTEXT_BOUNDARY] Clearing context accumulator to prevent question mixing');
+        contextAccumulator = '';
+    }
+    
+    // Reset reconstruction state
+    resetReconstructionState();
+    
+    // Clear any pending transcriptions
+    if (global.pendingContextTranscription) {
+        global.pendingContextTranscription = null;
+    }
+    
+    // Reset AI state
+    isAiResponding = false;
+    
+    console.log('✅ [CONTEXT_BOUNDARY] Context boundary enforced - clean slate achieved');
 }
 
 // Conversation management functions
@@ -270,6 +605,7 @@ async function sendReconnectionContext() {
         isProcessingTextMessage = true;
         
         // Set flag to suppress rendering during reconnection
+
         isSuppressingRender = true;
 
         // Send dummy text for master prompt execution
@@ -289,12 +625,14 @@ async function sendReconnectionContext() {
         // Reset processing flag after a delay
         setTimeout(() => {
             isProcessingTextMessage = false;
+
             isSuppressingRender = false;
         }, 5000);
         
     } catch (error) {
         console.error('Error sending reconnection context:', error);
         isProcessingTextMessage = false;
+        
         isSuppressingRender = false;
     }
 }
@@ -499,10 +837,74 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             pendingInput += transcriptionText + ' ';
                             console.log('Accumulating input:', transcriptionText);
 
+                            // Check if this should interrupt current AI response
+                            if (shouldInterrupt(transcriptionText)) {
+                                console.log('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
+                                
+                                // Validate and log current response buffer before interruption
+                                if (messageBuffer) {
+                                    const integrity = validateResponseIntegrity(messageBuffer);
+                                    console.log('📊 [INTERRUPTION_ANALYSIS] Current response buffer length:', messageBuffer.length);
+                                    console.log('📊 [INTERRUPTION_ANALYSIS] Buffer integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                                    if (!integrity.isValid) {
+                                        console.warn('⚠️ [INTERRUPTION_ANALYSIS] Buffer issues:', integrity.issues);
+                                    }
+                                }
+                                
+                                // Clean up interrupted response
+                                cleanupResponseBuffer();
+                                
+                                // Add current context and new input to queue
+                                if (contextAccumulator.trim()) {
+                                    console.log('📝 [QUEUE_MANAGEMENT] Adding context to queue:', contextAccumulator.trim());
+                                    questionQueue.push(contextAccumulator.trim());
+                                }
+                                console.log('📝 [QUEUE_MANAGEMENT] Adding follow-up question to queue:', transcriptionText.trim());
+                                questionQueue.push(transcriptionText.trim());
+                                
+                                // Reset context and process immediately
+                                contextAccumulator = '';
+                                pendingInput = '';
+                                isAiResponding = false;
+                                
+                                console.log('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
+                                // Process the combined questions immediately
+                                processQuestionQueue(session);
+                                return;
+                            }
+                            
                             // Set new timer to process after delay (wait for complete input)
                             inputDebounceTimer = setTimeout(() => {
                                 if (pendingInput.trim()) {
                                     console.log('Processing complete input after delay:', pendingInput.trim());
+                                    
+                                    // Check if context should be reset
+                                    if (shouldResetContext()) {
+                                        console.log('Resetting context due to timeout');
+                                        contextAccumulator = '';
+                                        questionQueue = [];
+                                    }
+                                    
+                                    // Add to context accumulator
+                                    contextAccumulator += pendingInput + ' ';
+                                    
+                                    // Check if this is a complete question
+                                    if (isCompleteQuestion(pendingInput.trim())) {
+                                        console.log('Complete question detected:', pendingInput.trim());
+                                        
+                                        // Add to question queue
+                                        questionQueue.push(contextAccumulator.trim());
+                                        
+                                        // Process the queue if AI is not responding
+                                        if (!isAiResponding) {
+                                            processQuestionQueue(session);
+                                        }
+                                        
+                                        // Reset context for next question
+                                        contextAccumulator = '';
+                                    } else {
+                                        console.log('Incomplete input, accumulating in context:', pendingInput.trim());
+                                    }
                                     
                                     // Prevent duplicate transcriptions by checking recent history
                                     const isDuplicate = speakerConversationHistory.some(entry => 
@@ -547,15 +949,65 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.modelTurn?.parts) {
                         for (const part of message.serverContent.modelTurn.parts) {
                             if (part.text) {
-                                // If this is the first part of a new response, signal that a new response is starting
+                                // If this is the first part of a new response, ensure new-response-starting is sent
                                 if (messageBuffer === '') {
+                                    isAiResponding = true; // Track that AI is now responding
+                                    resetReconstructionState(); // Reset reconstruction state for new response
+                                    console.log('🤖 [AI_RESPONSE_START] First chunk of AI response received');
+                                    
+                                    // CRITICAL FIX: Always send new-response-starting for new AI responses
+                                    // This ensures proper response counter regardless of input path
                                     if (!isSuppressingRender) {
                                         sendToRenderer('new-response-starting');
                                     }
                                 }
+                                
                                 // Sanitize the AI response text to remove corrupted characters
-                                //const sanitizedText = sanitizeText(part.text);
-                                messageBuffer += part.text;
+                                const sanitizedText = sanitizeText(part.text);
+                                
+                                // Detect corruption before adding to buffer
+                                const isCorrupted = detectStreamingCorruption(messageBuffer, sanitizedText);
+                                
+                                if (isCorrupted && !corruptionDetected) {
+                                    console.error('🚨 [CORRUPTION_ALERT] Corruption detected during streaming!');
+                                    corruptionDetected = true;
+                                    
+                                    // Attempt reconstruction
+                                    const reconstructed = reconstructResponse();
+                                    if (reconstructed) {
+                                        console.log('✅ [RECONSTRUCTION_SUCCESS] Response reconstructed from clean segment');
+                                        messageBuffer = reconstructed;
+                                        if (!isSuppressingRender) {
+                                            sendToRenderer('update-response', messageBuffer);
+                                        }
+                                        return; // Skip adding corrupted text
+                                    } else {
+                                        console.warn('⚠️ [RECONSTRUCTION_FAILED] No clean segments available, continuing with corrupted stream');
+                                    }
+                                }
+                                
+                                // Add sanitized text to buffer if not corrupted
+                                if (!isCorrupted) {
+                                    messageBuffer += sanitizedText;
+                                    
+                                    // Save clean segments periodically
+                                    if (messageBuffer.length % SEGMENT_SIZE === 0) {
+                                        saveResponseSegment(messageBuffer);
+                                    }
+                                } else {
+                                    // If corrupted but no reconstruction available, add anyway but log warning
+                                    messageBuffer += sanitizedText;
+                                    console.warn('⚠️ [FORCED_APPEND] Adding potentially corrupted text due to no reconstruction option');
+                                }
+                                
+                                // Validate response integrity periodically during streaming
+                                if (messageBuffer.length % 500 === 0) { // Check every 500 characters
+                                    const integrity = validateResponseIntegrity(messageBuffer);
+                                    if (!integrity.isValid) {
+                                        console.warn('⚠️ [STREAMING_INTEGRITY] Issues detected during streaming:', integrity.issues);
+                                    }
+                                }
+                                
                                 if (!isSuppressingRender) {
                                     sendToRenderer('update-response', messageBuffer);
                                 }
@@ -564,8 +1016,39 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     }
 
                     if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.generationComplete) {
+                        console.log('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
+                        
+                        // Final integrity check before sending to renderer
+                        const finalIntegrity = validateResponseIntegrity(messageBuffer);
+                        console.log('📊 [FINAL_INTEGRITY] Response length:', messageBuffer.length, 'characters');
+                        console.log('📊 [FINAL_INTEGRITY] Final integrity status:', finalIntegrity.isValid ? 'VALID' : 'CORRUPTED');
+                        
+                        if (!finalIntegrity.isValid) {
+                            console.error('❌ [FINAL_INTEGRITY] Corrupted response detected before saving:', finalIntegrity.issues);
+                            
+                            // Attempt final reconstruction
+                            const reconstructed = reconstructResponse();
+                            if (reconstructed) {
+                                console.log('✅ [FINAL_RECONSTRUCTION] Response reconstructed successfully');
+                                messageBuffer = reconstructed;
+                                
+                                // Re-validate reconstructed response
+                                const reconstructedIntegrity = validateResponseIntegrity(messageBuffer);
+                                console.log('📊 [RECONSTRUCTED_INTEGRITY] Final status:', reconstructedIntegrity.isValid ? 'VALID' : 'STILL_CORRUPTED');
+                            } else {
+                                console.error('❌ [FINAL_RECONSTRUCTION] Failed to reconstruct response - saving corrupted version');
+                            }
+                        }
+                        
+                        // Create response object with timing data for final response
+                        const responseWithTiming = {
+                            content: messageBuffer,
+                            responseTime: lastResponseTime,
+                            timestamp: Date.now()
+                        };
+                        
                         if (!isSuppressingRender) {
-                            sendToRenderer('update-response', messageBuffer);
+                            sendToRenderer('update-response', responseWithTiming);
                         }
 
                         // Save conversation turn when we have both transcription and AI response
@@ -576,22 +1059,50 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             if (isReconnectionContext) {
                                 // DO NOT save context messages to conversation history to prevent recursive loops
                                 // Context messages are internal reconnection messages and should not be persisted
-                                console.log('Skipping save of context message to prevent recursive loop');
+                                console.log('⏭️ [SAVE_SKIP] Skipping save of context message to prevent recursive loop');
                             } else {
                                 // Save screenshot context messages and other text messages
                                 // Pass suppression flag to indicate if this response was suppressed from UI
+                                console.log('💾 [SAVE_CONVERSATION] Saving context message conversation turn');
                                 saveConversationTurn(global.pendingContextTranscription, messageBuffer, isSuppressingRender);
                             }
                             global.pendingContextTranscription = null; // Reset after processing
                         } else if (speakerCurrentTranscription && messageBuffer) {
                             // Save regular speaker-only transcription
                             // Pass suppression flag to indicate if this response was suppressed from UI
+                            console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
                             saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
                             speakerCurrentTranscription = ''; // Reset for next turn
                         }
 
+                        // Calculate and log response timing
+                        if (requestStartTime) {
+                            const responseEndTime = Date.now();
+                            const responseTimeMs = responseEndTime - requestStartTime;
+                            lastResponseTime = responseTimeMs;
+                            const endTimestamp = new Date(responseEndTime).toISOString();
+                            
+                            console.log('⏰ [RESPONSE_COMPLETE] Timestamp:', endTimestamp);
+                            console.log('⚡ [RESPONSE_TIME] Total time for complete response:', responseTimeMs, 'ms');
+                            
+
+                            
+                            requestStartTime = null; // Reset for next request
+                        }
+                        
                         messageBuffer = '';
                         isProcessingTextMessage = false; // Reset flag after processing
+                        isAiResponding = false; // Mark AI as no longer responding
+                        
+                        console.log('🔄 [STATE_RESET] AI response state reset, checking for queued questions');
+                        
+                        // Process any queued questions after response completion
+                        if (questionQueue.length > 0) {
+                            console.log('📋 [QUEUE_PROCESSING] Processing', questionQueue.length, 'queued questions after response completion');
+                            setTimeout(() => processQuestionQueue(session), 100); // Small delay to ensure clean state
+                        } else {
+                            console.log('✅ [QUEUE_EMPTY] No queued questions, ready for new input');
+                        }
                     }
 
                     if (message.serverContent?.inputTranscription?.text) {
@@ -613,6 +1124,31 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     // Reset suppression flag on error
                     isSuppressingRender = false;
                     isProcessingTextMessage = false;
+                    isAiResponding = false; // Reset AI responding state on error
+                    
+                    console.log('❌ [ERROR_RECOVERY] Starting error recovery process');
+                    
+                    // Validate and log current response buffer before cleanup
+                    if (messageBuffer) {
+                        const integrity = validateResponseIntegrity(messageBuffer);
+                        console.log('📊 [ERROR_ANALYSIS] Response buffer at error - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                        if (!integrity.isValid) {
+                            console.warn('⚠️ [ERROR_ANALYSIS] Buffer corruption detected during error:', integrity.issues);
+                        }
+                    }
+                    
+                    // Clear context and queue on error
+                    if (contextAccumulator.trim()) {
+                        console.log('🧹 [ERROR_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
+                    }
+                    if (questionQueue.length > 0) {
+                        console.log('🧹 [ERROR_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
+                    }
+                    
+                    contextAccumulator = '';
+                    questionQueue = [];
+                    resetReconstructionState(); // Reset reconstruction state on error
+                    console.log('✅ [ERROR_RECOVERY] Context, queue, and reconstruction state cleared due to error');
 
                     // Save partial response if available before handling error
                     if (messageBuffer) {
@@ -654,6 +1190,31 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     // Reset suppression flag on session close
                     isSuppressingRender = false;
                     isProcessingTextMessage = false;
+                    isAiResponding = false; // Reset AI responding state on session close
+                    
+                    console.log('🔌 [SESSION_CLOSE] Starting session close cleanup process');
+                    
+                    // Validate and log current response buffer before cleanup
+                    if (messageBuffer) {
+                        const integrity = validateResponseIntegrity(messageBuffer);
+                        console.log('📊 [CLOSE_ANALYSIS] Response buffer at close - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                        if (!integrity.isValid) {
+                            console.warn('⚠️ [CLOSE_ANALYSIS] Buffer corruption detected during close:', integrity.issues);
+                        }
+                    }
+                    
+                    // Clear context and queue on session close
+                    if (contextAccumulator.trim()) {
+                        console.log('🧹 [CLOSE_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
+                    }
+                    if (questionQueue.length > 0) {
+                        console.log('🧹 [CLOSE_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
+                    }
+                    
+                    contextAccumulator = '';
+                    questionQueue = [];
+                    resetReconstructionState(); // Reset reconstruction state on session close
+                    console.log('✅ [SESSION_CLOSE] Context, queue, and reconstruction state cleared due to session close');
 
                     // Save partial response if available before handling close
                     if (messageBuffer) {
@@ -953,13 +1514,24 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 return { success: false, error: 'Invalid text message' };
             }
 
-            console.log('Sending text message:', text);
+            // Send new-response-starting event to ensure proper response counter
+            // User-initiated text messages should ALWAYS trigger a new response counter
+            sendToRenderer('new-response-starting');
+
+            // Record request start time and log full transcript
+            requestStartTime = Date.now();
+            const timestamp = new Date(requestStartTime).toISOString();
+            console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini via IPC:');
+            console.log('📄 [TRANSCRIPT_CONTENT]', text.trim());
+            
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
             await geminiSessionRef.current.sendRealtimeInput({ text: text.trim() });
             return { success: true };
         } catch (error) {
             console.error('Error sending text:', error);
             isProcessingTextMessage = false; // Reset flag on error
+            requestStartTime = null; // Reset timing on error
             return { success: false, error: error.message };
         }
     });
@@ -1061,7 +1633,17 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 `
             }
 
-            console.log('\nSending context-with-screenshot:', completeTranscription);
+            // Send new-response-starting event to ensure proper response counter
+            // User-initiated context-with-screenshot should ALWAYS trigger a new response counter
+            sendToRenderer('new-response-starting');
+
+            // Record request start time and log full transcript
+            requestStartTime = Date.now();
+            const timestamp = new Date(requestStartTime).toISOString();
+            console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini via context-with-screenshot:');
+            console.log('📄 [TRANSCRIPT_CONTENT]', completeTranscription.trim());
+            
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
             
             // Store the complete transcription for saving after AI response
@@ -1072,6 +1654,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         } catch (error) {
             console.error('\nError sending context-with-screenshot:', error);
             isProcessingTextMessage = false; // Reset flag on error
+            requestStartTime = null; // Reset timing on error
             return { success: false, error: error.message };
         }
     });

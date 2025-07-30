@@ -173,7 +173,6 @@ export class AssistantApp extends LitElement {
         });
         
         ipcRenderer.on('new-response-starting', () => {
-            //console.log('[new-response-starting] Setting _awaitingNewResponse to true for automatic response');
             this._awaitingNewResponse = true;
         });
             ipcRenderer.on('update-status', (_, status) => {
@@ -232,33 +231,48 @@ export class AssistantApp extends LitElement {
     }
 
     setResponse(response) {
+        // Handle both string responses (streaming) and object responses (final with timing)
+        const responseContent = typeof response === 'string' ? response : response.content;
+        const responseTime = typeof response === 'object' ? response.responseTime : null;
+        const timestamp = typeof response === 'object' ? response.timestamp : Date.now();
+        
+        // Create response object with timing data
+        const responseObj = {
+            content: responseContent,
+            responseTime: responseTime,
+            timestamp: timestamp
+        };
 
         if (this._awaitingNewResponse || this.responses.length === 0) {
             // Add new response - this is the start of a new AI response
-            this.responses = [...this.responses, response];
+            this.responses = [...this.responses, responseObj];
             this.currentResponseIndex = this.responses.length - 1;
             this._awaitingNewResponse = false;
             
             // Enable auto-scroll for every new answer
             this.autoScrollEnabled = true;
             localStorage.setItem('autoScrollEnabled', 'true');
-            
-            //console.log('[setResponse] Added new response. New length:', this.responses.length, 'New index:', this.currentResponseIndex);
         } else {
             // Update current response - this is a streaming update of the existing response
             // Only update if we have responses and a valid current index
             if (this.responses.length > 0 && this.currentResponseIndex >= 0 && this.currentResponseIndex < this.responses.length) {
+                // Preserve existing timing data during streaming updates
+                const existingResponse = this.responses[this.currentResponseIndex];
+                const updatedResponse = {
+                    content: responseContent,
+                    responseTime: responseTime || existingResponse.responseTime,
+                    timestamp: timestamp
+                };
+                
                 this.responses = [
                     ...this.responses.slice(0, this.currentResponseIndex),
-                    response,
+                    updatedResponse,
                     ...this.responses.slice(this.currentResponseIndex + 1)
                 ];
-                //console.log('[setResponse] Updated current response at index:', this.currentResponseIndex, 'Length:', this.responses.length);
             } else {
                 // Fallback: treat as new response if indices are invalid
-                this.responses = [...this.responses, response];
+                this.responses = [...this.responses, responseObj];
                 this.currentResponseIndex = this.responses.length - 1;
-                //console.log('[setResponse] Fallback: Added new response due to invalid indices. New length:', this.responses.length, 'New index:', this.currentResponseIndex);
             }
         }
         
@@ -272,7 +286,6 @@ export class AssistantApp extends LitElement {
         if (this.autoScrollEnabled) {
             this.autoScrollEnabled = false;
             localStorage.setItem('autoScrollEnabled', 'false');
-            console.log('Auto-scroll disabled due to user interaction');
         }
     }
 
@@ -459,7 +472,7 @@ export class AssistantApp extends LitElement {
             this.setStatus('Error sending message: ' + result.error);
         } else {
             this.setStatus('Message sent...');
-            this._awaitingNewResponse = true;
+            // Note: _awaitingNewResponse is set by the 'new-response-starting' IPC event from gemini.js
         }
     }
 
@@ -643,12 +656,9 @@ export class AssistantApp extends LitElement {
     }
 
     toggleAutoScroll() {
-        console.log('[AssistantApp] Global shortcut triggered auto-scroll toggle');
         const jarvisView = this.shadowRoot.querySelector('jarvis-view');
         if (jarvisView && jarvisView.toggleAutoScroll) {
             jarvisView.toggleAutoScroll();
-        } else {
-            console.log('[AssistantApp] AssistantView not found or toggleAutoScroll method not available');
         }
     }
 

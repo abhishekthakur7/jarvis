@@ -474,6 +474,27 @@ export class AssistantView extends LitElement {
             color: #44ff44;
         }
 
+        .response-time-display {
+            font-size: 12px;
+            color: #888;
+            margin-left: 3px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+
+        .response-time-display.fast {
+            color:rgb(232, 232, 232);
+        }
+
+        .response-time-display.medium {
+            color: #ffaa44;
+        }
+
+        .response-time-display.slow {
+            color: #ff4444;
+        }
+
         .scroll-speed-controls {
             display: -webkit-box;
             align-items: center;
@@ -598,6 +619,7 @@ export class AssistantView extends LitElement {
         autoScrollEnabled: { type: Boolean },
         scrollSpeed: { type: Number },
         _autoScrollPaused: { type: Boolean },
+        lastResponseTime: { type: Number },
     };
 
     constructor() {
@@ -609,6 +631,7 @@ export class AssistantView extends LitElement {
         this._lastAnimatedWordCount = 0;
         this.microphoneEnabled = false;
         this.microphoneState = 'off'; // 'off', 'recording', 'speaking'
+        this.lastResponseTime = null;
         
         // Initialize with layout-specific defaults
         this.loadLayoutSpecificSettings();
@@ -634,9 +657,11 @@ export class AssistantView extends LitElement {
 
     getCurrentResponse() {
         const profileNames = this.getProfileNames();
-        return this.responses.length > 0 && this.currentResponseIndex >= 0
-            ? this.responses[this.currentResponseIndex]
-            : `Hey, Im listening to your ${profileNames[this.selectedProfile] || 'session'}?`;
+        if (this.responses.length > 0 && this.currentResponseIndex >= 0) {
+            const response = this.responses[this.currentResponseIndex];
+            return typeof response === 'string' ? response : (response?.content || '');
+        }
+        return `Hey, Im listening to your ${profileNames[this.selectedProfile] || 'session'}?`;
     }
 
     renderMarkdown(content) {
@@ -993,6 +1018,8 @@ export class AssistantView extends LitElement {
             ipcRenderer.on('scroll-response-up', this.handleScrollUp);
             ipcRenderer.on('scroll-response-down', this.handleScrollDown);
             
+
+            
             // Listen for layout mode changes to reload settings
             this.handleLayoutModeChange = () => {
                 console.log('[AssistantView] Layout mode changed, reloading settings');
@@ -1022,6 +1049,7 @@ export class AssistantView extends LitElement {
             if (this.handleScrollDown) {
                 ipcRenderer.removeListener('scroll-response-down', this.handleScrollDown);
             }
+
             if (this.handleLayoutModeChange) {
                 ipcRenderer.removeListener('layout-mode-changed', this.handleLayoutModeChange);
             }
@@ -1181,6 +1209,34 @@ export class AssistantView extends LitElement {
         if (textInput) {
             textInput.value = '';
         }
+    }
+
+    getResponseTimeDisplay() {
+        if (this.responses.length === 0 || this.currentResponseIndex < 0) {
+            return { text: '', className: '' };
+        }
+        
+        const response = this.responses[this.currentResponseIndex];
+        const responseTime = typeof response === 'object' ? response?.responseTime : null;
+        
+        if (!responseTime) {
+            return { text: '', className: '' };
+        }
+        
+        const timeMs = responseTime;
+        let className = '';
+        
+        if (timeMs < 2000) {
+            className = 'fast';
+        } else if (timeMs < 5000) {
+            className = 'medium';
+        } else {
+            className = 'slow';
+        }
+        
+        const timeText = `${timeMs}ms`;
+        
+        return { text: timeText, className };
     }
 
     scrollToBottom() {
@@ -1489,6 +1545,15 @@ export class AssistantView extends LitElement {
                         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
                     </svg>
                 </button>
+                
+                ${(() => {
+                    const timeDisplay = this.getResponseTimeDisplay();
+                    return timeDisplay.text ? html`
+                        <div class="response-time-display ${timeDisplay.className}">
+                            ${timeDisplay.text}
+                        </div>
+                    ` : '';
+                })()}
 
                 <button class="nav-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
                     <?xml version="1.0" encoding="UTF-8"?><svg
