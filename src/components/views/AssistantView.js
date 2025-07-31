@@ -245,6 +245,45 @@ export class AssistantView extends LitElement {
             background: var(--scrollbar-thumb-hover);
         }
 
+        /* Mermaid diagram styling */
+        .response-container .mermaid-diagram {
+            background: var(--input-background);
+            border: 1px solid var(--button-border);
+            border-radius: 6px;
+            padding: 1em;
+            margin: 1em 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+
+        .response-container .mermaid-diagram svg {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Override mermaid's default colors for dark theme */
+        .response-container .mermaid-diagram .node rect,
+        .response-container .mermaid-diagram .node circle,
+        .response-container .mermaid-diagram .node ellipse,
+        .response-container .mermaid-diagram .node polygon {
+            fill: var(--input-background) !important;
+            stroke: var(--button-border) !important;
+        }
+
+        .response-container .mermaid-diagram .node .label {
+            color: var(--text-color) !important;
+            fill: var(--text-color) !important;
+        }
+
+        .response-container .mermaid-diagram .edgePath .path {
+            stroke: var(--text-color) !important;
+        }
+
+        .response-container .mermaid-diagram .edgeLabel {
+            background-color: var(--input-background) !important;
+            color: var(--text-color) !important;
+        }
+
 
 
         /* Enhanced text formatting styles for dark theme */
@@ -675,6 +714,7 @@ export class AssistantView extends LitElement {
                     sanitize: false, // We trust the AI responses
                 });
                 let rendered = window.marked.parse(content);
+                rendered = this.renderMermaidDiagrams(rendered);
                 rendered = this.highlightJavaCode(rendered);
                 rendered = this.wrapWordsInSpans(rendered);
                 return rendered;
@@ -685,6 +725,122 @@ export class AssistantView extends LitElement {
         }
 
         return content; // Fallback if marked is not available
+    }
+
+    renderMermaidDiagrams(html) {
+        // Check if mermaid is available
+        if (typeof window !== 'undefined' && window.mermaid) {
+            try {
+                // Initialize mermaid with dark theme
+                window.mermaid.initialize({
+                    theme: 'dark',
+                    startOnLoad: false,
+                    securityLevel: 'loose',
+                    fontFamily: 'Inter, sans-serif'
+                });
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const codeBlocks = doc.querySelectorAll('pre code');
+                
+                codeBlocks.forEach((codeBlock, index) => {
+                    const code = codeBlock.textContent.trim();
+                    
+                    // Check if this is a mermaid code block
+                    if (this.isMermaidCode(code)) {
+                        const mermaidId = `mermaid-${Date.now()}-${index}`;
+                        
+                        // Create a div to hold the mermaid diagram
+                        const mermaidDiv = doc.createElement('div');
+                        mermaidDiv.className = 'mermaid-diagram';
+                        mermaidDiv.id = mermaidId;
+                        mermaidDiv.style.cssText = `
+                            background: var(--input-background);
+                            border: 1px solid var(--button-border);
+                            border-radius: 6px;
+                            padding: 1em;
+                            margin: 1em 0;
+                            text-align: center;
+                            overflow-x: auto;
+                        `;
+                        
+                        // Store the mermaid code in a data attribute for later rendering
+                        mermaidDiv.setAttribute('data-mermaid-code', code);
+                        
+                        // Replace the code block with the mermaid div
+                        const preElement = codeBlock.parentElement;
+                        preElement.parentElement.replaceChild(mermaidDiv, preElement);
+                    }
+                });
+                
+                return doc.body.innerHTML;
+            } catch (error) {
+                console.warn('Error processing mermaid diagrams:', error);
+                return html; // Fallback to original HTML
+            }
+        }
+        
+        return html; // Fallback if mermaid is not available
+    }
+
+    isMermaidCode(code) {
+        // Check for common mermaid diagram types
+        const mermaidPatterns = [
+            /^\s*graph\s+(TD|TB|BT|RL|LR)/i,
+            /^\s*flowchart\s+(TD|TB|BT|RL|LR)/i,
+            /^\s*sequenceDiagram/i,
+            /^\s*classDiagram/i,
+            /^\s*stateDiagram/i,
+            /^\s*erDiagram/i,
+            /^\s*journey/i,
+            /^\s*gantt/i,
+            /^\s*pie/i,
+            /^\s*gitgraph/i,
+            /^\s*mindmap/i,
+            /^\s*timeline/i,
+            // General mermaid pattern - catches any content that looks like mermaid
+            /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitgraph|mindmap|timeline)/i,
+            // Catch any code that contains typical mermaid syntax
+            /-->|\|\||\[\[|\]\]|\{\{|\}\}|\(\(|\)\)|subgraph|end/i
+        ];
+        
+        return mermaidPatterns.some(pattern => pattern.test(code));
+    }
+
+    async renderMermaidDiagramsInDOM(container) {
+        // Check if mermaid is available and container exists
+        if (typeof window !== 'undefined' && window.mermaid && container) {
+            try {
+                const mermaidDivs = container.querySelectorAll('.mermaid-diagram[data-mermaid-code]');
+                
+                for (const div of mermaidDivs) {
+                    const mermaidCode = div.getAttribute('data-mermaid-code');
+                    if (mermaidCode) {
+                        try {
+                            // Generate unique ID for this diagram
+                            const diagramId = div.id || `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                            
+                            // Render the mermaid diagram
+                            const { svg } = await window.mermaid.render(diagramId, mermaidCode);
+                            
+                            // Insert the rendered SVG
+                            div.innerHTML = svg;
+                            
+                            // Remove the data attribute as it's no longer needed
+                            div.removeAttribute('data-mermaid-code');
+                            
+                            console.log('Mermaid diagram rendered successfully:', diagramId);
+                        } catch (error) {
+                            console.warn('Error rendering individual mermaid diagram:', error);
+                            // Fallback: show the original code in a pre block
+                            div.innerHTML = `<pre><code>${mermaidCode}</code></pre>`;
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn('Error rendering mermaid diagrams in DOM:', error);
+            }
+        }
     }
 
     highlightJavaCode(html) {
@@ -1451,6 +1607,9 @@ export class AssistantView extends LitElement {
             const currentResponse = this.getCurrentResponse();
             const renderedResponse = this.renderMarkdown(currentResponse);
             container.innerHTML = renderedResponse;
+            
+            // Render mermaid diagrams after DOM insertion
+            this.renderMermaidDiagramsInDOM(container);
             
             // Replace pronouns in the response content
             this.replacePronounsInResponse();
