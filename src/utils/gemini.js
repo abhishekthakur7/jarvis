@@ -290,77 +290,95 @@ function saveResponseSegment(text) {
     }
 }
 
+// DISABLED: Corruption detection temporarily commented out
+// function detectStreamingCorruption(currentBuffer, newText) {
+//     // Enhanced corruption detection for streaming responses
+//     const combinedText = currentBuffer + newText;
+//     
+//     // Enhanced corruption patterns based on observed issues
+//     const corruptionPatterns = [
+//         // HTML structure corruption
+//         /<span\s+class='chunk<span/,           // Nested span corruption
+//         /<span\s+class="[^"]*<span/,          // Nested spans with quotes
+//         /\w<span\s+class=/,                   // Missing space before span
+//         /<spanclass=/,                        // Missing space in span tag
+//         /<span[^>]*<span/,                    // Overlapping span tags
+//         
+//         // Missing spaces and word concatenation
+//         /[a-z][A-Z]/,                         // camelCase without spaces
+//         /[a-z]\d/,                            // letter followed by number
+//         /\d[a-z]/,                            // number followed by letter
+//         /[a-z]{2,}[A-Z][a-z]/,               // word concatenation patterns
+//         /ends[A-Z]/,                          // specific pattern from logs
+//         /cuta[A-Z]/,                          // specific pattern from logs
+//         
+//         // Malformed HTML attributes
+//         /class="[^"]*[^"\s]</,               // incomplete class attributes
+//         /span class="[^"]*$/,                 // incomplete span opening
+//         /<span[^>]*$/,                        // incomplete span tags
+//         
+//         // Character encoding issues
+//         /[ΓÖªαñ]/,                            // encoding corruption
+//         /[\u0000-\u001F\u007F-\u009F]/,        // control characters
+//         
+//         // Context bleeding detection
+//         /measure 45.*container/,              // mixing wire and container puzzles
+//         /45.*minutes.*liter/,                 // mixing time and volume contexts
+//         /wire.*burn.*pour/                    // mixing different problem contexts
+//     ];
+//     
+//     for (const pattern of corruptionPatterns) {
+//         if (pattern.test(combinedText)) {
+//             console.warn('🚨 [CORRUPTION_DETECTED] Enhanced pattern found:', pattern.source);
+//             console.warn('🚨 [CORRUPTION_CONTEXT] Buffer:', currentBuffer.substring(-50));
+//             console.warn('🚨 [CORRUPTION_CONTEXT] New text:', newText);
+//             return true;
+//         }
+//     }
+//     
+//     return false;
+// }
+
+// Temporary replacement function that always returns false (no corruption detected)
 function detectStreamingCorruption(currentBuffer, newText) {
-    // Enhanced corruption detection for streaming responses
-    const combinedText = currentBuffer + newText;
-    
-    // Enhanced corruption patterns based on observed issues
-    const corruptionPatterns = [
-        // HTML structure corruption
-        /<span\s+class='chunk<span/,           // Nested span corruption
-        /<span\s+class="[^"]*<span/,          // Nested spans with quotes
-        /\w<span\s+class=/,                   // Missing space before span
-        /<spanclass=/,                        // Missing space in span tag
-        /<span[^>]*<span/,                    // Overlapping span tags
-        
-        // Missing spaces and word concatenation
-        /[a-z][A-Z]/,                         // camelCase without spaces
-        /[a-z]\d/,                            // letter followed by number
-        /\d[a-z]/,                            // number followed by letter
-        /[a-z]{2,}[A-Z][a-z]/,               // word concatenation patterns
-        /ends[A-Z]/,                          // specific pattern from logs
-        /cuta[A-Z]/,                          // specific pattern from logs
-        
-        // Malformed HTML attributes
-        /class="[^"]*[^"\s]</,               // incomplete class attributes
-        /span class="[^"]*$/,                 // incomplete span opening
-        /<span[^>]*$/,                        // incomplete span tags
-        
-        // Character encoding issues
-        /[ΓÖªαñ]/,                            // encoding corruption
-        /[\u0000-\u001F\u007F-\u009F]/,        // control characters
-        
-        // Context bleeding detection
-        /measure 45.*container/,              // mixing wire and container puzzles
-        /45.*minutes.*liter/,                 // mixing time and volume contexts
-        /wire.*burn.*pour/                    // mixing different problem contexts
-    ];
-    
-    for (const pattern of corruptionPatterns) {
-        if (pattern.test(combinedText)) {
-            console.warn('🚨 [CORRUPTION_DETECTED] Enhanced pattern found:', pattern.source);
-            console.warn('🚨 [CORRUPTION_CONTEXT] Buffer:', currentBuffer.substring(-50));
-            console.warn('🚨 [CORRUPTION_CONTEXT] New text:', newText);
-            return true;
-        }
-    }
-    
-    return false;
+    return false; // Corruption detection disabled
 }
 
+// DISABLED: Response reconstruction function
+// function reconstructResponse() {
+//     console.log('🔧 [RECONSTRUCTION] Starting response reconstruction');
+//     
+//     if (responseSegments.length === 0) {
+//         console.warn('⚠️ [RECONSTRUCTION] No clean segments available for reconstruction');
+//         return null;
+//     }
+//     
+//     // Use the most recent valid segment as base
+//     const latestSegment = responseSegments[responseSegments.length - 1];
+//     console.log('🔧 [RECONSTRUCTION] Using latest clean segment:', latestSegment.length, 'characters');
+//     
+//     // Clear corruption flag
+//     corruptionDetected = false;
+//     
+//     return latestSegment.content;
+// }
+
+// Temporary replacement function that returns null (no reconstruction)
 function reconstructResponse() {
-    console.log('🔧 [RECONSTRUCTION] Starting response reconstruction');
-    
-    if (responseSegments.length === 0) {
-        console.warn('⚠️ [RECONSTRUCTION] No clean segments available for reconstruction');
-        return null;
-    }
-    
-    // Use the most recent valid segment as base
-    const latestSegment = responseSegments[responseSegments.length - 1];
-    console.log('🔧 [RECONSTRUCTION] Using latest clean segment:', latestSegment.length, 'characters');
-    
-    // Clear corruption flag
-    corruptionDetected = false;
-    
-    return latestSegment.content;
+    return null; // Reconstruction disabled
 }
 
+// DISABLED: Reset reconstruction state function
+// function resetReconstructionState() {
+//     responseSegments = [];
+//     lastValidSegment = '';
+//     corruptionDetected = false;
+//     console.log('🧹 [RECONSTRUCTION] Reset reconstruction state');
+// }
+
+// Temporary replacement function that does nothing
 function resetReconstructionState() {
-    responseSegments = [];
-    lastValidSegment = '';
-    corruptionDetected = false;
-    console.log('🧹 [RECONSTRUCTION] Reset reconstruction state');
+    // Reconstruction state reset disabled
 }
 
 // Complete context isolation function to prevent context bleeding
@@ -962,45 +980,54 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                 // Detect corruption before adding to buffer
                                 const isCorrupted = detectStreamingCorruption(messageBuffer, sanitizedText);
                                 
-                                if (isCorrupted && !corruptionDetected) {
-                                    console.error('🚨 [CORRUPTION_ALERT] Corruption detected during streaming!');
-                                    corruptionDetected = true;
-                                    
-                                    // Attempt reconstruction
-                                    const reconstructed = reconstructResponse();
-                                    if (reconstructed) {
-                                        console.log('✅ [RECONSTRUCTION_SUCCESS] Response reconstructed from clean segment');
-                                        messageBuffer = reconstructed;
-                                        if (!isSuppressingRender) {
-                                            sendToRenderer('update-response', messageBuffer);
-                                        }
-                                        return; // Skip adding corrupted text
-                                    } else {
-                                        console.warn('⚠️ [RECONSTRUCTION_FAILED] No clean segments available, continuing with corrupted stream');
-                                    }
+                                // DISABLED: Corruption detection and reconstruction logic
+                                // if (isCorrupted && !corruptionDetected) {
+                                //     console.error('🚨 [CORRUPTION_ALERT] Corruption detected during streaming!');
+                                //     corruptionDetected = true;
+                                //     
+                                //     // Attempt reconstruction
+                                //     const reconstructed = reconstructResponse();
+                                //     if (reconstructed) {
+                                //         console.log('✅ [RECONSTRUCTION_SUCCESS] Response reconstructed from clean segment');
+                                //         messageBuffer = reconstructed;
+                                //         if (!isSuppressingRender) {
+                                //             sendToRenderer('update-response', messageBuffer);
+                                //         }
+                                //         return; // Skip adding corrupted text
+                                //     } else {
+                                //         console.warn('⚠️ [RECONSTRUCTION_FAILED] No clean segments available, continuing with corrupted stream');
+                                //     }
+                                // }
+                                
+                                // Add sanitized text to buffer (corruption detection disabled)
+                                messageBuffer += sanitizedText;
+                                
+                                // Save clean segments periodically
+                                if (messageBuffer.length % SEGMENT_SIZE === 0) {
+                                    saveResponseSegment(messageBuffer);
                                 }
                                 
-                                // Add sanitized text to buffer if not corrupted
-                                if (!isCorrupted) {
-                                    messageBuffer += sanitizedText;
-                                    
-                                    // Save clean segments periodically
-                                    if (messageBuffer.length % SEGMENT_SIZE === 0) {
-                                        saveResponseSegment(messageBuffer);
-                                    }
-                                } else {
-                                    // If corrupted but no reconstruction available, add anyway but log warning
-                                    messageBuffer += sanitizedText;
-                                    console.warn('⚠️ [FORCED_APPEND] Adding potentially corrupted text due to no reconstruction option');
-                                }
+                                // DISABLED: Corruption-based conditional logic
+                                // if (!isCorrupted) {
+                                //     messageBuffer += sanitizedText;
+                                //     
+                                //     // Save clean segments periodically
+                                //     if (messageBuffer.length % SEGMENT_SIZE === 0) {
+                                //         saveResponseSegment(messageBuffer);
+                                //     }
+                                // } else {
+                                //     // If corrupted but no reconstruction available, add anyway but log warning
+                                //     messageBuffer += sanitizedText;
+                                //     console.warn('⚠️ [FORCED_APPEND] Adding potentially corrupted text due to no reconstruction option');
+                                // }
                                 
-                                // Validate response integrity periodically during streaming
-                                if (messageBuffer.length % 500 === 0) { // Check every 500 characters
-                                    const integrity = validateResponseIntegrity(messageBuffer);
-                                    if (!integrity.isValid) {
-                                        console.warn('⚠️ [STREAMING_INTEGRITY] Issues detected during streaming:', integrity.issues);
-                                    }
-                                }
+                                // DISABLED: Streaming integrity validation
+                                // if (messageBuffer.length % 500 === 0) { // Check every 500 characters
+                                //     const integrity = validateResponseIntegrity(messageBuffer);
+                                //     if (!integrity.isValid) {
+                                //         console.warn('⚠️ [STREAMING_INTEGRITY] Issues detected during streaming:', integrity.issues);
+                                //     }
+                                // }
                                 
                                 if (!isSuppressingRender) {
                                     sendToRenderer('update-response', messageBuffer);
@@ -1012,27 +1039,29 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                     if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.generationComplete) {
                         console.log('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
                         
-                        // Final integrity check before sending to renderer
-                        const finalIntegrity = validateResponseIntegrity(messageBuffer);
-                        console.log('📊 [FINAL_INTEGRITY] Response length:', messageBuffer.length, 'characters');
-                        console.log('📊 [FINAL_INTEGRITY] Final integrity status:', finalIntegrity.isValid ? 'VALID' : 'CORRUPTED');
+                        // DISABLED: Final integrity check and reconstruction logic
+                        // const finalIntegrity = validateResponseIntegrity(messageBuffer);
+                        // console.log('📊 [FINAL_INTEGRITY] Response length:', messageBuffer.length, 'characters');
+                        // console.log('📊 [FINAL_INTEGRITY] Final integrity status:', finalIntegrity.isValid ? 'VALID' : 'CORRUPTED');
+                        // 
+                        // if (!finalIntegrity.isValid) {
+                        //     console.error('❌ [FINAL_INTEGRITY] Corrupted response detected before saving:', finalIntegrity.issues);
+                        //     
+                        //     // Attempt final reconstruction
+                        //     const reconstructed = reconstructResponse();
+                        //     if (reconstructed) {
+                        //         console.log('✅ [FINAL_RECONSTRUCTION] Response reconstructed successfully');
+                        //         messageBuffer = reconstructed;
+                        //         
+                        //         // Re-validate reconstructed response
+                        //         const reconstructedIntegrity = validateResponseIntegrity(messageBuffer);
+                        //         console.log('📊 [RECONSTRUCTED_INTEGRITY] Final status:', reconstructedIntegrity.isValid ? 'VALID' : 'STILL_CORRUPTED');
+                        //     } else {
+                        //         console.error('❌ [FINAL_RECONSTRUCTION] Failed to reconstruct response - saving corrupted version');
+                        //     }
+                        // }
                         
-                        if (!finalIntegrity.isValid) {
-                            console.error('❌ [FINAL_INTEGRITY] Corrupted response detected before saving:', finalIntegrity.issues);
-                            
-                            // Attempt final reconstruction
-                            const reconstructed = reconstructResponse();
-                            if (reconstructed) {
-                                console.log('✅ [FINAL_RECONSTRUCTION] Response reconstructed successfully');
-                                messageBuffer = reconstructed;
-                                
-                                // Re-validate reconstructed response
-                                const reconstructedIntegrity = validateResponseIntegrity(messageBuffer);
-                                console.log('📊 [RECONSTRUCTED_INTEGRITY] Final status:', reconstructedIntegrity.isValid ? 'VALID' : 'STILL_CORRUPTED');
-                            } else {
-                                console.error('❌ [FINAL_RECONSTRUCTION] Failed to reconstruct response - saving corrupted version');
-                            }
-                        }
+                        console.log('📊 [RESPONSE_COMPLETE] Response length:', messageBuffer.length, 'characters');
                         
                         // Create response object with timing data for final response
                         const responseWithTiming = {

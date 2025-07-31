@@ -1051,6 +1051,13 @@ export class CustomizeView extends LitElement {
     handleNormalFontSizeChange(e) {
         this.normalFontSize = parseInt(e.target.value, 10);
         localStorage.setItem('normalFontSize', this.normalFontSize.toString());
+        
+        // Apply font size immediately if we're in normal layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'normal') {
+            this.updateFontSize(this.normalFontSize);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1094,6 +1101,13 @@ export class CustomizeView extends LitElement {
     handleCompactFontSizeChange(e) {
         this.compactFontSize = parseInt(e.target.value, 10);
         localStorage.setItem('compactFontSize', this.compactFontSize.toString());
+        
+        // Apply font size immediately if we're in compact layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'compact') {
+            this.updateFontSize(this.compactFontSize);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1137,6 +1151,13 @@ export class CustomizeView extends LitElement {
     handleSystemDesignFontSizeChange(e) {
         this.systemDesignFontSize = parseInt(e.target.value, 10);
         localStorage.setItem('systemDesignFontSize', this.systemDesignFontSize.toString());
+        
+        // Apply font size immediately if we're in system-design layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'system-design') {
+            this.updateFontSize(this.systemDesignFontSize);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1177,6 +1198,10 @@ export class CustomizeView extends LitElement {
         root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
         root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
         root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
+    }
+
+    updateFontSize(fontSize) {
+        document.documentElement.style.setProperty('--response-font-size', `${fontSize}px`);
     }
 
     render() {

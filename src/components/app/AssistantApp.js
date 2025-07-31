@@ -993,19 +993,18 @@ export class AssistantApp extends LitElement {
             const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            if (normalTransparency !== null) {
-                const transparency = parseFloat(normalTransparency);
-                this.updateTransparency(transparency);
-            }
+            // Use default value of 0.45 if not set
+            const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : 0.45;
+            this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${normalFontSize}px`);
+            root.style.setProperty('--response-font-size', `${normalFontSize || 12}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = normalAutoScroll === 'true';
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(normalScrollSpeed, 10);
+            this.scrollSpeed = parseInt(normalScrollSpeed, 10) || 2;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
             
         } else if (layoutMode === 'compact') {
@@ -1016,19 +1015,18 @@ export class AssistantApp extends LitElement {
             const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            if (compactTransparency !== null) {
-                const transparency = parseFloat(compactTransparency);
-                this.updateTransparency(transparency);
-            }
+            // Use default value of 0.60 if not set
+            const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : 0.60;
+            this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${compactFontSize}px`);
+            root.style.setProperty('--response-font-size', `${compactFontSize || 11}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = compactAutoScroll === 'true';
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(compactScrollSpeed, 10);
+            this.scrollSpeed = parseInt(compactScrollSpeed, 10) || 2;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
             
         } else if (layoutMode === 'system-design') {
@@ -1039,19 +1037,18 @@ export class AssistantApp extends LitElement {
             const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            if (systemDesignTransparency !== null) {
-                const transparency = parseFloat(systemDesignTransparency);
-                this.updateTransparency(transparency);
-            }
+            // Use default value of 0.40 if not set
+            const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : 0.40;
+            this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${systemDesignFontSize}px`);
+            root.style.setProperty('--response-font-size', `${systemDesignFontSize || 14}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = systemDesignAutoScroll === 'true';
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10);
+            this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10) || 2;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
     }
