@@ -1090,6 +1090,11 @@ export class AssistantView extends LitElement {
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
             this.autoScrollEnabled = compactAutoScroll === 'true';
             this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10);
+        } else if (layoutMode === 'system-design') {
+            // Load system design layout settings
+            const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
+            this.autoScrollEnabled = systemDesignAutoScroll === 'true';
+            this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10);
         }
     }
 
@@ -1276,6 +1281,8 @@ export class AssistantView extends LitElement {
                 localStorage.setItem('normalScrollSpeed', this.scrollSpeed.toString());
             } else if (layoutMode === 'compact') {
                 localStorage.setItem('compactScrollSpeed', this.scrollSpeed.toString());
+            } else if (layoutMode === 'system-design') {
+                localStorage.setItem('systemDesignScrollSpeed', this.scrollSpeed.toString());
             }
             
             this.requestUpdate(); // Trigger re-render to update scroll speed display
@@ -1318,6 +1325,8 @@ export class AssistantView extends LitElement {
             localStorage.setItem('normalAutoScroll', this.autoScrollEnabled.toString());
         } else if (layoutMode === 'compact') {
             localStorage.setItem('compactAutoScroll', this.autoScrollEnabled.toString());
+        } else if (layoutMode === 'system-design') {
+            localStorage.setItem('systemDesignAutoScroll', this.autoScrollEnabled.toString());
         }
         
         // If disabling auto-scroll, stop any current animation

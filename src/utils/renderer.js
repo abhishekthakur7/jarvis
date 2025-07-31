@@ -733,6 +733,7 @@ const cheddar = {
     getCurrentView: () => AssistantApp.currentView,
     getLayoutMode: () => AssistantApp.layoutMode,
     setLayoutMode: (layoutMode) => AssistantApp.handleLayoutModeChange(layoutMode),
+    handleLayoutModeCycle: () => AssistantApp.handleLayoutModeCycle(),
     
     // Status and response functions
     setStatus: (text) => AssistantApp.setStatus(text),

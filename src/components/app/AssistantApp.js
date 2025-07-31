@@ -965,13 +965,15 @@ export class AssistantApp extends LitElement {
 
     updateLayoutMode() {
         // Remove all layout classes first
-        document.documentElement.classList.remove('compact-layout', 'ultra-compact-layout', 'focus-mode');
+        document.documentElement.classList.remove('compact-layout', 'ultra-compact-layout', 'system-design-layout', 'focus-mode');
         
         // Apply the selected layout mode
         if (this.layoutMode === 'compact') {
             document.documentElement.classList.add('compact-layout');
         } else if (this.layoutMode === 'ultra-compact') {
             document.documentElement.classList.add('ultra-compact-layout');
+        } else if (this.layoutMode === 'system-design') {
+            document.documentElement.classList.add('system-design-layout');
         }
         
         // Apply focus mode if enabled
@@ -1028,6 +1030,29 @@ export class AssistantApp extends LitElement {
             // Update scroll speed
             this.scrollSpeed = parseInt(compactScrollSpeed, 10);
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
+            
+        } else if (layoutMode === 'system-design') {
+            // Apply system design layout settings
+            const systemDesignTransparency = localStorage.getItem('systemDesignTransparency');
+            const systemDesignFontSize = localStorage.getItem('systemDesignFontSize');
+            const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
+            const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
+            
+            // Apply transparency using the correct CSS variables
+            if (systemDesignTransparency !== null) {
+                const transparency = parseFloat(systemDesignTransparency);
+                this.updateTransparency(transparency);
+            }
+            
+            root.style.setProperty('--response-font-size', `${systemDesignFontSize}px`);
+            
+            // Update auto-scroll setting
+            this.autoScrollEnabled = systemDesignAutoScroll === 'true';
+            localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
+            
+            // Update scroll speed
+            this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10);
+            localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
     }
 
@@ -1079,7 +1104,7 @@ export class AssistantApp extends LitElement {
     }
 
     handleLayoutModeCycle() {
-        const modes = ['normal', 'compact', 'ultra-compact'];
+        const modes = ['normal', 'compact', 'ultra-compact', 'system-design'];
         const currentIndex = modes.indexOf(this.layoutMode);
         const nextIndex = (currentIndex + 1) % modes.length;
         this.handleLayoutModeChange(modes[nextIndex]);

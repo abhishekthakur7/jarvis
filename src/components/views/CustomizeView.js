@@ -343,7 +343,6 @@ export class CustomizeView extends LitElement {
             padding: 2px 6px;
             border-radius: 3px;
             font-weight: 500;
-            border: 1px solid var(--success-border, rgba(52, 211, 153, 0.2));
             font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
         }
 
@@ -422,6 +421,12 @@ export class CustomizeView extends LitElement {
         compactScrollSpeed: { type: Number },
         compactWidth: { type: Number },
         compactHeight: { type: Number },
+        systemDesignTransparency: { type: Number },
+        systemDesignFontSize: { type: Number },
+        systemDesignAutoScroll: { type: Boolean },
+        systemDesignScrollSpeed: { type: Number },
+        systemDesignWidth: { type: Number },
+        systemDesignHeight: { type: Number },
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
         onScreenshotIntervalChange: { type: Function },
@@ -474,6 +479,12 @@ export class CustomizeView extends LitElement {
         this.compactScrollSpeed = 2;
         this.compactWidth = 350;
         this.compactHeight = 300;
+        this.systemDesignTransparency = 0.40;
+        this.systemDesignFontSize = 14;
+        this.systemDesignAutoScroll = false;
+        this.systemDesignScrollSpeed = 2;
+        this.systemDesignWidth = 900;
+        this.systemDesignHeight = 500;
 
         // Initialize defaults in localStorage if they don't exist
         this.initializeDefaultsInLocalStorage();
@@ -557,6 +568,7 @@ export class CustomizeView extends LitElement {
         switch (this.layoutMode) {
             case 'compact': return 'Compact';
             case 'ultra-compact': return 'Ultra Compact';
+            case 'system-design': return 'System Design';
             default: return 'Normal';
         }
     }
@@ -567,6 +579,8 @@ export class CustomizeView extends LitElement {
                 return 'Smaller window size with reduced padding and font sizes for minimal screen footprint';
             case 'ultra-compact':
                 return 'Extremely compact layout with minimal UI elements and very small fonts for maximum space efficiency';
+            case 'system-design':
+                return 'Large window optimized for system design diagrams and architectural discussions';
             default:
                 return 'Standard layout with comfortable spacing and font sizes';
         }
@@ -919,6 +933,26 @@ export class CustomizeView extends LitElement {
         if (localStorage.getItem('compactScrollSpeed') === null) {
             localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
         }
+
+        // Initialize system design layout defaults if they don't exist
+        if (localStorage.getItem('systemDesignTransparency') === null) {
+            localStorage.setItem('systemDesignTransparency', this.systemDesignTransparency.toString());
+        }
+        if (localStorage.getItem('systemDesignFontSize') === null) {
+            localStorage.setItem('systemDesignFontSize', this.systemDesignFontSize.toString());
+        }
+        if (localStorage.getItem('systemDesignAutoScroll') === null) {
+            localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
+        }
+        if (localStorage.getItem('systemDesignScrollSpeed') === null) {
+            localStorage.setItem('systemDesignScrollSpeed', this.systemDesignScrollSpeed.toString());
+        }
+        if (localStorage.getItem('systemDesignWidth') === null) {
+            localStorage.setItem('systemDesignWidth', this.systemDesignWidth.toString());
+        }
+        if (localStorage.getItem('systemDesignHeight') === null) {
+            localStorage.setItem('systemDesignHeight', this.systemDesignHeight.toString());
+        }
     }
 
     loadLayoutSpecificSettings() {
@@ -972,6 +1006,32 @@ export class CustomizeView extends LitElement {
         const compactHeight = localStorage.getItem('compactHeight');
         if (compactHeight !== null) {
             this.compactHeight = parseInt(compactHeight, 10);
+        }
+
+        // Load system design layout settings
+        const systemDesignTransparency = localStorage.getItem('systemDesignTransparency');
+        if (systemDesignTransparency !== null) {
+            this.systemDesignTransparency = parseFloat(systemDesignTransparency);
+        }
+        const systemDesignFontSize = localStorage.getItem('systemDesignFontSize');
+        if (systemDesignFontSize !== null) {
+            this.systemDesignFontSize = parseInt(systemDesignFontSize, 10);
+        }
+        const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
+        if (systemDesignAutoScroll !== null) {
+            this.systemDesignAutoScroll = systemDesignAutoScroll === 'true';
+        }
+        const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
+        if (systemDesignScrollSpeed !== null) {
+            this.systemDesignScrollSpeed = parseInt(systemDesignScrollSpeed, 10);
+        }
+        const systemDesignWidth = localStorage.getItem('systemDesignWidth');
+        if (systemDesignWidth !== null) {
+            this.systemDesignWidth = parseInt(systemDesignWidth, 10);
+        }
+        const systemDesignHeight = localStorage.getItem('systemDesignHeight');
+        if (systemDesignHeight !== null) {
+            this.systemDesignHeight = parseInt(systemDesignHeight, 10);
         }
     }
 
@@ -1044,6 +1104,42 @@ export class CustomizeView extends LitElement {
     handleCompactHeightChange(e) {
         this.compactHeight = parseInt(e.target.value, 10);
         localStorage.setItem('compactHeight', this.compactHeight.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignTransparencyChange(e) {
+        this.systemDesignTransparency = parseFloat(e.target.value);
+        localStorage.setItem('systemDesignTransparency', this.systemDesignTransparency.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignFontSizeChange(e) {
+        this.systemDesignFontSize = parseInt(e.target.value, 10);
+        localStorage.setItem('systemDesignFontSize', this.systemDesignFontSize.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignAutoScrollChange(e) {
+        this.systemDesignAutoScroll = e.target.checked;
+        localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignScrollSpeedChange(e) {
+        this.systemDesignScrollSpeed = parseInt(e.target.value, 10);
+        localStorage.setItem('systemDesignScrollSpeed', this.systemDesignScrollSpeed.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignWidthChange(e) {
+        this.systemDesignWidth = parseInt(e.target.value, 10);
+        localStorage.setItem('systemDesignWidth', this.systemDesignWidth.toString());
+        this.requestUpdate();
+    }
+
+    handleSystemDesignHeightChange(e) {
+        this.systemDesignHeight = parseInt(e.target.value, 10);
+        localStorage.setItem('systemDesignHeight', this.systemDesignHeight.toString());
         this.requestUpdate();
     }
 
@@ -1145,6 +1241,7 @@ export class CustomizeView extends LitElement {
                                     <option value="normal" ?selected=${this.layoutMode === 'normal'}>Normal</option>
                                     <option value="compact" ?selected=${this.layoutMode === 'compact'}>Compact</option>
                                     <option value="ultra-compact" ?selected=${this.layoutMode === 'ultra-compact'}>Ultra Compact</option>
+                                    <option value="system-design" ?selected=${this.layoutMode === 'system-design'}>System Design</option>
                                 </select>
                                 <div class="form-description">
                                     ${this.getLayoutModeDescription()}
@@ -1473,6 +1570,159 @@ export class CustomizeView extends LitElement {
                                     </div>
                                     <div class="form-description">
                                         Window height when in compact layout mode
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- System Design Layout Settings Section -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>System Design Layout Settings</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Background Transparency</label>
+                                    <span class="slider-value">${Math.round(this.systemDesignTransparency * 100)}%</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="0"
+                                    max="1"
+                                    step="0.01"
+                                    .value=${this.systemDesignTransparency}
+                                    @input=${this.handleSystemDesignTransparencyChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>Transparent</span>
+                                    <span>Opaque</span>
+                                </div>
+                                <div class="form-description">
+                                    Background transparency when in system design layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Font Size</label>
+                                    <span class="slider-value">${this.systemDesignFontSize}px</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="10"
+                                    max="32"
+                                    step="1"
+                                    .value=${this.systemDesignFontSize}
+                                    @input=${this.handleSystemDesignFontSizeChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>10px</span>
+                                    <span>32px</span>
+                                </div>
+                                <div class="form-description">
+                                    Font size for AI responses when in system design layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="system-design-auto-scroll"
+                                        class="checkbox-input"
+                                        .checked=${this.systemDesignAutoScroll}
+                                        @change=${this.handleSystemDesignAutoScrollChange}
+                                    />
+                                    <label for="system-design-auto-scroll" class="checkbox-label">Auto Scroll</label>
+                                </div>
+                                <div class="form-description">
+                                    Automatically scroll to new content when in system design layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <div class="slider-container">
+                                <div class="slider-header">
+                                    <label class="form-label">Auto Scroll Speed</label>
+                                    <span class="slider-value">${this.systemDesignScrollSpeed}</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    class="slider-input"
+                                    min="1"
+                                    max="10"
+                                    step="1"
+                                    .value=${this.systemDesignScrollSpeed}
+                                    @input=${this.handleSystemDesignScrollSpeedChange}
+                                />
+                                <div class="slider-labels">
+                                    <span>Slow</span>
+                                    <span>Fast</span>
+                                </div>
+                                <div class="form-description">
+                                    Speed of automatic scrolling when in system design layout mode
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Width</label>
+                                        <span class="slider-value">${this.systemDesignWidth}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="600"
+                                        max="1200"
+                                        step="10"
+                                        .value=${this.systemDesignWidth}
+                                        @input=${this.handleSystemDesignWidthChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>600px</span>
+                                        <span>1200px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window width when in system design layout mode
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="slider-container">
+                                    <div class="slider-header">
+                                        <label class="form-label">Window Height</label>
+                                        <span class="slider-value">${this.systemDesignHeight}px</span>
+                                    </div>
+                                    <input
+                                        type="range"
+                                        class="slider-input"
+                                        min="400"
+                                        max="800"
+                                        step="10"
+                                        .value=${this.systemDesignHeight}
+                                        @input=${this.handleSystemDesignHeightChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>400px</span>
+                                        <span>800px</span>
+                                    </div>
+                                    <div class="form-description">
+                                        Window height when in system design layout mode
                                     </div>
                                 </div>
                             </div>

@@ -360,18 +360,10 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             globalShortcut.register(keybinds.toggleLayoutMode, async () => {
                 console.log('Layout mode toggle shortcut triggered');
                 try {
-                    // Get current layout mode and toggle it
-                    const currentLayoutMode = await mainWindow.webContents.executeJavaScript(
-                        'cheddar.getLayoutMode()'
-                    );
-                    const newLayoutMode = currentLayoutMode === 'compact' ? 'normal' : 'compact';
-                    
-                    // Set the new layout mode
+                    // Use the cycling logic from AssistantApp.js
                     await mainWindow.webContents.executeJavaScript(
-                        `cheddar.setLayoutMode('${newLayoutMode}')`
+                        'cheddar.handleLayoutModeCycle()'
                     );
-                    
-                    console.log(`Layout mode toggled from ${currentLayoutMode} to ${newLayoutMode}`);
                 } catch (error) {
                     console.error('Error toggling layout mode:', error);
                 }
@@ -601,6 +593,9 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             if (layoutMode === 'compact') {
                 baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactWidth")')) || 350;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactHeight")')) || 300;
+            } else if (layoutMode === 'system-design') {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignWidth")')) || 900;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignHeight")')) || 500;
             } else {
                 baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalWidth")')) || 550;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalHeight")')) || 500;
