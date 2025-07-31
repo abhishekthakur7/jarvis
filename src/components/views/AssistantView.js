@@ -1059,6 +1059,13 @@ export class AssistantView extends LitElement {
                    return 'our';
                });
 
+               // Replace "Here's Here are" (case insensitive) with ""
+               replacedText = replacedText.replace(/\here\b/gi, (match) => {
+                   // Preserve the original case
+                   if (match === 'Here\'s' || match === 'Here is' || match === 'Here are' || match === 'Here\'re') return '';
+                   return '';
+               });
+
                // Update the span content if it changed
                if (replacedText !== originalText) {
                    span.textContent = replacedText;
