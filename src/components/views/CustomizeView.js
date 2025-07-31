@@ -468,17 +468,17 @@ export class CustomizeView extends LitElement {
 
         // Layout-specific defaults
         this.normalTransparency = 0.45;
-        this.normalFontSize = 13;
+        this.normalFontSize = 12;
         this.normalAutoScroll = false;
         this.normalScrollSpeed = 2;
-        this.normalWidth = 550;
+        this.normalWidth = 450;
         this.normalHeight = 500;
         this.compactTransparency = 0.60;
         this.compactFontSize = 11;
         this.compactAutoScroll = true;
         this.compactScrollSpeed = 2;
-        this.compactWidth = 350;
-        this.compactHeight = 300;
+        this.compactWidth = 320;
+        this.compactHeight = 270;
         this.systemDesignTransparency = 0.40;
         this.systemDesignFontSize = 14;
         this.systemDesignAutoScroll = false;
@@ -1038,6 +1038,13 @@ export class CustomizeView extends LitElement {
     handleNormalTransparencyChange(e) {
         this.normalTransparency = parseFloat(e.target.value);
         localStorage.setItem('normalTransparency', this.normalTransparency.toString());
+        
+        // Apply transparency immediately if we're in normal layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'normal') {
+            this.updateTransparency(this.normalTransparency);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1074,6 +1081,13 @@ export class CustomizeView extends LitElement {
     handleCompactTransparencyChange(e) {
         this.compactTransparency = parseFloat(e.target.value);
         localStorage.setItem('compactTransparency', this.compactTransparency.toString());
+        
+        // Apply transparency immediately if we're in compact layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'compact') {
+            this.updateTransparency(this.compactTransparency);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1110,6 +1124,13 @@ export class CustomizeView extends LitElement {
     handleSystemDesignTransparencyChange(e) {
         this.systemDesignTransparency = parseFloat(e.target.value);
         localStorage.setItem('systemDesignTransparency', this.systemDesignTransparency.toString());
+        
+        // Apply transparency immediately if we're in system-design layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'system-design') {
+            this.updateTransparency(this.systemDesignTransparency);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1141,6 +1162,21 @@ export class CustomizeView extends LitElement {
         this.systemDesignHeight = parseInt(e.target.value, 10);
         localStorage.setItem('systemDesignHeight', this.systemDesignHeight.toString());
         this.requestUpdate();
+    }
+
+    updateTransparency(transparency) {
+        const root = document.documentElement;
+        root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparency})`);
+        root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparency})`);
+        root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparency * 0.05})`);
+        root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparency * 0.375})`);
+        root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
+        root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
+        root.style.setProperty('--preview-video-background', `rgba(0, 0, 0, ${transparency * 1.125})`);
+        root.style.setProperty('--screen-option-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
+        root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
+        root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
+        root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
     }
 
     render() {

@@ -597,7 +597,7 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
                 baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignWidth")')) || 900;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignHeight")')) || 500;
             } else {
-                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalWidth")')) || 550;
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalWidth")')) || 450;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalHeight")')) || 500;
             }
 
