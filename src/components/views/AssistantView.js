@@ -600,9 +600,8 @@ export class AssistantView extends LitElement {
 
         .font-size-label {
             color: rgba(255, 255, 255, 0.7);
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 500;
-            padding: 0 4px;
         }
 
         .auto-scroll-toggle {
