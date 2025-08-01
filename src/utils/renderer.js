@@ -712,6 +712,14 @@ function handleShortcut(shortcutKey) {
                 jarvisView.toggleMicrophone();
             }
         }
+    } else if (shortcutKey === 'shift+alt+0' || shortcutKey === 'shift+Alt+0') {
+        if (currentView === 'jarvis') {
+            // Trigger speaker detection toggle in jarvis view
+            const jarvisView = cheddar.element().shadowRoot.querySelector('jarvis-view');
+            if (jarvisView && jarvisView.toggleSpeakerDetection) {
+                jarvisView.toggleSpeakerDetection();
+            }
+        }
     } else if (shortcutKey === 'ctrl+g' || shortcutKey === 'cmd+g') {
         if (currentView === 'jarvis') {
             // Trigger session reinitialization in jarvis view
@@ -887,6 +895,27 @@ async function isMicrophoneActive() {
     }
 }
 
+// Speaker detection state management functions
+async function setSpeakerDetectionEnabled(enabled) {
+    try {
+        const result = await ipcRenderer.invoke('set-speaker-detection-enabled', enabled);
+        return result;
+    } catch (error) {
+        console.error('Error setting speaker detection state:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+async function isSpeakerDetectionEnabled() {
+    try {
+        const result = await ipcRenderer.invoke('is-speaker-detection-enabled');
+        return result;
+    } catch (error) {
+        console.error('Error getting speaker detection state:', error);
+        return { success: false, enabled: true };
+    }
+}
+
 // Add microphone functions to cheddar object
 cheddar.initializeMicrophoneSession = initializeMicrophoneSession;
 cheddar.sendMicrophoneAudio = sendMicrophoneAudio;
@@ -901,6 +930,10 @@ cheddar.clearSpeakerTranscription = clearSpeakerTranscription;
 // Add microphone state management functions to cheddar object
 cheddar.setMicrophoneActive = setMicrophoneActive;
 cheddar.isMicrophoneActive = isMicrophoneActive;
+
+// Add speaker detection state management functions to cheddar object
+cheddar.setSpeakerDetectionEnabled = setSpeakerDetectionEnabled;
+cheddar.isSpeakerDetectionEnabled = isSpeakerDetectionEnabled;
 
 // Add reconnection function to cheddar object
 cheddar.attemptReconnection = attemptReconnection;

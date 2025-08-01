@@ -144,6 +144,7 @@ function getDefaultKeybinds() {
         toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
         toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
         microphoneToggle: isMac ? 'Shift+Alt+8' : 'Shift+Alt+8',
+        speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
         reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
         nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
         previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
@@ -255,6 +256,25 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered microphoneToggle: ${keybinds.microphoneToggle}`);
         } catch (error) {
             console.error(`Failed to register microphoneToggle (${keybinds.microphoneToggle}):`, error);
+        }
+    }
+
+    // Register speaker detection toggle shortcut
+    if (keybinds.speakerDetectionToggle) {
+        try {
+            globalShortcut.register(keybinds.speakerDetectionToggle, () => {
+                console.log('Speaker detection toggle shortcut triggered');
+                // Use the correct shortcut key format for speaker detection toggle
+                const shortcutKey = 'shift+alt+0';
+                
+                // Use the handleShortcut function to trigger speaker detection toggle
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('${shortcutKey}');
+                `);
+            });
+            console.log(`Registered speakerDetectionToggle: ${keybinds.speakerDetectionToggle}`);
+        } catch (error) {
+            console.error(`Failed to register speakerDetectionToggle (${keybinds.speakerDetectionToggle}):`, error);
         }
     }
 

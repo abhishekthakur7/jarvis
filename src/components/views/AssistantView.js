@@ -644,6 +644,44 @@ export class AssistantView extends LitElement {
         .auto-scroll-toggle.disabled .auto-scroll-icon {
             color: #666;
         }
+
+        .speaker-button {
+            background: transparent;
+            border: 2px solid #666;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .speaker-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .speaker-button.enabled {
+            border-color: #007aff;
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .speaker-button.disabled {
+            border-color: #666;
+        }
+
+        .speaker-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+
+        .speaker-button.enabled .speaker-icon {
+            color: #007aff;
+        }
+
+        .speaker-button.disabled .speaker-icon {
+            color: #666;
+        }
     `;
 
     static properties = {
@@ -654,6 +692,7 @@ export class AssistantView extends LitElement {
         shouldAnimateResponse: { type: Boolean },
         microphoneEnabled: { type: Boolean },
         microphoneState: { type: String }, // 'off', 'recording', 'speaking'
+        speakerDetectionEnabled: { type: Boolean },
         autoScrollEnabled: { type: Boolean },
         scrollSpeed: { type: Number },
         _autoScrollPaused: { type: Boolean },
@@ -669,6 +708,7 @@ export class AssistantView extends LitElement {
         this._lastAnimatedWordCount = 0;
         this.microphoneEnabled = false;
         this.microphoneState = 'off'; // 'off', 'recording', 'speaking'
+        this.speakerDetectionEnabled = true; // Default to enabled
         this.lastResponseTime = null;
         
         // Initialize with layout-specific defaults
@@ -1277,6 +1317,16 @@ export class AssistantView extends LitElement {
         this.requestUpdate();
     }
 
+    toggleSpeakerDetection() {
+        this.speakerDetectionEnabled = !this.speakerDetectionEnabled;
+        this.dispatchEvent(new CustomEvent('speaker-detection-toggle', {
+            detail: { enabled: this.speakerDetectionEnabled },
+            bubbles: true,
+            composed: true
+        }));
+        this.requestUpdate();
+    }
+
     increaseScrollSpeed() {
         if (this.scrollSpeed < 10) {
             this.scrollSpeed += 1;
@@ -1405,7 +1455,7 @@ export class AssistantView extends LitElement {
             className = 'slow';
         }
         
-        const timeText = `${timeMs}ms`;
+        const timeText = `${timeMs}`;
         
         return { text: timeText, className };
     }
@@ -1697,7 +1747,7 @@ export class AssistantView extends LitElement {
 
                 <div class="font-size-controls">
                     <button class="font-size-button" @click=${this.increaseFontSize}>+</button>
-                    <span class="font-size-label">${this.getCurrentFontSize()}px</span>
+                    <span class="font-size-label">${this.getCurrentFontSize()}</span>
                     <button class="font-size-button" @click=${this.decreaseFontSize}>-</button>
                 </div>
 
@@ -1717,6 +1767,12 @@ export class AssistantView extends LitElement {
                     <svg class="microphone-icon" viewBox="0 0 24 24">
                         <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
                         <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                    </svg>
+                </button>
+
+                <button class="speaker-button ${this.speakerDetectionEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleSpeakerDetection}>
+                    <svg class="speaker-icon" viewBox="0 0 24 24">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                     </svg>
                 </button>
                 

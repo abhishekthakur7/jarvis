@@ -600,6 +600,7 @@ export class CustomizeView extends LitElement {
             toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
             toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
             microphoneToggle: isMac ? 'Shift+Alt+8' : 'Shift+Alt+8',
+            speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
             reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
             toggleLayoutMode: 'Shift+Alt+/',
             nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
@@ -685,6 +686,11 @@ export class CustomizeView extends LitElement {
                 key: 'microphoneToggle',
                 name: 'Toggle Microphone',
                 description: 'Enable/disable microphone input',
+            },
+            {
+                key: 'speakerDetectionToggle',
+                name: 'Toggle Speaker Detection',
+                description: 'Enable/disable speaker audio detection',
             },
             {
                 key: 'reinitializeSession',

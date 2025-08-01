@@ -123,6 +123,9 @@ export class AssistantApp extends LitElement {
         shouldAnimateResponse: { type: Boolean },
         autoScrollEnabled: { type: Boolean },
         scrollSpeed: { type: Number },
+        microphoneEnabled: { type: Boolean },
+        microphoneState: { type: String },
+        speakerDetectionEnabled: { type: Boolean },
     };
 
     constructor() {
@@ -150,6 +153,8 @@ export class AssistantApp extends LitElement {
         this.microphoneState = 'off'; // 'off', 'recording', 'speaking'
         this.microphoneProcessor = null;
         this.microphoneTranscription = '';
+        this.speakerDetectionEnabled = localStorage.getItem('speakerDetectionEnabled') !== 'false'; // Default to true
+        this.previousSpeakerDetectionState = this.speakerDetectionEnabled; // Track previous state for microphone toggle
 
         // Auto-scroll settings
         this.autoScrollEnabled = localStorage.getItem('autoScrollEnabled') !== 'false';
@@ -194,6 +199,9 @@ export class AssistantApp extends LitElement {
         this.boundDisableAutoScroll = this.disableAutoScroll.bind(this);
         window.addEventListener('keydown', this.boundDisableAutoScroll);
         window.addEventListener('mousedown', this.boundDisableAutoScroll);
+        
+        // Initialize speaker detection state from backend
+        this.initializeSpeakerDetectionState();
     }
 
     disconnectedCallback() {
@@ -488,6 +496,19 @@ export class AssistantApp extends LitElement {
         this.updateAssistantViewMicrophoneState();
         
         if (enabled) {
+            // Store current speaker detection state before enabling microphone
+            this.previousSpeakerDetectionState = this.speakerDetectionEnabled;
+            
+            // Enable speaker detection if not already enabled
+            if (!this.speakerDetectionEnabled) {
+                this.speakerDetectionEnabled = true;
+                localStorage.setItem('speakerDetectionEnabled', 'true');
+                if (window.cheddar && window.cheddar.setSpeakerDetectionEnabled) {
+                    await window.cheddar.setSpeakerDetectionEnabled(true);
+                }
+                this.updateAssistantViewSpeakerDetectionState();
+            }
+            
             await this.startMicrophoneCapture();
             // Set microphone as active to prevent automatic speaker transcription sending
             await window.cheddar.setMicrophoneActive(true);
@@ -497,8 +518,46 @@ export class AssistantApp extends LitElement {
             await window.cheddar.setMicrophoneActive(false);
             // Clear any remaining microphone transcription when mic is turned off
             await window.cheddar.clearMicrophoneTranscription();
+            
+            // Restore previous speaker detection state
+            if (this.speakerDetectionEnabled !== this.previousSpeakerDetectionState) {
+                this.speakerDetectionEnabled = this.previousSpeakerDetectionState;
+                localStorage.setItem('speakerDetectionEnabled', this.previousSpeakerDetectionState.toString());
+                if (window.cheddar && window.cheddar.setSpeakerDetectionEnabled) {
+                    await window.cheddar.setSpeakerDetectionEnabled(this.previousSpeakerDetectionState);
+                }
+                this.updateAssistantViewSpeakerDetectionState();
+            }
+            
             //console.log('Microphone transcription cleared when mic turned off');
         }
+    }
+
+    // Speaker detection event handlers
+    async handleSpeakerDetectionToggle(e) {
+        const enabled = e.detail.enabled;
+        
+        // Update the parent component's speakerDetectionEnabled property
+        this.speakerDetectionEnabled = enabled;
+        
+        // Update previous state if microphone is not currently active
+        // This ensures the correct state is restored when microphone is turned off
+        if (!this.microphoneEnabled) {
+            this.previousSpeakerDetectionState = enabled;
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('speakerDetectionEnabled', enabled.toString());
+        
+        // Update the backend
+        if (window.cheddar && window.cheddar.setSpeakerDetectionEnabled) {
+            await window.cheddar.setSpeakerDetectionEnabled(enabled);
+        }
+        
+        // Update the AssistantView component
+        this.updateAssistantViewSpeakerDetectionState();
+        
+        console.log('Speaker detection toggled:', enabled);
     }
 
     async startMicrophoneCapture() {
@@ -655,6 +714,45 @@ export class AssistantApp extends LitElement {
         }
     }
 
+    updateAssistantViewSpeakerDetectionState() {
+        const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+        if (jarvisView) {
+            jarvisView.speakerDetectionEnabled = this.speakerDetectionEnabled;
+            jarvisView.requestUpdate();
+        }
+    }
+    
+    async initializeSpeakerDetectionState() {
+        // Wait for cheddar to be available
+        if (!window.cheddar || !window.cheddar.isSpeakerDetectionEnabled) {
+            setTimeout(() => this.initializeSpeakerDetectionState(), 100);
+            return;
+        }
+        
+        try {
+            // Get the current backend state
+            const backendResult = await window.cheddar.isSpeakerDetectionEnabled();
+            if (backendResult.success) {
+                const backendState = backendResult.enabled;
+                
+                // If frontend and backend states differ, sync them
+                if (this.speakerDetectionEnabled !== backendState) {
+                    console.log(`Syncing speaker detection state: frontend=${this.speakerDetectionEnabled}, backend=${backendState}`);
+                    
+                    // Update backend to match frontend (localStorage takes precedence)
+                    await window.cheddar.setSpeakerDetectionEnabled(this.speakerDetectionEnabled);
+                    console.log(`Backend speaker detection state updated to: ${this.speakerDetectionEnabled}`);
+                }
+                
+                // Update the UI to ensure it reflects the current state
+                this.updateAssistantViewSpeakerDetectionState();
+                console.log(`Speaker detection initialized: ${this.speakerDetectionEnabled}`);
+            }
+        } catch (error) {
+            console.error('Failed to initialize speaker detection state:', error);
+        }
+    }
+
     toggleAutoScroll() {
         const jarvisView = this.shadowRoot.querySelector('jarvis-view');
         if (jarvisView && jarvisView.toggleAutoScroll) {
@@ -677,6 +775,15 @@ export class AssistantApp extends LitElement {
             const jarvisView = this.shadowRoot.querySelector('jarvis-view');
             if (jarvisView && jarvisView.toggleMicrophone) {
                 jarvisView.toggleMicrophone();
+            }
+        }
+        
+        // Shift+Alt+0 for speaker detection toggle (only in jarvis view)
+        if (e.shiftKey && e.altKey && e.key === '0' && this.currentView === 'jarvis') {
+            e.preventDefault();
+            const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+            if (jarvisView && jarvisView.toggleSpeakerDetection) {
+                jarvisView.toggleSpeakerDetection();
             }
         }
         
@@ -916,11 +1023,13 @@ export class AssistantApp extends LitElement {
                         .shouldAnimateResponse=${this.shouldAnimateResponse}
                         .microphoneEnabled=${this.microphoneEnabled}
                         .microphoneState=${this.microphoneState}
+                        .speakerDetectionEnabled=${this.speakerDetectionEnabled}
                         .autoScrollEnabled=${this.autoScrollEnabled}
                         .scrollSpeed=${this.scrollSpeed}
                         @response-index-changed=${this.handleResponseIndexChanged}
                         @response-animation-complete=${() => { this.shouldAnimateResponse = false; this.requestUpdate(); }}
                         @microphone-toggle=${this.handleMicrophoneToggle}
+                        @speaker-detection-toggle=${this.handleSpeakerDetectionToggle}
                         @scroll-speed-change=${this.handleScrollSpeedChange}
                         @auto-scroll-toggle=${this.handleAutoScrollToggle}
                     ></jarvis-view>

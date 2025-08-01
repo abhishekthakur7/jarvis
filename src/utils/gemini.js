@@ -12,6 +12,7 @@ let conversationHistory = [];
 let isInitializingSession = false;
 let isInitializingMicrophoneSession = false;
 let isMicrophoneActive = false;
+let isSpeakerDetectionEnabled = true; // Default to enabled
 
 // Audio capture variables
 let systemAudioProc = null;
@@ -566,6 +567,15 @@ function setMicrophoneActive(active) {
 
 function isMicrophoneCurrentlyActive() {
     return isMicrophoneActive;
+}
+
+// Speaker detection state management
+function setSpeakerDetectionEnabled(enabled) {
+    isSpeakerDetectionEnabled = enabled;
+}
+
+function isSpeakerDetectionCurrentlyEnabled() {
+    return isSpeakerDetectionEnabled;
 }
 
 async function sendMicrophoneAudioToGemini(base64Data) {
@@ -1479,6 +1489,12 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
 
     ipcMain.handle('send-audio-content', async (event, { data, mimeType }) => {
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
+        
+        // Check if speaker detection is disabled - if so, don't send audio at all
+        if (!isSpeakerDetectionEnabled) {
+            return { success: true, sent: false, reason: 'Speaker detection disabled' };
+        }
+        
         try {
             // Always send audio for transcription, but mark differently based on microphone state
             if (isMicrophoneActive) {
@@ -1870,6 +1886,26 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
+
+    // Speaker detection state IPC handlers
+    ipcMain.handle('set-speaker-detection-enabled', async (event, enabled) => {
+        try {
+            setSpeakerDetectionEnabled(enabled);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting speaker detection state:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('is-speaker-detection-enabled', async (event) => {
+        try {
+            return { success: true, enabled: isSpeakerDetectionCurrentlyEnabled() };
+        } catch (error) {
+            console.error('Error getting speaker detection state:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 module.exports = {
@@ -1892,4 +1928,6 @@ module.exports = {
     getMicrophoneTranscription,
     clearMicrophoneTranscription,
     sendMicrophoneAudioToGemini,
+    setSpeakerDetectionEnabled,
+    isSpeakerDetectionCurrentlyEnabled,
 };
