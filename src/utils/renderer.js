@@ -333,9 +333,12 @@ function setupWindowsLoopbackProcessing() {
 
     let audioBuffer = [];
     const samplesPerChunk = SAMPLE_RATE * AUDIO_CHUNK_DURATION;
+    let frameCount = 0;
 
     audioProcessor.onaudioprocess = async e => {
         const inputData = e.inputBuffer.getChannelData(0);
+        frameCount++;
+        
         audioBuffer.push(...inputData);
 
         // Process audio in chunks
@@ -343,6 +346,8 @@ function setupWindowsLoopbackProcessing() {
             const chunk = audioBuffer.splice(0, samplesPerChunk);
             const pcmData16 = convertFloat32ToInt16(chunk);
             const base64Data = arrayBufferToBase64(pcmData16.buffer);
+            
+            console.log(`Speaker Audio: Sending chunk to backend, size=${pcmData16.length}`);
 
             // Always send audio to IPC handler - it will decide whether to send to Gemini or not
             await ipcRenderer.invoke('send-audio-content', {

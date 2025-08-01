@@ -572,6 +572,74 @@ function isMicrophoneCurrentlyActive() {
 // Speaker detection state management
 function setSpeakerDetectionEnabled(enabled) {
     isSpeakerDetectionEnabled = enabled;
+    
+    // If speaker detection is being disabled, process any pending input immediately
+    if (!enabled) {
+        processPendingSpeakerInput();
+    }
+}
+
+function processPendingSpeakerInput() {
+    if (pendingInput.trim()) {
+        // Clear existing debounce timer
+        if (inputDebounceTimer) {
+            clearTimeout(inputDebounceTimer);
+            inputDebounceTimer = null;
+        }
+        
+        // Check if context should be reset
+        if (shouldResetContext()) {
+            contextAccumulator = '';
+            questionQueue = [];
+        }
+        
+        // Add to context accumulator
+        contextAccumulator += pendingInput + ' ';
+        
+        // Check if this is a complete question
+        if (isCompleteQuestion(pendingInput.trim())) {
+            // Add to question queue
+            questionQueue.push(contextAccumulator.trim());
+            
+            // Process the queue if AI is not responding and session is available
+            if (!isAiResponding && global.geminiSessionRef?.current) {
+                processQuestionQueue(global.geminiSessionRef.current);
+            }
+            
+            // Reset context for next question
+            contextAccumulator = '';
+        }
+        
+        // Prevent duplicate transcriptions by checking recent history
+        const isDuplicate = speakerConversationHistory.some(entry => 
+            entry.transcription === pendingInput.trim() && 
+            (Date.now() - entry.timestamp) < 2000 // Within 2 seconds
+        );
+
+        if (!isDuplicate) {
+            speakerTranscription += pendingInput;
+            
+            // Count words and manage cleanup to retain most recent words
+            const words = speakerTranscription.trim().split(/\s+/);
+            speakerWordCount = words.length;
+            
+            // Clean up if exceeding word limit, keep only the most recent words
+            if (speakerWordCount > MAX_MICROPHONE_WORDS) {
+                const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
+                speakerTranscription = remainingWords.join(' ') + ' ';
+            }
+            
+            // Save the complete accumulated input to conversation history
+            speakerConversationHistory.push({
+                timestamp: Date.now(),
+                transcription: pendingInput.trim(),
+                type: 'speaker'
+            });
+        }
+        
+        // Reset pending input
+        pendingInput = '';
+    }
 }
 
 function isSpeakerDetectionCurrentlyEnabled() {
@@ -841,7 +909,8 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                 onmessage: function (message) {
                     //console.log('captured by speaker session');
                     // Handle transcription input with debouncing to prevent interrupted responses
-                    if(isMicrophoneActive) {
+                    // Process transcription for both microphone and speaker audio when speaker detection is enabled
+                    if(isMicrophoneActive || isSpeakerDetectionEnabled) {
                         if (message.serverContent?.inputTranscription?.text) {
                             let transcriptionText = message.serverContent?.inputTranscription?.text;
                             // Sanitize the transcription text to remove corrupted characters
@@ -857,7 +926,6 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
 
                             // Accumulate input instead of processing immediately
                             pendingInput += transcriptionText + ' ';
-                            console.log('Accumulating input:', transcriptionText);
 
                             // Check if this should interrupt current AI response
                             if (shouldInterrupt(transcriptionText)) {
@@ -1362,15 +1430,19 @@ async function startMacOSAudioCapture(geminiSessionRef) {
 
     let audioBuffer = Buffer.alloc(0);
 
+    let chunkCount = 0;
+    
     systemAudioProc.stdout.on('data', data => {
         audioBuffer = Buffer.concat([audioBuffer, data]);
 
         while (audioBuffer.length >= CHUNK_SIZE) {
             const chunk = audioBuffer.slice(0, CHUNK_SIZE);
             audioBuffer = audioBuffer.slice(CHUNK_SIZE);
+            chunkCount++;
 
             const monoChunk = CHANNELS === 2 ? convertStereoToMono(chunk) : chunk;
             const base64Data = monoChunk.toString('base64');
+            
             sendAudioToGemini(base64Data, geminiSessionRef);
 
             if (process.env.DEBUG_AUDIO) {
@@ -1421,7 +1493,13 @@ function stopMacOSAudioCapture() {
 }
 
 async function sendAudioToGemini(base64Data, geminiSessionRef) {
-    if (!geminiSessionRef.current) return;
+    if (!geminiSessionRef.current) {
+        return;
+    }
+    
+    if (!isSpeakerDetectionEnabled) {
+        return;
+    }
 
     try {
         // Always send audio for transcription, but mark differently based on microphone state
