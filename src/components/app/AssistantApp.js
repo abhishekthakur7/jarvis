@@ -778,14 +778,8 @@ export class AssistantApp extends LitElement {
             }
         }
         
-        // Shift+Alt+0 for speaker detection toggle (only in jarvis view)
-        if (e.shiftKey && e.altKey && e.key === '0' && this.currentView === 'jarvis') {
-            e.preventDefault();
-            const jarvisView = this.shadowRoot.querySelector('jarvis-view');
-            if (jarvisView && jarvisView.toggleSpeakerDetection) {
-                jarvisView.toggleSpeakerDetection();
-            }
-        }
+        // Shift+Alt+0 for speaker detection toggle is handled by global shortcut in window.js
+        // Removed duplicate handler to prevent double execution
         
         // Shift+Alt+F for focus mode toggle
         if (e.shiftKey && e.altKey && e.key === 'F') {

@@ -251,7 +251,9 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
                 // Use the handleShortcut function to trigger microphone toggle
                 mainWindow.webContents.executeJavaScript(`
                     cheddar.handleShortcut('${shortcutKey}');
-                `);
+                `).catch(error => {
+                    console.error('Error executing microphone toggle JavaScript:', error);
+                });
             });
             console.log(`Registered microphoneToggle: ${keybinds.microphoneToggle}`);
         } catch (error) {
@@ -270,7 +272,9 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
                 // Use the handleShortcut function to trigger speaker detection toggle
                 mainWindow.webContents.executeJavaScript(`
                     cheddar.handleShortcut('${shortcutKey}');
-                `);
+                `).catch(error => {
+                    console.error('Error executing speaker detection toggle JavaScript:', error);
+                });
             });
             console.log(`Registered speakerDetectionToggle: ${keybinds.speakerDetectionToggle}`);
         } catch (error) {

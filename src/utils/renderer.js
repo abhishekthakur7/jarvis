@@ -347,7 +347,7 @@ function setupWindowsLoopbackProcessing() {
             const pcmData16 = convertFloat32ToInt16(chunk);
             const base64Data = arrayBufferToBase64(pcmData16.buffer);
             
-            console.log(`Speaker Audio: Sending chunk to backend, size=${pcmData16.length}`);
+            //console.log(`Speaker Audio: Sending chunk to backend, size=${pcmData16.length}`);
 
             // Always send audio to IPC handler - it will decide whether to send to Gemini or not
             await ipcRenderer.invoke('send-audio-content', {

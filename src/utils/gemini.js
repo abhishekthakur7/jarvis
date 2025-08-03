@@ -199,6 +199,7 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     }
     
     isAiResponding = true;
+    isProcessingTextMessage = true; // CRITICAL FIX: Enable response processing for speaker audio requests
     lastQuestionTime = Date.now();
     
     // Record request start time and log full transcript
@@ -208,6 +209,7 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
     console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
     console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
+    console.log('🔧 [RESPONSE_PROCESSING] Enabled response processing for this request');
     
     try {
         // Send the combined text to Gemini using the correct method
@@ -596,11 +598,29 @@ function isMicrophoneCurrentlyActive() {
 // Speaker detection state management
 async function setSpeakerDetectionEnabled(enabled) {
     console.log('Speaker detection toggle shortcut triggered');
-    isSpeakerDetectionEnabled = enabled;
     
     // If speaker detection is being disabled, process any pending input immediately
     if (!enabled) {
+        // Wait for any ongoing AI processing to complete before toggling
+        if (isAiResponding) {
+            console.log('⏳ [SPEAKER_TOGGLE] Waiting for ongoing AI response to complete before toggling off...');
+            // Wait up to 10 seconds for AI response to complete
+            let waitCount = 0;
+            while (isAiResponding && waitCount < 100) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                waitCount++;
+            }
+            if (isAiResponding) {
+                console.log('⚠️ [SPEAKER_TOGGLE] AI response still ongoing after 10 seconds, proceeding with toggle');
+            } else {
+                console.log('✅ [SPEAKER_TOGGLE] AI response completed, proceeding with toggle');
+            }
+        }
+        
         await processPendingSpeakerInput();
+        
+        // Wait a brief moment to ensure processing completes
+        await new Promise(resolve => setTimeout(resolve, 500));
     } else {
         // If speaker detection is being enabled, clear any stale state to prevent duplication
         // This prevents processing the same audio content that was already handled when toggled off
@@ -620,6 +640,10 @@ async function setSpeakerDetectionEnabled(enabled) {
         
         console.log('🔄 [SPEAKER_DETECTION_ON] Cleared stale audio state, transcription, and recent history to prevent duplication');
     }
+    
+    // Set the speaker detection state after processing is complete
+    isSpeakerDetectionEnabled = enabled;
+    console.log(`🎯 [SPEAKER_DETECTION] Speaker detection ${enabled ? 'enabled' : 'disabled'} successfully`);
 }
 
 async function processPendingSpeakerInput() {
@@ -665,6 +689,21 @@ async function processPendingSpeakerInput() {
             // Process the queue if AI is not responding and session is available
             if (!isAiResponding && global.geminiSessionRef?.current) {
                 await processQuestionQueue(global.geminiSessionRef.current);
+                
+                // Wait for AI response to complete before returning
+                if (isAiResponding) {
+                    console.log('⏳ [PENDING_INPUT] Waiting for AI response to complete...');
+                    let waitCount = 0;
+                    while (isAiResponding && waitCount < 150) { // Wait up to 15 seconds
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                        waitCount++;
+                    }
+                    if (isAiResponding) {
+                        console.log('⚠️ [PENDING_INPUT] AI response still ongoing after 15 seconds');
+                    } else {
+                        console.log('✅ [PENDING_INPUT] AI response completed successfully');
+                    }
+                }
             }
             
             // Reset context for next question
