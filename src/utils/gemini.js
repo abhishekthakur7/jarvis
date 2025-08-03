@@ -147,6 +147,22 @@ async function processQuestionQueue(geminiSession) {
     
     // Combine all queued questions with proper separation
     const combinedQuestions = validQuestions.join(' ').trim();
+    
+    // Check for duplicate questions against recent conversation history
+    const isDuplicateQuestion = conversationHistory.some(entry => {
+        const similarity = entry.transcription.trim() === combinedQuestions.trim() ||
+                          entry.transcription.includes(combinedQuestions.trim()) ||
+                          combinedQuestions.includes(entry.transcription.trim());
+        const isRecent = (Date.now() - entry.timestamp) < 20000; // Within 20 seconds
+        return similarity && isRecent;
+    });
+    
+    if (isDuplicateQuestion) {
+        console.log('🚫 [DUPLICATE_QUESTION] Skipping duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
+        questionQueue = []; // Clear the queue
+        return;
+    }
+    
     questionQueue = []; // Clear the queue
     
     console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
@@ -162,6 +178,14 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     }
     
     console.log('🚀 [AI_REQUEST] Preparing to send new AI request with complete isolation');
+    
+    // CRITICAL FIX: Clear any pending debounce timer when starting new AI request
+    if (inputDebounceTimer) {
+        clearTimeout(inputDebounceTimer);
+        inputDebounceTimer = null;
+        pendingInput = '';
+        console.log('🧹 [DEBOUNCE_CLEARED] Cleared pending debounce timer before new AI request');
+    }
     
     // Ensure complete buffer cleanup and context isolation
     cleanupResponseBuffer();
@@ -576,15 +600,50 @@ async function setSpeakerDetectionEnabled(enabled) {
     // If speaker detection is being disabled, process any pending input immediately
     if (!enabled) {
         await processPendingSpeakerInput();
+    } else {
+        // If speaker detection is being enabled, clear any stale state to prevent duplication
+        // This prevents processing the same audio content that was already handled when toggled off
+        if (inputDebounceTimer) {
+            clearTimeout(inputDebounceTimer);
+            inputDebounceTimer = null;
+        }
+        pendingInput = '';
+        contextAccumulator = '';
+        speakerCurrentTranscription = ''; // Clear accumulated speaker transcription
+        speakerTranscription = ''; // Clear speaker transcription buffer
+        questionQueue = []; // Clear any queued questions
+        
+        // Clear recent speaker conversation history to prevent duplicate processing
+        const cutoffTime = Date.now() - 10000; // Keep only entries older than 10 seconds
+        speakerConversationHistory = speakerConversationHistory.filter(entry => entry.timestamp < cutoffTime);
+        
+        console.log('🔄 [SPEAKER_DETECTION_ON] Cleared stale audio state, transcription, and recent history to prevent duplication');
     }
 }
 
 async function processPendingSpeakerInput() {
     if (pendingInput.trim()) {
+        console.log('🔄 [PENDING_INPUT_PROCESSING] Processing pending input on speaker detection toggle:', pendingInput.trim());
+        
         // Clear existing debounce timer
         if (inputDebounceTimer) {
             clearTimeout(inputDebounceTimer);
             inputDebounceTimer = null;
+        }
+        
+        // Enhanced duplicate check - prevent processing same content that was recently processed
+        const isDuplicateContent = speakerConversationHistory.some(entry => {
+            const similarity = entry.transcription.trim() === pendingInput.trim() ||
+                              entry.transcription.includes(pendingInput.trim()) ||
+                              pendingInput.includes(entry.transcription.trim());
+            const isRecent = (Date.now() - entry.timestamp) < 10000; // Within 10 seconds
+            return similarity && isRecent;
+        });
+        
+        if (isDuplicateContent) {
+            console.log('🚫 [DUPLICATE_PREVENTION] Skipping duplicate pending input processing');
+            pendingInput = '';
+            return;
         }
         
         // Check if context should be reset
@@ -611,32 +670,27 @@ async function processPendingSpeakerInput() {
             contextAccumulator = '';
         }
         
-        // Prevent duplicate transcriptions by checking recent history
-        const isDuplicate = speakerConversationHistory.some(entry => 
-            entry.transcription === pendingInput.trim() && 
-            (Date.now() - entry.timestamp) < 2000 // Within 2 seconds
-        );
-
-        if (!isDuplicate) {
-            speakerTranscription += pendingInput;
-            
-            // Count words and manage cleanup to retain most recent words
-            const words = speakerTranscription.trim().split(/\s+/);
-            speakerWordCount = words.length;
-            
-            // Clean up if exceeding word limit, keep only the most recent words
-            if (speakerWordCount > MAX_MICROPHONE_WORDS) {
-                const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
-                speakerTranscription = remainingWords.join(' ') + ' ';
-            }
-            
-            // Save the complete accumulated input to conversation history
-            speakerConversationHistory.push({
-                timestamp: Date.now(),
-                transcription: pendingInput.trim(),
-                type: 'speaker'
-            });
+        // Save to speaker transcription and conversation history
+        speakerTranscription += pendingInput;
+        
+        // Count words and manage cleanup to retain most recent words
+        const words = speakerTranscription.trim().split(/\s+/);
+        speakerWordCount = words.length;
+        
+        // Clean up if exceeding word limit, keep only the most recent words
+        if (speakerWordCount > MAX_MICROPHONE_WORDS) {
+            const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
+            speakerTranscription = remainingWords.join(' ') + ' ';
         }
+        
+        // Save the complete accumulated input to conversation history
+        speakerConversationHistory.push({
+            timestamp: Date.now(),
+            transcription: pendingInput.trim(),
+            type: 'speaker'
+        });
+        
+        console.log('✅ [PENDING_INPUT_PROCESSED] Successfully processed and saved pending input');
         
         // Reset pending input
         pendingInput = '';
@@ -909,6 +963,12 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                 },
                 onmessage: function (message) {
                     //console.log('captured by speaker session');
+                    
+                    // CRITICAL FIX: Populate speakerCurrentTranscription FIRST before any processing
+                    if (message.serverContent?.inputTranscription?.text) {
+                        speakerCurrentTranscription += message.serverContent.inputTranscription.text;
+                    }
+                    
                     // Handle transcription input with debouncing to prevent interrupted responses
                     // Process transcription for both microphone and speaker audio when speaker detection is enabled
                     if(isMicrophoneActive || isSpeakerDetectionEnabled) {
@@ -917,6 +977,17 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             // Sanitize the transcription text to remove corrupted characters
                             //transcriptionText = sanitizeText(transcriptionText);
                             if (!transcriptionText || transcriptionText.trim().length === 0) {
+                                return;
+                            }
+
+                            // Check for recent duplicate transcriptions to prevent processing same content
+                            const isDuplicateTranscription = speakerConversationHistory.some(entry => 
+                                entry.transcription.includes(transcriptionText.trim()) && 
+                                (Date.now() - entry.timestamp) < 5000 // Within 5 seconds
+                            );
+                            
+                            if (isDuplicateTranscription) {
+                                console.log('🚫 [DUPLICATE_PREVENTION] Skipping duplicate transcription:', transcriptionText.trim());
                                 return;
                             }
 
@@ -967,11 +1038,33 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             // Set new timer to process after delay (wait for complete input)
                             inputDebounceTimer = setTimeout(() => {
                                 if (pendingInput.trim()) {
-                                    console.log('Processing complete input after delay:', pendingInput.trim());
+                                    console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
+                                    
+                                    // Double-check speaker detection is still enabled before processing
+                                    if (!isSpeakerDetectionEnabled) {
+                                        console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
+                                        pendingInput = '';
+                                        return;
+                                    }
+                                    
+                                    // Enhanced duplicate check before processing
+                                    const isDuplicateInDebounce = speakerConversationHistory.some(entry => {
+                                        const similarity = entry.transcription.trim() === pendingInput.trim() ||
+                                                          entry.transcription.includes(pendingInput.trim()) ||
+                                                          pendingInput.includes(entry.transcription.trim());
+                                        const isRecent = (Date.now() - entry.timestamp) < 8000; // Within 8 seconds
+                                        return similarity && isRecent;
+                                    });
+                                    
+                                    if (isDuplicateInDebounce) {
+                                        console.log('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
+                                        pendingInput = '';
+                                        return;
+                                    }
                                     
                                     // Check if context should be reset
                                     if (shouldResetContext()) {
-                                        console.log('Resetting context due to timeout');
+                                        console.log('🔄 [CONTEXT_RESET] Resetting context due to timeout');
                                         contextAccumulator = '';
                                         questionQueue = [];
                                     }
@@ -981,7 +1074,7 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                     
                                     // Check if this is a complete question
                                     if (isCompleteQuestion(pendingInput.trim())) {
-                                        console.log('Complete question detected:', pendingInput.trim());
+                                        console.log('❓ [COMPLETE_QUESTION] Complete question detected:', pendingInput.trim());
                                         
                                         // Add to question queue
                                         questionQueue.push(contextAccumulator.trim());
@@ -994,37 +1087,30 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                         // Reset context for next question
                                         contextAccumulator = '';
                                     } else {
-                                        console.log('Incomplete input, accumulating in context:', pendingInput.trim());
+                                        console.log('📝 [INCOMPLETE_INPUT] Incomplete input, accumulating in context:', pendingInput.trim());
                                     }
                                     
-                                    // Prevent duplicate transcriptions by checking recent history
-                                    const isDuplicate = speakerConversationHistory.some(entry => 
-                                        entry.transcription === pendingInput.trim() && 
-                                        (Date.now() - entry.timestamp) < 2000 // Within 2 seconds
-                                    );
-
-                                    if (!isDuplicate) {
-                                        speakerTranscription += pendingInput;
-                                        
-                                        // Count words and manage cleanup to retain most recent words
-                                        const words = speakerTranscription.trim().split(/\s+/);
-                                        speakerWordCount = words.length;
-                                        
-                                        // Clean up if exceeding word limit, keep only the most recent words
-                                        if (speakerWordCount > MAX_MICROPHONE_WORDS) {
-                                            const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
-                                            speakerTranscription = remainingWords.join(' ') + ' ';
-                                        }
-                                        
-                                        // Save the complete accumulated input to conversation history
-                                        speakerConversationHistory.push({
-                                            timestamp: Date.now(),
-                                            transcription: pendingInput.trim(),
-                                            type: 'speaker'
-                                        });
-
-                                        console.log('Saved complete transcription:', pendingInput.trim());
+                                    // Save to speaker transcription and conversation history
+                                    speakerTranscription += pendingInput;
+                                    
+                                    // Count words and manage cleanup to retain most recent words
+                                    const words = speakerTranscription.trim().split(/\s+/);
+                                    speakerWordCount = words.length;
+                                    
+                                    // Clean up if exceeding word limit, keep only the most recent words
+                                    if (speakerWordCount > MAX_MICROPHONE_WORDS) {
+                                        const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
+                                        speakerTranscription = remainingWords.join(' ') + ' ';
                                     }
+                                    
+                                    // Save the complete accumulated input to conversation history
+                                    speakerConversationHistory.push({
+                                        timestamp: Date.now(),
+                                        transcription: pendingInput.trim(),
+                                        type: 'speaker'
+                                    });
+
+                                    console.log('✅ [DEBOUNCE_SAVED] Saved complete transcription:', pendingInput.trim());
                                     
                                     // Reset pending input
                                     pendingInput = '';
@@ -1170,10 +1256,26 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             }
                             global.pendingContextTranscription = null; // Reset after processing
                         } else if (speakerCurrentTranscription && messageBuffer) {
-                            // Save regular speaker-only transcription
-                            // Pass suppression flag to indicate if this response was suppressed from UI
-                            console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
-                            saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
+                            // Check for duplicate responses before saving
+                            const isDuplicateResponse = conversationHistory.some(entry => {
+                                const transcriptionSimilarity = entry.transcription.trim() === speakerCurrentTranscription.trim() ||
+                                                               entry.transcription.includes(speakerCurrentTranscription.trim()) ||
+                                                               speakerCurrentTranscription.includes(entry.transcription.trim());
+                                const responseSimilarity = entry.ai_response && messageBuffer &&
+                                                          (entry.ai_response.includes(messageBuffer.substring(0, 100)) ||
+                                                           messageBuffer.includes(entry.ai_response.substring(0, 100)));
+                                const isRecent = (Date.now() - entry.timestamp) < 15000; // Within 15 seconds
+                                return (transcriptionSimilarity || responseSimilarity) && isRecent;
+                            });
+                            
+                            if (isDuplicateResponse) {
+                                console.log('🚫 [DUPLICATE_RESPONSE] Skipping save of duplicate response to conversation history');
+                            } else {
+                                // Save regular speaker-only transcription
+                                // Pass suppression flag to indicate if this response was suppressed from UI
+                                console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
+                                saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
+                            }
                             speakerCurrentTranscription = ''; // Reset for next turn
                         }
 
@@ -1196,6 +1298,14 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                         isProcessingTextMessage = false; // Reset flag after processing
                         isAiResponding = false; // Mark AI as no longer responding
                         
+                        // CRITICAL FIX: Clear debounce timer when AI response completes to prevent duplicate processing
+                        if (inputDebounceTimer) {
+                            clearTimeout(inputDebounceTimer);
+                            inputDebounceTimer = null;
+                            pendingInput = '';
+                            console.log('🧹 [DEBOUNCE_CLEARED] Cleared debounce timer after AI response completion');
+                        }
+                        
                         console.log('🔄 [STATE_RESET] AI response state reset, checking for queued questions');
                         
                         // Process any queued questions after response completion
@@ -1205,10 +1315,6 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                         } else {
                             console.log('✅ [QUEUE_EMPTY] No queued questions, ready for new input');
                         }
-                    }
-
-                    if (message.serverContent?.inputTranscription?.text) {
-                        speakerCurrentTranscription += message.serverContent.inputTranscription.text;
                     }
 
                     if (message.serverContent?.turnComplete) {
