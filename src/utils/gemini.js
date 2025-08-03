@@ -595,6 +595,7 @@ function isMicrophoneCurrentlyActive() {
 
 // Speaker detection state management
 async function setSpeakerDetectionEnabled(enabled) {
+    console.log('Speaker detection toggle shortcut triggered');
     isSpeakerDetectionEnabled = enabled;
     
     // If speaker detection is being disabled, process any pending input immediately
