@@ -129,7 +129,7 @@ function shouldInterrupt(newInput) {
     return isAiResponding && isCompleteQuestion(newInput);
 }
 
-function processQuestionQueue(geminiSession) {
+async function processQuestionQueue(geminiSession) {
     if (questionQueue.length === 0 || isAiResponding) return;
     
     console.log('🔍 [QUEUE_VALIDATION] Validating question queue before processing');
@@ -152,10 +152,10 @@ function processQuestionQueue(geminiSession) {
     console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
     
     // Send combined questions to AI
-    sendCombinedQuestionsToAI(combinedQuestions, geminiSession);
+    await sendCombinedQuestionsToAI(combinedQuestions, geminiSession);
 }
 
-function sendCombinedQuestionsToAI(combinedText, geminiSession) {
+async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     if (!geminiSession || !combinedText.trim()) {
         console.log('⚠️ [AI_REQUEST] Invalid session or empty text, aborting request');
         return;
@@ -186,8 +186,8 @@ function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
     
     try {
-        // Send the combined text to Gemini
-        geminiSession.send(combinedText.trim());
+        // Send the combined text to Gemini using the correct method
+        await geminiSession.sendRealtimeInput({ text: combinedText.trim() });
         console.log('✅ [AI_REQUEST] Successfully sent validated questions to AI');
     } catch (error) {
         console.error('❌ [AI_REQUEST_ERROR] Error sending combined questions to AI:', error);
@@ -570,16 +570,16 @@ function isMicrophoneCurrentlyActive() {
 }
 
 // Speaker detection state management
-function setSpeakerDetectionEnabled(enabled) {
+async function setSpeakerDetectionEnabled(enabled) {
     isSpeakerDetectionEnabled = enabled;
     
     // If speaker detection is being disabled, process any pending input immediately
     if (!enabled) {
-        processPendingSpeakerInput();
+        await processPendingSpeakerInput();
     }
 }
 
-function processPendingSpeakerInput() {
+async function processPendingSpeakerInput() {
     if (pendingInput.trim()) {
         // Clear existing debounce timer
         if (inputDebounceTimer) {
@@ -596,14 +596,15 @@ function processPendingSpeakerInput() {
         // Add to context accumulator
         contextAccumulator += pendingInput + ' ';
         
-        // Check if this is a complete question
-        if (isCompleteQuestion(pendingInput.trim())) {
+        // When speaker detection is toggled off, always send accumulated input to Gemini
+        // regardless of whether it's a complete question
+        if (contextAccumulator.trim()) {
             // Add to question queue
             questionQueue.push(contextAccumulator.trim());
             
             // Process the queue if AI is not responding and session is available
             if (!isAiResponding && global.geminiSessionRef?.current) {
-                processQuestionQueue(global.geminiSessionRef.current);
+                await processQuestionQueue(global.geminiSessionRef.current);
             }
             
             // Reset context for next question
@@ -1968,7 +1969,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     // Speaker detection state IPC handlers
     ipcMain.handle('set-speaker-detection-enabled', async (event, enabled) => {
         try {
-            setSpeakerDetectionEnabled(enabled);
+            await setSpeakerDetectionEnabled(enabled);
             return { success: true };
         } catch (error) {
             console.error('Error setting speaker detection state:', error);
