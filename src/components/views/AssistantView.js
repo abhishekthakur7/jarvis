@@ -15,6 +15,7 @@ export class AssistantView extends LitElement {
 
         .response-container {
             height: calc(100% - 5px);
+            overflow-x: hidden;
             overflow-y: auto;
             border-radius: 5px;
             font-size: var(--response-font-size, 18px);
