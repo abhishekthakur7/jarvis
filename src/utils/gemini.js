@@ -211,6 +211,15 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
     console.log('🔧 [RESPONSE_PROCESSING] Enabled response processing for this request');
     
+    // CRITICAL FIX: Save to conversation history immediately to prevent duplicate processing
+    conversationHistory.push({
+        timestamp: requestStartTime,
+        transcription: combinedText.trim(),
+        type: 'user_request',
+        processed: true
+    });
+    console.log('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
+    
     try {
         // Send the combined text to Gemini using the correct method
         await geminiSession.sendRealtimeInput({ text: combinedText.trim() });
@@ -1087,6 +1096,13 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                         return;
                                     }
                                     
+                                    // CRITICAL FIX: Check if AI is currently responding to prevent duplicate processing
+                                    if (isAiResponding) {
+                                        console.log('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
+                                        pendingInput = '';
+                                        return;
+                                    }
+                                    
                                     // Enhanced duplicate check before processing
                                     const isDuplicateInDebounce = speakerConversationHistory.some(entry => {
                                         const similarity = entry.transcription.trim() === pendingInput.trim() ||
@@ -1098,6 +1114,21 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                     
                                     if (isDuplicateInDebounce) {
                                         console.log('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
+                                        pendingInput = '';
+                                        return;
+                                    }
+                                    
+                                    // CRITICAL FIX: Check against conversation history to prevent reprocessing recently processed content
+                                    const isRecentlyProcessed = conversationHistory.some(entry => {
+                                        const similarity = entry.transcription.trim() === pendingInput.trim() ||
+                                                          entry.transcription.includes(pendingInput.trim()) ||
+                                                          pendingInput.includes(entry.transcription.trim());
+                                        const isRecent = (Date.now() - entry.timestamp) < 15000; // Within 15 seconds
+                                        return similarity && isRecent;
+                                    });
+                                    
+                                    if (isRecentlyProcessed) {
+                                        console.log('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
                                         pendingInput = '';
                                         return;
                                     }
@@ -1345,6 +1376,10 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                             pendingInput = '';
                             console.log('🧹 [DEBOUNCE_CLEARED] Cleared debounce timer after AI response completion');
                         }
+                        
+                        // CRITICAL FIX: Clear context accumulator to prevent reprocessing same content
+                        contextAccumulator = '';
+                        console.log('🧹 [CONTEXT_CLEARED] Cleared context accumulator to prevent duplicate processing');
                         
                         console.log('🔄 [STATE_RESET] AI response state reset, checking for queued questions');
                         
