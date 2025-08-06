@@ -50,7 +50,6 @@ export class MainView extends LitElement {
         }
 
         .logo-container {
-            margin-bottom: 32px;
             position: relative;
             z-index: 2;
         }
