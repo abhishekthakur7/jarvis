@@ -9,7 +9,7 @@ export class AssistantView extends LitElement {
         }
 
         * {
-            font-family: 'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+            font-family: var(--font-family, 'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif);
             cursor: default;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -24,7 +24,7 @@ export class AssistantView extends LitElement {
             font-size: var(--response-font-size, 18px);
             line-height: 1.5;
             background: var(--main-content-background);
-            padding: 12px;
+            padding: 3px;
             letter-spacing: 0.01em;
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
@@ -339,7 +339,7 @@ export class AssistantView extends LitElement {
         .response-container p,
         .response-container li {
             line-height: 1.6;
-            font-family: Arial, sans-serif;
+            font-family: var(--font-family, Arial, sans-serif);
         }
 
         .response-container .chunk-a {
@@ -794,7 +794,7 @@ export class AssistantView extends LitElement {
             }
             
             .response-container p {
-                line-height: 1.9;
+                line-height: 1.5;
             }
             
             .response-container code {
@@ -1243,6 +1243,65 @@ export class AssistantView extends LitElement {
         }
     }
 
+    loadFontFamily() {
+        const savedFontFamily = localStorage.getItem('selectedFontFamily');
+        if (savedFontFamily) {
+            // Get the font options to find the full CSS font stack
+            const fontOptions = this.getFontFamilyOptions();
+            const fontOption = fontOptions.find(option => option.name === savedFontFamily);
+            const fontStack = fontOption ? fontOption.value : savedFontFamily;
+            
+            // Apply the font family to the document
+            document.documentElement.style.setProperty('--font-family', fontStack);
+        } else {
+            // Default to Inter if no font is saved
+            const defaultFont = "'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif";
+            document.documentElement.style.setProperty('--font-family', defaultFont);
+            localStorage.setItem('selectedFontFamily', 'Inter');
+        }
+    }
+
+    getFontFamilyOptions() {
+        return [
+            { name: 'Inter', value: "'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" },
+            { name: 'SF Pro Display', value: "'SF Pro Display', 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif" },
+            { name: 'Segoe UI', value: "'Segoe UI', 'Inter', 'SF Pro Display', 'Roboto', 'Helvetica Neue', sans-serif" },
+            { name: 'Roboto', value: "'Roboto', 'Inter', 'SF Pro Display', 'Segoe UI', 'Helvetica Neue', sans-serif" },
+            { name: 'Helvetica Neue', value: "'Helvetica Neue', 'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', sans-serif" },
+            { name: 'Arial', value: "'Arial', 'Helvetica', sans-serif" },
+            { name: 'Times New Roman', value: "'Times New Roman', 'Times', serif" },
+            { name: 'Georgia', value: "'Georgia', 'Times New Roman', serif" },
+            { name: 'Courier New', value: "'Courier New', 'Courier', monospace" },
+            { name: 'Verdana', value: "'Verdana', 'Geneva', sans-serif" },
+            { name: 'Trebuchet MS', value: "'Trebuchet MS', 'Lucida Grande', sans-serif" },
+            { name: 'Tahoma', value: "'Tahoma', 'Geneva', sans-serif" },
+            { name: 'Palatino', value: "'Palatino', 'Palatino Linotype', serif" },
+            { name: 'Garamond', value: "'Garamond', 'Times New Roman', serif" },
+            { name: 'Bookman', value: "'Bookman', 'Times New Roman', serif" },
+            { name: 'Comic Sans MS', value: "'Comic Sans MS', 'Comic Sans', cursive" },
+            { name: 'Impact', value: "'Impact', 'Arial Black', sans-serif" },
+            { name: 'Lucida Console', value: "'Lucida Console', 'Monaco', monospace" },
+            { name: 'Open Sans', value: "'Open Sans', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Lato', value: "'Lato', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Montserrat', value: "'Montserrat', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Poppins', value: "'Poppins', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Nunito', value: "'Nunito', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Source Sans Pro', value: "'Source Sans Pro', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Raleway', value: "'Raleway', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Ubuntu', value: "'Ubuntu', 'Helvetica Neue', 'Arial', sans-serif" },
+            { name: 'Playfair Display', value: "'Playfair Display', 'Georgia', 'Times New Roman', serif" },
+            { name: 'Merriweather', value: "'Merriweather', 'Georgia', 'Times New Roman', serif" },
+            { name: 'Crimson Text', value: "'Crimson Text', 'Georgia', 'Times New Roman', serif" },
+            { name: 'Libre Baskerville', value: "'Libre Baskerville', 'Georgia', 'Times New Roman', serif" },
+            { name: 'PT Serif', value: "'PT Serif', 'Georgia', 'Times New Roman', serif" },
+            { name: 'Lora', value: "'Lora', 'Georgia', 'Times New Roman', serif" },
+            { name: 'Fira Code', value: "'Fira Code', 'Consolas', 'Monaco', monospace" },
+            { name: 'Source Code Pro', value: "'Source Code Pro', 'Consolas', 'Monaco', monospace" },
+            { name: 'JetBrains Mono', value: "'JetBrains Mono', 'Consolas', 'Monaco', monospace" },
+            { name: 'Inconsolata', value: "'Inconsolata', 'Consolas', 'Monaco', monospace" }
+        ];
+    }
+
     loadLayoutSpecificSettings() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
@@ -1335,6 +1394,9 @@ export class AssistantView extends LitElement {
 
         // Load and apply font size
         this.loadFontSize();
+        
+        // Load and apply font family
+        this.loadFontFamily();
         
         // Update layout mode class
         this.updateLayoutModeClass();

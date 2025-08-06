@@ -3,7 +3,7 @@ import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
 export class AppHeader extends LitElement {
     static styles = css`
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-family, 'Inter', sans-serif);
             cursor: default;
             user-select: none;
         }
@@ -85,7 +85,6 @@ export class AppHeader extends LitElement {
 
         .key {
             background: var(--key-background);
-            padding: 2px 6px;
             border-radius: 4px;
             font-size: 12px;
             margin: 0px;
@@ -448,10 +447,6 @@ export class AppHeader extends LitElement {
                         : ''}
                     ${this.currentView === 'jarvis'
                         ? html`
-                              <button @click=${this.onHideToggleClick} class="button">
-                                  Hide&nbsp;&nbsp;<span class="key" style="pointer-events: none;">${cheddar.isMacOS ? 'Cmd' : 'Ctrl'}</span
-                                  >&nbsp;&nbsp;<span class="key">&bsol;</span>
-                              </button>
                               <button @click=${this.onCloseClick} class="icon-button window-close">
                                   <?xml version="1.0" encoding="UTF-8"?><svg
                                       width="24px"

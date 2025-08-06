@@ -4,11 +4,7 @@ import { resizeLayout } from '../../utils/windowResize.js';
 export class CustomizeView extends LitElement {
     static styles = css`
         * {
-            font-family:
-                'Inter',
-                -apple-system,
-                BlinkMacSystemFont,
-                sans-serif;
+            font-family: var(--font-family, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
             cursor: default;
             user-select: none;
         }
@@ -408,6 +404,7 @@ export class CustomizeView extends LitElement {
         googleSearchEnabled: { type: Boolean },
         backgroundTransparency: { type: Number },
         fontSize: { type: Number },
+        selectedFontFamily: { type: String },
         // Layout-specific settings
         normalTransparency: { type: Number },
         normalFontSize: { type: Number },
@@ -466,6 +463,9 @@ export class CustomizeView extends LitElement {
         // Font size default (in pixels)
         this.fontSize = 11;
 
+        // Font family default
+        this.selectedFontFamily = 'Inter';
+
         // Layout-specific defaults
         this.normalTransparency = 0.45;
         this.normalFontSize = 12;
@@ -501,6 +501,10 @@ export class CustomizeView extends LitElement {
         super.connectedCallback();
         // Load layout mode for display purposes
         this.loadLayoutMode();
+        // Load font family setting
+        this.loadFontFamily();
+        // Load Google Fonts
+        this.loadGoogleFonts();
         // Resize window for this view
         resizeLayout();
     }
@@ -1210,6 +1214,75 @@ export class CustomizeView extends LitElement {
         document.documentElement.style.setProperty('--response-font-size', `${fontSize}px`);
     }
 
+    loadFontFamily() {
+        const savedFontFamily = localStorage.getItem('selectedFontFamily');
+        if (savedFontFamily) {
+            this.selectedFontFamily = savedFontFamily;
+        } else {
+            // Set default font family if none is saved
+            this.selectedFontFamily = 'Inter';
+            localStorage.setItem('selectedFontFamily', this.selectedFontFamily);
+        }
+        this.updateFontFamily();
+    }
+
+    handleFontFamilyChange(e) {
+        this.selectedFontFamily = e.target.value;
+        localStorage.setItem('selectedFontFamily', this.selectedFontFamily);
+        this.updateFontFamily();
+    }
+
+    updateFontFamily() {
+        // Ensure we have a valid font family value
+        let fontFamily = this.selectedFontFamily;
+        
+        // If it's just a simple name like 'Inter', convert it to the full font stack
+        if (fontFamily && !fontFamily.includes(',')) {
+            const fontOptions = this.getFontFamilyOptions();
+            const matchingOption = fontOptions.find(option => option.label === fontFamily);
+            if (matchingOption) {
+                fontFamily = matchingOption.value;
+            }
+        }
+        
+        // Set the CSS variable with the full font stack
+        document.documentElement.style.setProperty('--font-family', fontFamily);
+        window.electronAPI?.ipcRenderer?.send('font-family-changed', fontFamily);
+    }
+
+    getFontFamilyOptions() {
+        // Load Google Fonts for non-web-safe fonts
+        this.loadGoogleFonts();
+        
+        return [
+            { value: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', label: 'Inter' },
+            { value: '"SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', label: 'SF Pro Display' },
+            { value: '"Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif', label: 'Segoe UI' },
+            { value: '"Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', label: 'Roboto' },
+            { value: '"Helvetica Neue", Helvetica, Arial, sans-serif', label: 'Helvetica Neue' },
+            { value: 'Arial, "Helvetica Neue", Helvetica, sans-serif', label: 'Arial' },
+            { value: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', label: 'System UI' },
+            { value: 'Georgia, "Times New Roman", Times, serif', label: 'Georgia' },
+            { value: '"Times New Roman", Times, Georgia, serif', label: 'Times New Roman' },
+            { value: '"Courier New", Courier, "Lucida Console", monospace', label: 'Courier New' },
+            { value: 'Monaco, "Lucida Console", "Courier New", monospace', label: 'Monaco' },
+            { value: '"Fira Code", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', label: 'Fira Code' }
+        ];
+    }
+
+    loadGoogleFonts() {
+        // Check if Google Fonts are already loaded
+        if (document.querySelector('link[href*="fonts.googleapis.com"]')) {
+            return;
+        }
+
+        // Create and append Google Fonts link
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@300;400;500;600&display=swap';
+        document.head.appendChild(link);
+    }
+
     render() {
         const profiles = this.getProfiles();
         const languages = this.getLanguages();
@@ -1317,6 +1390,23 @@ export class CustomizeView extends LitElement {
                         </div>
                         
                         <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Font Family</label>
+                                <select
+                                    class="form-control"
+                                    .value=${this.selectedFontFamily}
+                                    @change=${this.handleFontFamilyChange}
+                                >
+                                    ${this.getFontFamilyOptions().map(font => html`
+                                        <option value="${font.value}" ?selected=${this.selectedFontFamily === font.value}>
+                                            ${font.label}
+                                        </option>
+                                    `)}
+                                </select>
+                                <div class="form-description">
+                                    Choose the font family for the interface and AI responses
+                                </div>
+                            </div>
                             <div class="form-group">
                                 <div class="checkbox-group">
                                     <input

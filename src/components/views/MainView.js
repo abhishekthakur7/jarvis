@@ -4,7 +4,7 @@ import { resizeLayout } from '../../utils/windowResize.js';
 export class MainView extends LitElement {
     static styles = css`
         * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: var(--font-family, 'Inter', -apple-system, BlinkMacSystemFont, sans-serif);
             cursor: default;
             user-select: none;
         }
@@ -25,7 +25,7 @@ export class MainView extends LitElement {
             align-items: center;
             justify-content: center;
             height: 100%;
-            padding: 40px 20px;
+            padding: 20px 10px;
             position: relative;
         }
 
@@ -55,16 +55,16 @@ export class MainView extends LitElement {
         }
 
         .logo {
-            width: 64px;
-            height: 64px;
+            width: 32px;
+            height: 32px;
             background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
-            border-radius: 16px;
+            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             box-shadow: 
-                0 8px 32px rgba(0, 122, 255, 0.3),
-                0 4px 16px rgba(0, 0, 0, 0.2);
+                0 4px 16px rgba(0, 122, 255, 0.3),
+                0 2px 8px rgba(0, 0, 0, 0.2);
             animation: float 3s ease-in-out infinite;
         }
 
@@ -74,38 +74,38 @@ export class MainView extends LitElement {
         }
 
         .logo svg {
-            width: 32px;
-            height: 32px;
+            width: 16px;
+            height: 16px;
             color: white;
         }
 
         .welcome-text {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             position: relative;
             z-index: 2;
         }
 
         .welcome-title {
-            font-size: 32px;
+            font-size: 16px;
             font-weight: 700;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             background: linear-gradient(135deg, #ffffff 0%, #e5e5e7 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -0.5px;
+            letter-spacing: -0.25px;
         }
 
         .welcome-subtitle {
-            font-size: 16px;
+            font-size: 8px;
             color: var(--description-color, rgba(255, 255, 255, 0.7));
             font-weight: 400;
             line-height: 1.5;
         }
 
         .input-section {
-            width: 100%;
+            width: 70%;
             position: relative;
             z-index: 2;
         }
@@ -113,8 +113,8 @@ export class MainView extends LitElement {
         .input-group {
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
         .input-wrapper {
@@ -123,11 +123,11 @@ export class MainView extends LitElement {
 
         .input-icon {
             position: absolute;
-            left: 16px;
+            left: 8px;
             top: 50%;
             transform: translateY(-50%);
-            width: 20px;
-            height: 20px;
+            width: 10px;
+            height: 10px;
             color: var(--placeholder-color, rgba(255, 255, 255, 0.4));
             z-index: 1;
         }
@@ -136,10 +136,10 @@ export class MainView extends LitElement {
             background: rgba(255, 255, 255, 0.08);
             color: var(--text-color);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 16px 16px 16px 48px;
-            width: 83%;
-            border-radius: 12px;
-            font-size: 15px;
+            padding: 8px 8px 8px 24px;
+            width: 87%;
+            border-radius: 6px;
+            font-size: 7.5px;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
             position: relative;
@@ -189,20 +189,20 @@ export class MainView extends LitElement {
             background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
             color: white;
             border: none;
-            padding: 16px 32px;
-            border-radius: 12px;
-            font-size: 15px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 7.5px;
             font-weight: 600;
             white-space: nowrap;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
             box-shadow: 
-                0 4px 16px rgba(0, 122, 255, 0.3),
-                0 2px 8px rgba(0, 0, 0, 0.2);
+                0 2px 8px rgba(0, 122, 255, 0.3),
+                0 1px 4px rgba(0, 0, 0, 0.2);
             position: relative;
             overflow: hidden;
         }
@@ -249,19 +249,19 @@ export class MainView extends LitElement {
         .shortcut-icons {
             display: flex;
             align-items: center;
-            gap: 4px;
-            margin-left: 8px;
+            gap: 2px;
+            margin-left: 4px;
         }
 
         .shortcut-icons svg {
-            width: 16px;
-            height: 16px;
+            width: 8px;
+            height: 8px;
             opacity: 0.8;
         }
 
         .description {
             color: var(--description-color, rgba(255, 255, 255, 0.6));
-            font-size: 14px;
+            font-size: 7px;
             text-align: center;
             line-height: 1.5;
             position: relative;
@@ -285,8 +285,8 @@ export class MainView extends LitElement {
         .features-preview {
             display: flex;
             justify-content: center;
-            gap: 24px;
-            margin-top: 32px;
+            gap: 12px;
+            margin-top: 16px;
             opacity: 0.6;
         }
 
@@ -294,24 +294,24 @@ export class MainView extends LitElement {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            font-size: 12px;
+            gap: 4px;
+            font-size: 6px;
             color: var(--description-color);
         }
 
         .feature-icon {
-            width: 24px;
-            height: 24px;
+            width: 12px;
+            height: 12px;
             background: rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
+            border-radius: 3px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .feature-icon svg {
-            width: 14px;
-            height: 14px;
+            width: 7px;
+            height: 7px;
             color: var(--text-color);
         }
 
