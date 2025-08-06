@@ -4,64 +4,179 @@ import { resizeLayout } from '../../utils/windowResize.js';
 export class MainView extends LitElement {
     static styles = css`
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             cursor: default;
             user-select: none;
         }
 
-        .welcome {
-            font-size: 24px;
+        :host {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .background-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(
+                ellipse at center,
+                rgba(0, 122, 255, 0.1) 0%,
+                rgba(0, 122, 255, 0.05) 30%,
+                transparent 70%
+            );
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        .logo-container {
+            margin-bottom: 32px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 
+                0 8px 32px rgba(0, 122, 255, 0.3),
+                0 4px 16px rgba(0, 0, 0, 0.2);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .logo svg {
+            width: 32px;
+            height: 32px;
+            color: white;
+        }
+
+        .welcome-text {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .welcome-title {
+            font-size: 32px;
+            font-weight: 700;
             margin-bottom: 8px;
-            font-weight: 600;
-            margin-top: auto;
+            background: linear-gradient(135deg, #ffffff 0%, #e5e5e7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
+        .welcome-subtitle {
+            font-size: 16px;
+            color: var(--description-color, rgba(255, 255, 255, 0.7));
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .input-section {
+            width: 100%;
+            position: relative;
+            z-index: 2;
         }
 
         .input-group {
             display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 24px;
         }
 
-        .input-group input {
-            flex: 1;
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            color: var(--placeholder-color, rgba(255, 255, 255, 0.4));
+            z-index: 1;
         }
 
         input {
-            background: var(--input-background);
+            background: rgba(255, 255, 255, 0.08);
             color: var(--text-color);
-            border: 1px solid var(--button-border);
-            padding: 10px 14px;
-            width: 100%;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 16px 16px 16px 48px;
+            width: 83%;
+            border-radius: 12px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            position: relative;
         }
 
         input:focus {
             outline: none;
-            border-color: var(--focus-border-color);
-            box-shadow: 0 0 0 3px var(--focus-box-shadow);
-            background: var(--input-focus-background);
+            border-color: #007aff;
+            box-shadow: 
+                0 0 0 3px rgba(0, 122, 255, 0.2),
+                0 8px 32px rgba(0, 122, 255, 0.15);
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
         }
 
         input::placeholder {
-            color: var(--placeholder-color);
+            color: var(--placeholder-color, rgba(255, 255, 255, 0.5));
         }
 
-        /* Red blink animation for empty API key */
         input.api-key-error {
-            animation: blink-red 1s ease-in-out;
+            animation: shake 0.5s ease-in-out, blink-red 1s ease-in-out;
             border-color: #ff4444;
         }
 
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
         @keyframes blink-red {
-            0%,
-            100% {
-                border-color: var(--button-border);
-                background: var(--input-background);
+            0%, 100% {
+                border-color: rgba(255, 255, 255, 0.15);
+                background: rgba(255, 255, 255, 0.08);
             }
-            25%,
-            75% {
+            25%, 75% {
                 border-color: #ff4444;
                 background: rgba(255, 68, 68, 0.1);
             }
@@ -72,74 +187,157 @@ export class MainView extends LitElement {
         }
 
         .start-button {
-            background: var(--start-button-background);
-            color: var(--start-button-color);
-            border: 1px solid var(--start-button-border);
-            padding: 8px 16px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
+            background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
             white-space: nowrap;
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 
+                0 4px 16px rgba(0, 122, 255, 0.3),
+                0 2px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
         }
 
         .start-button:hover {
-            background: var(--start-button-hover-background);
-            border-color: var(--start-button-hover-border);
+            transform: translateY(-2px);
+            box-shadow: 
+                0 8px 32px rgba(0, 122, 255, 0.4),
+                0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button:hover::before {
+            left: 100%;
+        }
+
+        .start-button:active {
+            transform: translateY(0);
         }
 
         .start-button.initializing {
-            opacity: 0.5;
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .start-button.initializing:hover {
-            background: var(--start-button-background);
-            border-color: var(--start-button-border);
+            transform: none;
+            box-shadow: 
+                0 4px 16px rgba(0, 122, 255, 0.3),
+                0 2px 8px rgba(0, 0, 0, 0.2);
         }
 
         .shortcut-icons {
             display: flex;
             align-items: center;
-            gap: 2px;
-            margin-left: 4px;
+            gap: 4px;
+            margin-left: 8px;
         }
 
         .shortcut-icons svg {
-            width: 14px;
-            height: 14px;
-        }
-
-        .shortcut-icons svg path {
-            stroke: currentColor;
-        }
-
-        .description {
-            color: var(--description-color);
-            font-size: 14px;
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .link {
-            color: var(--link-color);
-            text-decoration: underline;
-            cursor: pointer;
-        }
-
-        .shortcut-hint {
-            color: var(--description-color);
-            font-size: 11px;
+            width: 16px;
+            height: 16px;
             opacity: 0.8;
         }
 
-        :host {
-            height: 100%;
+        .description {
+            color: var(--description-color, rgba(255, 255, 255, 0.6));
+            font-size: 14px;
+            text-align: center;
+            line-height: 1.5;
+            position: relative;
+            z-index: 2;
+        }
+
+        .link {
+            color: #007aff;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        .link:hover {
+            color: #5856d6;
+            border-bottom-color: #5856d6;
+        }
+
+        .features-preview {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 32px;
+            opacity: 0.6;
+        }
+
+        .feature-item {
             display: flex;
             flex-direction: column;
-            width: 100%;
-            max-width: 500px;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--description-color);
+        }
+
+        .feature-icon {
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feature-icon svg {
+            width: 14px;
+            height: 14px;
+            color: var(--text-color);
+        }
+
+        @media (max-height: 600px) {
+            .welcome-container {
+                padding: 20px;
+            }
+            
+            .logo {
+                width: 48px;
+                height: 48px;
+            }
+            
+            .logo svg {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .welcome-title {
+                font-size: 24px;
+            }
+            
+            .features-preview {
+                display: none;
+            }
         }
     `;
 
@@ -277,30 +475,86 @@ export class MainView extends LitElement {
         if (isMac) {
             return html`Start Session <span class="shortcut-icons">${cmdIcon}${enterIcon}</span>`;
         } else {
-            return html`Start Session <span class="shortcut-icons">Ctrl${enterIcon}</span>`;
+            return html`Start Session <span class="shortcut-icons">Shift+Alt+4</span>`;
         }
     }
 
     render() {
         return html`
-            <div class="welcome">Welcome</div>
+            <div class="welcome-container">
+                <div class="background-gradient"></div>
+                
+                <div class="logo-container">
+                    <div class="logo">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
 
-            <div class="input-group">
-                <input
-                    type="password"
-                    placeholder="Enter your Gemini API Key"
-                    .value=${localStorage.getItem('apiKey') || ''}
-                    @input=${this.handleInput}
-                    class="${this.showApiKeyError ? 'api-key-error' : ''}"
-                />
-                <button @click=${this.handleStartClick} class="start-button ${this.isInitializing ? 'initializing' : ''}">
-                    ${this.getStartButtonText()}
-                </button>
+                <div class="welcome-text">
+                    <h1 class="welcome-title">Welcome to Jarvis</h1>
+                    <p class="welcome-subtitle">Your intelligent AI assistant is ready to help</p>
+                </div>
+
+                <div class="input-section">
+                    <div class="input-group">
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <input
+                                type="password"
+                                placeholder="Enter your Gemini API Key"
+                                .value=${localStorage.getItem('apiKey') || ''}
+                                @input=${this.handleInput}
+                                class="${this.showApiKeyError ? 'api-key-error' : ''}"
+                            />
+                        </div>
+                        <button @click=${this.handleStartClick} class="start-button ${this.isInitializing ? 'initializing' : ''}">
+                            ${this.getStartButtonText()}
+                        </button>
+                    </div>
+                    
+                    <p class="description">
+                        Don't have an API key?
+                        <span @click=${this.handleAPIKeyHelpClick} class="link">Get one here</span>
+                    </p>
+                </div>
+
+                <div class="features-preview">
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <span>Smart Chat</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                <rect x="9" y="9" width="6" height="6" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <span>Screen Capture</span>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1 1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        <span>Customizable</span>
+                    </div>
+                </div>
             </div>
-            <p class="description">
-                dont have an api key?
-                <span @click=${this.handleAPIKeyHelpClick} class="link">get one here</span>
-            </p>
         `;
     }
 }
