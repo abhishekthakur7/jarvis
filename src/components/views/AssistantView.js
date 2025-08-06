@@ -9,19 +9,26 @@ export class AssistantView extends LitElement {
         }
 
         * {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
             cursor: default;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         .response-container {
             height: calc(100% - 5px);
             overflow-x: hidden;
             overflow-y: auto;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: var(--response-font-size, 18px);
-            line-height: 1.2;
+            line-height: 1.5;
             background: var(--main-content-background);
-            padding: 2px;
+            padding: 12px;
+            letter-spacing: 0.01em;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
         }
 
         /* Animated word-by-word reveal */
@@ -43,73 +50,114 @@ export class AssistantView extends LitElement {
         .response-container h4,
         .response-container h5,
         .response-container h6 {
-            margin: 1.2em 0 0.6em 0;
+            margin: 1.5em 0 0.75em 0;
             color: var(--text-color);
             font-weight: 600;
+            letter-spacing: -0.02em;
+            line-height: 1.3;
         }
 
         .response-container h1 {
             font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         .response-container h2 {
             font-size: 1.5em;
+            font-weight: 650;
+            color: #f0f0f0;
         }
         .response-container h3 {
             font-size: 1.3em;
+            font-weight: 600;
+            color: #e8e8e8;
         }
         .response-container h4 {
             font-size: 1.1em;
+            font-weight: 600;
+            color: #e0e0e0;
         }
         .response-container h5 {
             font-size: 1em;
+            font-weight: 600;
+            color: #d8d8d8;
         }
         .response-container h6 {
             font-size: 0.9em;
+            font-weight: 600;
+            color: #d0d0d0;
         }
 
         .response-container p {
-            margin: 0.8em 0;
+            margin: 1em 0;
             color: var(--text-color);
+            line-height: 1.6;
+            letter-spacing: 0.005em;
         }
 
         .response-container ul,
         .response-container ol {
-            margin: 0.8em 0;
-            padding-left: 2em;
+            margin: 1.2em 0;
+            padding-left: 1.8em;
             color: var(--text-color);
+            line-height: 1.6;
         }
 
         .response-container li {
-            margin: 0.4em 0;
+            margin: 0.6em 0;
+            line-height: 1.6;
+            letter-spacing: 0.005em;
+        }
+
+        .response-container ul li::marker {
+            color: #007aff;
+        }
+
+        .response-container ol li::marker {
+            color: #007aff;
+            font-weight: 600;
         }
 
         .response-container blockquote {
-            margin: 1em 0;
-            padding: 0.5em 1em;
-            border-left: 4px solid var(--focus-border-color);
-            background: rgba(0, 122, 255, 0.1);
+            margin: 1.5em 0;
+            padding: 1em 1.5em;
+            border-left: 4px solid #007aff;
+            background: rgba(0, 122, 255, 0.08);
             font-style: italic;
+            border-radius: 0 6px 6px 0;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-left: 4px solid #007aff;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.1);
         }
 
         .response-container code {
-            background: rgb(240 141 73 / 0%);
-            padding: 0.3em 0.4em;
-            border-radius: 3px;
-            font-family: Menlo, "Ubuntu Mono", monospace;
-            font-size: 1em;
-            color: gold;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #ffd700;
             white-space: pre-wrap;
             word-break: break-word;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-weight: 500;
+            letter-spacing: 0.02em;
         }
 
         .response-container pre {
-            background: var(--input-background);
-            border: 1px solid var(--button-border);
-            border-radius: 6px;
-            padding: 1em;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 1.2em;
             white-space: pre-wrap;
             word-break: break-word;
-            margin: 0px;
+            margin: 1.5em 0;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
         }
 
         .response-container pre code {
@@ -425,25 +473,32 @@ export class AssistantView extends LitElement {
         }
 
         .nav-button {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.05);
             color: white;
-            border: none;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             padding: 4px;
-            border-radius: 50%;
+            border-radius: 8px;
             font-size: 12px;
             display: flex;
             align-items: center;
             width: 36px;
             height: 36px;
             justify-content: center;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(10px);
         }
 
         .nav-button:hover {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .nav-button:disabled {
             opacity: 0.3;
+            transform: none;
+            box-shadow: none;
         }
 
         .nav-button svg {
@@ -459,20 +514,23 @@ export class AssistantView extends LitElement {
         }
 
         .microphone-button {
-            background: transparent;
+            background: rgba(255, 255, 255, 0.05);
             border: 2px solid #666;
-            border-radius: 50%;
+            border-radius: 12px;
             width: 40px;
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
         }
 
         .microphone-button:hover {
             background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
 
         .microphone-button.off {
@@ -536,25 +594,27 @@ export class AssistantView extends LitElement {
         }
 
         .scroll-speed-controls {
-            display: -webkit-box;
+            display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
             margin-left: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .scroll-speed-controls button {
             background: transparent;
             color: white;
             border: none;
-            padding: 2px 4px;
-            border-radius: 2px;
+            padding: 4px 6px;
+            border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s ease;
-            min-width: 18px;
-            height: 15px;
+            transition: all 0.2s ease;
+            min-width: 5px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -562,34 +622,36 @@ export class AssistantView extends LitElement {
 
         .scroll-speed-controls button:hover {
             background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
         }
 
         .scroll-speed-controls span {
             font-size: 10px;
             padding: 0 4px;
-            min-width: 100px;
             text-align: center;
         }
 
         .font-size-controls {
             display: flex;
             align-items: center;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
         }
 
         .font-size-button {
             background: transparent;
             color: white;
             border: none;
-            padding: 2px 4px;
-            border-radius: 4px;
+            padding: 4px 6px;
+            border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s ease;
-            min-width: 18px;
-            height: 15px;
+            transition: all 0.2s ease;
+            min-width: 20px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -597,6 +659,7 @@ export class AssistantView extends LitElement {
 
         .font-size-button:hover {
             background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
         }
 
         .font-size-label {
@@ -682,6 +745,62 @@ export class AssistantView extends LitElement {
 
         .speaker-button.disabled .speaker-icon {
             color: #666;
+        }
+
+        /* Compact mode specific improvements */
+        :host(.compact-mode) .response-container {
+            padding: 8px;
+            line-height: 1.7;
+            letter-spacing: 0.02em;
+        }
+
+        :host(.compact-mode) .response-container p {
+            line-height: 1.8;
+            margin: 0.8em 0;
+        }
+
+        :host(.compact-mode) .response-container h1,
+        :host(.compact-mode) .response-container h2,
+        :host(.compact-mode) .response-container h3,
+        :host(.compact-mode) .response-container h4,
+        :host(.compact-mode) .response-container h5,
+        :host(.compact-mode) .response-container h6 {
+            line-height: 1.4;
+            margin: 1.2em 0 0.6em 0;
+        }
+
+        :host(.compact-mode) .response-container code {
+            font-size: 0.95em;
+            padding: 0.25em 0.5em;
+            letter-spacing: 0.03em;
+        }
+
+        :host(.compact-mode) .response-container ul,
+        :host(.compact-mode) .response-container ol {
+            line-height: 1.8;
+            margin: 1em 0;
+        }
+
+        :host(.compact-mode) .response-container li {
+            margin: 0.5em 0;
+            line-height: 1.8;
+        }
+
+        /* Enhanced readability for very small fonts */
+        @media (max-width: 400px) {
+            .response-container {
+                letter-spacing: 0.03em;
+                line-height: 1.8;
+            }
+            
+            .response-container p {
+                line-height: 1.9;
+            }
+            
+            .response-container code {
+                font-size: 1em;
+                letter-spacing: 0.04em;
+            }
         }
     `;
 
@@ -1193,11 +1312,32 @@ export class AssistantView extends LitElement {
         }
     }
 
+    updateLayoutModeClass() {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        
+        // Remove all layout mode classes
+        this.classList.remove('compact-mode', 'ultra-compact-mode', 'system-design-mode', 'focus-mode');
+        
+        // Add the current layout mode class
+        if (layoutMode === 'compact') {
+            this.classList.add('compact-mode');
+        } else if (layoutMode === 'ultra-compact') {
+            this.classList.add('ultra-compact-mode');
+        } else if (layoutMode === 'system-design') {
+            this.classList.add('system-design-mode');
+        } else if (layoutMode === 'focus-mode') {
+            this.classList.add('focus-mode');
+        }
+    }
+
     connectedCallback() {
         super.connectedCallback();
 
         // Load and apply font size
         this.loadFontSize();
+        
+        // Update layout mode class
+        this.updateLayoutModeClass();
 
         // Set up IPC listeners for keyboard shortcuts
         if (window.require) {
@@ -1232,6 +1372,7 @@ export class AssistantView extends LitElement {
             this.handleLayoutModeChange = () => {
                 console.log('[AssistantView] Layout mode changed, reloading settings');
                 this.loadLayoutSpecificSettings();
+                this.updateLayoutModeClass();
                 this.requestUpdate();
             };
             
