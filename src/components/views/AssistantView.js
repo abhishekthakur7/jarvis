@@ -138,7 +138,7 @@ export class AssistantView extends LitElement {
             background: rgba(255, 255, 255, 0.08);
             padding: 0.2em 0.4em;
             border-radius: 4px;
-            font-family: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+            font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
             font-size: 0.9em;
             color: #ffd700;
             white-space: pre-wrap;
@@ -170,10 +170,12 @@ export class AssistantView extends LitElement {
         .response-container pre[class*="language-"] {
             background: var(--code-block-background) !important;
             color: #ccc !important;
+            font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
         }
         
         .response-container code[class*="language-"] {
             color: #ccc !important;
+            font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
         }
         
         .response-container .token.comment,

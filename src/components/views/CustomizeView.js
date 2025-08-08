@@ -405,6 +405,7 @@ export class CustomizeView extends LitElement {
         backgroundTransparency: { type: Number },
         fontSize: { type: Number },
         selectedFontFamily: { type: String },
+        selectedCodeFontFamily: { type: String },
         // Layout-specific settings
         normalTransparency: { type: Number },
         normalFontSize: { type: Number },
@@ -466,6 +467,9 @@ export class CustomizeView extends LitElement {
         // Font family default
         this.selectedFontFamily = 'Inter';
 
+        // Code font family default
+        this.selectedCodeFontFamily = 'Fira Code';
+
         // Layout-specific defaults
         this.normalTransparency = 0.45;
         this.normalFontSize = 12;
@@ -494,6 +498,7 @@ export class CustomizeView extends LitElement {
         this.loadAdvancedModeSettings();
         this.loadBackgroundTransparency();
         this.loadFontSize();
+        this.loadCodeFontFamily();
         this.loadLayoutSpecificSettings();
     }
 
@@ -503,6 +508,8 @@ export class CustomizeView extends LitElement {
         this.loadLayoutMode();
         // Load font family setting
         this.loadFontFamily();
+        // Load code font family setting
+        this.loadCodeFontFamily();
         // Load Google Fonts
         this.loadGoogleFonts();
         // Resize window for this view
@@ -1270,6 +1277,59 @@ export class CustomizeView extends LitElement {
         ];
     }
 
+    loadCodeFontFamily() {
+        const savedCodeFontFamily = localStorage.getItem('selectedCodeFontFamily');
+        if (savedCodeFontFamily) {
+            this.selectedCodeFontFamily = savedCodeFontFamily;
+        } else {
+            // Set default code font family if none is saved
+            this.selectedCodeFontFamily = 'Fira Code';
+            localStorage.setItem('selectedCodeFontFamily', this.selectedCodeFontFamily);
+        }
+        this.updateCodeFontFamily();
+    }
+
+    handleCodeFontFamilyChange(e) {
+        this.selectedCodeFontFamily = e.target.value;
+        localStorage.setItem('selectedCodeFontFamily', this.selectedCodeFontFamily);
+        this.updateCodeFontFamily();
+    }
+
+    updateCodeFontFamily() {
+        // Ensure we have a valid font family value
+        let fontFamily = this.selectedCodeFontFamily;
+        
+        // If it's just a simple name like 'Fira Code', convert it to the full font stack
+        if (fontFamily && !fontFamily.includes(',')) {
+            const fontOptions = this.getCodeFontFamilyOptions();
+            const matchingOption = fontOptions.find(option => option.label === fontFamily);
+            if (matchingOption) {
+                fontFamily = matchingOption.value;
+            }
+        }
+        
+        // Set the CSS variable with the full font stack for code blocks
+        document.documentElement.style.setProperty('--code-font-family', fontFamily);
+    }
+
+    getCodeFontFamilyOptions() {
+        // Load Google Fonts for code fonts
+        this.loadGoogleFonts();
+        
+        return [
+            { value: '"Fira Code", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', label: 'Fira Code' },
+            { value: '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace', label: 'SF Mono' },
+            { value: 'Monaco, "Lucida Console", "Courier New", monospace', label: 'Monaco' },
+            { value: '"Cascadia Code", "Fira Code", "SF Mono", Monaco, "Roboto Mono", Consolas, monospace', label: 'Cascadia Code' },
+            { value: '"Roboto Mono", "Fira Code", "SF Mono", Monaco, Consolas, "Courier New", monospace', label: 'Roboto Mono' },
+            { value: 'Consolas, "Courier New", Monaco, "Lucida Console", monospace', label: 'Consolas' },
+            { value: '"Courier New", Courier, "Lucida Console", monospace', label: 'Courier New' },
+            { value: '"JetBrains Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace', label: 'JetBrains Mono' },
+            { value: '"Source Code Pro", "Fira Code", "SF Mono", Monaco, Consolas, monospace', label: 'Source Code Pro' },
+            { value: '"Ubuntu Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace', label: 'Ubuntu Mono' }
+        ];
+    }
+
     loadGoogleFonts() {
         // Check if Google Fonts are already loaded
         if (document.querySelector('link[href*="fonts.googleapis.com"]')) {
@@ -1279,7 +1339,7 @@ export class CustomizeView extends LitElement {
         // Create and append Google Fonts link
         const link = document.createElement('link');
         link.rel = 'stylesheet';
-        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@300;400;500;600&display=swap';
+        link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&family=Fira+Code:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500;600&family=Source+Code+Pro:wght@300;400;500;600&family=Ubuntu+Mono:wght@400;700&display=swap';
         document.head.appendChild(link);
     }
 
@@ -1407,6 +1467,26 @@ export class CustomizeView extends LitElement {
                                     Choose the font family for the interface and AI responses
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <label class="form-label">Code Font Family</label>
+                                <select
+                                    class="form-control"
+                                    .value=${this.selectedCodeFontFamily}
+                                    @change=${this.handleCodeFontFamilyChange}
+                                >
+                                    ${this.getCodeFontFamilyOptions().map(font => html`
+                                        <option value="${font.value}" ?selected=${this.selectedCodeFontFamily === font.value}>
+                                            ${font.label}
+                                        </option>
+                                    `)}
+                                </select>
+                                <div class="form-description">
+                                    Choose the font family specifically for code snippets
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
                             <div class="form-group">
                                 <div class="checkbox-group">
                                     <input
@@ -2030,19 +2110,18 @@ export class CustomizeView extends LitElement {
 
                     <div class="form-grid">
                         <div class="checkbox-group">
-                                <input
-                                    type="checkbox"
-                                    class="checkbox-input"
-                                    id="advanced-mode"
-                                    .checked=${this.advancedMode}
-                                    @change=${this.handleAdvancedModeChange}
-                                />
-                                <label for="advanced-mode" class="checkbox-label"> Enable Advanced Mode </label>
-                            </div>
-                            <div class="form-description" style="margin-left: 24px; margin-top: -8px;">
-                                Unlock experimental features, developer tools, and advanced configuration options
-                                <br /><strong>Note:</strong> Advanced mode adds a new icon to the main navigation bar
-                            </div>
+                            <input
+                                type="checkbox"
+                                class="checkbox-input"
+                                id="advanced-mode"
+                                .checked=${this.advancedMode}
+                                @change=${this.handleAdvancedModeChange}
+                            />
+                            <label for="advanced-mode" class="checkbox-label"> Enable Advanced Mode </label>
+                        </div>
+                        <div class="form-description" style="margin-left: 24px; margin-top: -8px;">
+                            Unlock experimental features, developer tools, and advanced configuration options
+                            <br /><strong>Note:</strong> Advanced mode adds a new icon to the main navigation bar
                         </div>
                     </div>
                 </div>

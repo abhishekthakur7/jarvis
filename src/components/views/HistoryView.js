@@ -106,7 +106,7 @@ export class HistoryView extends LitElement {
             background: rgb(240 141 73 / 0%);
             padding: 0.3em 0.4em;
             border-radius: 3px;
-            font-family: Menlo, "Ubuntu Mono", monospace;
+            font-family: var(--code-font-family, Menlo, "Ubuntu Mono", monospace) !important;
             font-size: 1em;
             color: gold;
             white-space: pre-wrap;
@@ -134,10 +134,12 @@ export class HistoryView extends LitElement {
         .message pre[class*="language-"] {
             background: var(--code-block-background) !important;
             color: #ccc !important;
+            font-family: var(--code-font-family, Menlo, "Ubuntu Mono", monospace) !important;
         }
         
         .message code[class*="language-"] {
             color: #ccc !important;
+            font-family: var(--code-font-family, Menlo, "Ubuntu Mono", monospace) !important;
         }
         
         .message .token.comment,
