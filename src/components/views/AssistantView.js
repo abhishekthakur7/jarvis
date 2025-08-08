@@ -866,13 +866,16 @@ export class AssistantView extends LitElement {
         // Check if marked is available
         if (typeof window !== 'undefined' && window.marked) {
             try {
+                // Fix incomplete code blocks during streaming
+                let processedContent = this.fixIncompleteCodeBlocks(content);
+                
                 // Configure marked for better security and formatting
                 window.marked.setOptions({
                     breaks: true,
                     gfm: true,
                     sanitize: false, // We trust the AI responses
                 });
-                let rendered = window.marked.parse(content);
+                let rendered = window.marked.parse(processedContent);
                 rendered = this.renderMermaidDiagrams(rendered);
                 rendered = this.highlightJavaCode(rendered);
                 rendered = this.wrapWordsInSpans(rendered);
@@ -1052,6 +1055,50 @@ export class AssistantView extends LitElement {
         ).length;
         
         return keywordCount >= 2;
+    }
+
+    fixIncompleteCodeBlocks(content) {
+        // Handle streaming code blocks that might be incomplete or concatenated
+        
+        // First, fix concatenated code blocks (e.g., "text```java" -> "text\n```java")
+        content = content.replace(/(\S)```(\w*)/g, '$1\n```$2');
+        
+        // Second, fix text concatenated after closing backticks (e.g., "```text" -> "```\ntext")
+        content = content.replace(/```(\S)/g, '```\n$1');
+        
+        const lines = content.split('\n');
+        const processedLines = [];
+        let inCodeBlock = false;
+        let codeBlockStart = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            
+            // Check for code block start
+            if (line.trim().startsWith('```')) {
+                if (!inCodeBlock) {
+                    // Starting a new code block
+                    inCodeBlock = true;
+                    codeBlockStart = i;
+                    processedLines.push(line);
+                } else {
+                    // Ending a code block
+                    inCodeBlock = false;
+                    processedLines.push(line);
+                    codeBlockStart = -1;
+                }
+            } else {
+                processedLines.push(line);
+            }
+        }
+        
+        // If we're still in a code block at the end (incomplete), close it temporarily
+        if (inCodeBlock && codeBlockStart !== -1) {
+            // Add a temporary closing marker for proper rendering
+            processedLines.push('```');
+        }
+        
+        return processedLines.join('\n');
     }
 
     wrapWordsInSpans(html) {
