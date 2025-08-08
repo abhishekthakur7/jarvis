@@ -98,7 +98,7 @@ export class MainView extends LitElement {
         }
 
         .welcome-subtitle {
-            font-size: 8px;
+            font-size: 11px;
             color: var(--description-color, rgba(255, 255, 255, 0.7));
             font-weight: 400;
             line-height: 1.5;
@@ -191,7 +191,7 @@ export class MainView extends LitElement {
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
-            font-size: 7.5px;
+            font-size: 12px;
             font-weight: 600;
             white-space: nowrap;
             display: flex;
@@ -261,7 +261,7 @@ export class MainView extends LitElement {
 
         .description {
             color: var(--description-color, rgba(255, 255, 255, 0.6));
-            font-size: 7px;
+            font-size: 11px;
             text-align: center;
             line-height: 1.5;
             position: relative;
