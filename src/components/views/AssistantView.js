@@ -125,7 +125,7 @@ export class AssistantView extends LitElement {
             margin: 1.5em 0;
             padding: 1em 1.5em;
             border-left: 4px solid #007aff;
-            background: rgba(0, 122, 255, 0.08);
+            background: var(--blockquote-background, rgba(0, 122, 255, 0.08));
             font-style: italic;
             border-radius: 0 6px 6px 0;
             backdrop-filter: blur(10px);
@@ -135,7 +135,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container code {
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--inline-code-background, rgba(255, 255, 255, 0.08));
             padding: 0.2em 0.4em;
             border-radius: 4px;
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
@@ -149,7 +149,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container pre {
-            background: rgba(0, 0, 0, 0.4);
+            background: var(--pre-code-background, rgba(0, 0, 0, 0.4));
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
             padding: 1.2em;

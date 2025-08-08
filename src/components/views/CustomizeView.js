@@ -900,6 +900,10 @@ export class CustomizeView extends LitElement {
         root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${this.backgroundTransparency * 0.75})`);
         root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${this.backgroundTransparency * 0.5})`);
         root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${this.backgroundTransparency})`);
+        // Add new variables for response container content
+        root.style.setProperty('--inline-code-background', `rgba(255, 255, 255, ${this.backgroundTransparency * 0.08})`);
+        root.style.setProperty('--pre-code-background', `rgba(0, 0, 0, ${this.backgroundTransparency * 0.4})`);
+        root.style.setProperty('--blockquote-background', `rgba(0, 122, 255, ${this.backgroundTransparency * 0.08})`);
     }
 
     loadFontSize() {
