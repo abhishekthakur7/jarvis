@@ -949,6 +949,22 @@ cheddar.isMicrophoneActive = isMicrophoneActive;
 cheddar.setSpeakerDetectionEnabled = setSpeakerDetectionEnabled;
 cheddar.isSpeakerDetectionEnabled = isSpeakerDetectionEnabled;
 
+// Add clue mode state management functions to cheddar object
+cheddar.setClueModeEnabled = async (enabled) => {
+    if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        return await ipcRenderer.invoke('set-clue-mode', enabled);
+    }
+    return { success: false, error: 'IPC not available' };
+};
+cheddar.isClueModeEnabled = async () => {
+    if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        return await ipcRenderer.invoke('is-clue-mode-enabled');
+    }
+    return { success: false, error: 'IPC not available' };
+};
+
 // Add reconnection function to cheddar object
 cheddar.attemptReconnection = attemptReconnection;
 

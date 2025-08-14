@@ -147,7 +147,7 @@ export class AssistantApp extends LitElement {
         this.focusMode = localStorage.getItem('focusMode') === 'true';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
         this.interviewMode = false;
-        this.clueMode = false;
+        this.clueMode = localStorage.getItem('clueMode') === 'true'; // Initialize from localStorage
         this.clueSuggestions = [];
         this.clueSuggestionsLoading = false;
         this.responses = [];
@@ -201,6 +201,14 @@ export class AssistantApp extends LitElement {
             ipcRenderer.on('microphone-transcription-update', (_, data) => {
                 this.handleMicrophoneTranscriptionUpdate(data);
             });
+            ipcRenderer.on('clue-suggestions-update', (_, suggestions) => {
+                this.clueSuggestions = suggestions;
+                this.requestUpdate();
+            });
+            ipcRenderer.on('clue-suggestions-loading', (_, isLoading) => {
+                this.clueSuggestionsLoading = isLoading;
+                this.requestUpdate();
+            });
 
         }
         
@@ -210,6 +218,9 @@ export class AssistantApp extends LitElement {
         
         // Add event listeners to disable auto-scroll on user interaction
         this.boundDisableAutoScroll = this.disableAutoScroll.bind(this);
+        
+        // Initialize clue mode state
+        this.initializeClueModeState();
         window.addEventListener('keydown', this.boundDisableAutoScroll);
         window.addEventListener('mousedown', this.boundDisableAutoScroll);
         
@@ -724,6 +735,35 @@ export class AssistantApp extends LitElement {
         }
     }
 
+    async initializeClueModeState() {
+        // Wait for cheddar to be available
+        if (!window.cheddar || !window.cheddar.isClueModeEnabled) {
+            setTimeout(() => this.initializeClueModeState(), 100);
+            return;
+        }
+        
+        try {
+            // Get the current backend state
+            const backendResult = await window.cheddar.isClueModeEnabled();
+            if (backendResult.success) {
+                const backendState = backendResult.enabled;
+                
+                // If frontend and backend states differ, sync them
+                if (this.clueMode !== backendState) {
+                    console.log(`🔍 [CLUE_MODE_SYNC] Syncing clue mode state: frontend=${this.clueMode}, backend=${backendState}`);
+                    
+                    // Update backend to match frontend (localStorage takes precedence)
+                    await window.cheddar.setClueModeEnabled(this.clueMode);
+                    console.log(`🔍 [CLUE_MODE_SYNC] Backend clue mode state updated to: ${this.clueMode}`);
+                }
+                
+                console.log(`🔍 [CLUE_MODE_INIT] Clue mode initialized: ${this.clueMode}`);
+            }
+        } catch (error) {
+            console.error('🔍 [CLUE_MODE_ERROR] Failed to initialize clue mode state:', error);
+        }
+    }
+
     toggleAutoScroll() {
         const jarvisView = this.shadowRoot.querySelector('jarvis-view');
         if (jarvisView && jarvisView.toggleAutoScroll) {
@@ -933,6 +973,9 @@ export class AssistantApp extends LitElement {
         }
         if (changedProperties.has('scrollSpeed')) {
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
+        }
+        if (changedProperties.has('clueMode')) {
+            localStorage.setItem('clueMode', this.clueMode.toString());
         }
     }
 
@@ -1230,8 +1273,20 @@ export class AssistantApp extends LitElement {
         this.requestUpdate();
     }
 
-    handleClueModeToggle() {
+    async handleClueModeToggle() {
         this.clueMode = !this.clueMode;
+        
+        // Sync clue mode state with backend
+        if (window.require) {
+            const { ipcRenderer } = window.require('electron');
+            try {
+                await ipcRenderer.invoke('set-clue-mode', this.clueMode);
+                console.log('🔍 [CLUE_MODE] Clue mode toggled:', this.clueMode);
+            } catch (error) {
+                console.error('🔍 [CLUE_MODE_ERROR] Failed to sync clue mode with backend:', error);
+            }
+        }
+        
         this.requestUpdate();
     }
 }

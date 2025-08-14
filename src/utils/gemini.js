@@ -14,6 +14,7 @@ let isInitializingSession = false;
 let isInitializingMicrophoneSession = false;
 let isMicrophoneActive = false;
 let isSpeakerDetectionEnabled = true; // Default to enabled
+let isClueMode = false; // Clue mode state
 
 // API key management
 let apiKeyManager = null;
@@ -31,6 +32,11 @@ let speakerConversationHistory = [];
 let microphoneWordCount = 0;
 let isProcessingTextMessage = false;
 const MAX_MICROPHONE_WORDS = 200;
+
+// Microphone clue mode processing
+let microphoneInputDebounceTimer = null;
+let pendingMicrophoneInput = '';
+const MICROPHONE_INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay for microphone input
 
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
@@ -510,7 +516,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                 onopen: function () {
                     console.log('Microphone transcription session connected');
                 },
-                onmessage: function (message) {
+                onmessage: async function (message) {
                     console.log('Microphone session message received:', message);
                     // Handle transcription input for microphone
                     if (message.serverContent?.inputTranscription?.text) {
@@ -558,6 +564,38 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                                 text: transcriptionText,
                                 isFinal: false // Gemini sends partial transcriptions
                             });
+                            
+                            // Handle clue mode processing for microphone input
+                            if (isClueMode) {
+                                // Accumulate microphone input for clue processing
+                                pendingMicrophoneInput += transcriptionText + ' ';
+                                
+                                // Clear existing timer
+                                if (microphoneInputDebounceTimer) {
+                                    clearTimeout(microphoneInputDebounceTimer);
+                                }
+                                
+                                // Set new timer to process after delay
+                                microphoneInputDebounceTimer = setTimeout(async () => {
+                                    if (pendingMicrophoneInput.trim()) {
+                                        console.log('🔍 [MICROPHONE_CLUE_MODE] Processing microphone input for clue suggestions:', pendingMicrophoneInput.trim());
+                                        
+                                        // Send to clue engine for suggestion generation
+                                        try {
+                                            sendToRenderer('clue-suggestions-loading', true);
+                                            const suggestions = await generateClueSuggestions(pendingMicrophoneInput.trim());
+                                            sendToRenderer('clue-suggestions-update', suggestions);
+                                            sendToRenderer('clue-suggestions-loading', false);
+                                        } catch (error) {
+                                            console.error('🔍 [MICROPHONE_CLUE_MODE_ERROR] Error generating suggestions:', error);
+                                            sendToRenderer('clue-suggestions-loading', false);
+                                        }
+                                        
+                                        // Reset pending input
+                                        pendingMicrophoneInput = '';
+                                    }
+                                }, MICROPHONE_INPUT_DEBOUNCE_DELAY);
+                            }
 
                             //console.log(microphoneConversationHistory);
                         }
@@ -703,9 +741,36 @@ async function processPendingSpeakerInput() {
         // Add to context accumulator
         contextAccumulator += pendingInput + ' ';
         
-        // When speaker detection is toggled off, always send accumulated input to Gemini
-        // regardless of whether it's a complete question
+        // When speaker detection is toggled off, check if clue mode is enabled
         if (contextAccumulator.trim()) {
+            // Check if clue mode is enabled - if so, send to clue engine instead
+            if (isClueMode) {
+                console.log('🔍 [CLUE_MODE_PENDING] Clue mode enabled during pending input processing, sending to clue engine:', contextAccumulator.trim());
+                
+                // Save transcription to history
+                speakerConversationHistory.push({
+                    timestamp: Date.now(),
+                    transcription: contextAccumulator.trim(),
+                    type: 'speaker'
+                });
+                
+                // Send to clue engine for suggestion generation
+                try {
+                    sendToRenderer('clue-suggestions-loading', true);
+                    const suggestions = await generateClueSuggestions(contextAccumulator.trim());
+                    sendToRenderer('clue-suggestions-update', suggestions);
+                    sendToRenderer('clue-suggestions-loading', false);
+                } catch (error) {
+                    console.error('🔍 [CLUE_MODE_PENDING_ERROR] Error generating suggestions:', error);
+                    sendToRenderer('clue-suggestions-loading', false);
+                }
+                
+                // Reset context and return (don't process through main AI)
+                contextAccumulator = '';
+                return;
+            }
+            
+            // Normal processing when clue mode is disabled
             // Add to question queue
             questionQueue.push(contextAccumulator.trim());
             
@@ -762,6 +827,115 @@ async function processPendingSpeakerInput() {
 
 function isSpeakerDetectionCurrentlyEnabled() {
     return isSpeakerDetectionEnabled;
+}
+
+// Clue mode state management
+function setClueMode(enabled) {
+    isClueMode = enabled;
+    console.log(`🔍 [CLUE_MODE] Clue mode ${enabled ? 'enabled' : 'disabled'}`);
+}
+
+function isClueModeCurrent() {
+    return isClueMode;
+}
+
+// Clue engine function to generate suggestions from transcription
+async function generateClueSuggestions(transcriptionText) {
+    if (!apiKeyManager) {
+        console.error('No API key manager available for clue generation');
+        return [];
+    }
+
+    try {
+        console.log('🔍 [CLUE_ENGINE] Generating suggestions for:', transcriptionText);
+        
+        // Get current API key
+        const currentApiKey = apiKeyManager.getCurrentApiKey();
+        if (!currentApiKey) {
+            console.error('No valid API keys available for clue generation');
+            return [];
+        }
+
+        // Create a separate client for clue generation (non-streaming)
+        const ai = new GoogleGenAI({
+            vertexai: false,
+            apiKey: currentApiKey,
+        });
+        
+        // Create a focused prompt for suggestion generation
+        const cluePrompt = `Based on this transcribed speech: "${transcriptionText}"
+
+Generate 3-5 concise, actionable question suggestions that would help the speaker elaborate or clarify their thoughts. Each suggestion should:
+- Be a complete, well-formed question
+- Help explore the topic deeper
+- Be relevant to the context
+- Be under 15 words
+
+Format as a simple JSON array of strings, nothing else:
+["Question 1?", "Question 2?", "Question 3?"]`;
+
+        // Send to Gemini for suggestion generation using the correct API
+        const response = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: cluePrompt,
+        });
+        
+        console.log('🔍 [CLUE_ENGINE] Response object:', typeof response, Object.keys(response));
+        
+        // Handle response text extraction
+        let responseText;
+        if (typeof response.text === 'function') {
+            responseText = response.text();
+        } else if (response.text) {
+            responseText = response.text;
+        } else if (response.candidates && response.candidates[0] && response.candidates[0].content && response.candidates[0].content.parts) {
+            responseText = response.candidates[0].content.parts.map(part => part.text).join('');
+        } else {
+            console.error('🔍 [CLUE_ENGINE] Unexpected response structure:', response);
+            return [];
+        }
+        
+        console.log('🔍 [CLUE_ENGINE] Raw response:', responseText);
+        
+        // Clean response text by removing markdown code blocks
+        let cleanedResponse = responseText.trim();
+        if (cleanedResponse.startsWith('```json')) {
+            cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanedResponse.startsWith('```')) {
+            cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        console.log('🔍 [CLUE_ENGINE] Cleaned response:', cleanedResponse);
+        
+        // Try to parse JSON response
+        try {
+            const suggestions = JSON.parse(cleanedResponse);
+            if (Array.isArray(suggestions)) {
+                console.log('🔍 [CLUE_ENGINE] Generated suggestions:', suggestions);
+                return suggestions;
+            }
+        } catch (parseError) {
+            console.error('🔍 [CLUE_ENGINE] Failed to parse suggestions JSON:', parseError);
+            // Fallback: extract questions from text
+            const fallbackSuggestions = extractQuestionsFromText(cleanedResponse);
+            return fallbackSuggestions;
+        }
+        
+        return [];
+    } catch (error) {
+        console.error('🔍 [CLUE_ENGINE] Error generating suggestions:', error);
+        return [];
+    }
+}
+
+// Fallback function to extract questions from unstructured text
+function extractQuestionsFromText(text) {
+    const questionRegex = /[^.!?]*\?/g;
+    const matches = text.match(questionRegex);
+    if (matches) {
+        return matches.map(q => q.trim()).filter(q => q.length > 5 && q.length < 100).slice(0, 5);
+    }
+    return [];
 }
 
 async function sendMicrophoneAudioToGemini(base64Data) {
@@ -1041,7 +1215,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                 onopen: function () {
                     sendToRenderer('update-status', 'Live session connected');
                 },
-                onmessage: function (message) {
+                onmessage: async function (message) {
                     //console.log('captured by speaker session');
                     
                     // CRITICAL FIX: Populate speakerCurrentTranscription FIRST before any processing
@@ -1083,6 +1257,38 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             if (shouldInterrupt(transcriptionText)) {
                                 console.log('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
                                 
+                                // Check if clue mode is enabled - if so, send to clue engine instead of processing immediately
+                                if (isClueMode) {
+                                    console.log('🔍 [CLUE_MODE_INTERRUPTION] Clue mode enabled during interruption, sending to clue engine:', transcriptionText.trim());
+                                    
+                                    // Clean up interrupted response
+                                    cleanupResponseBuffer();
+                                    
+                                    // Save transcription to history
+                                    speakerConversationHistory.push({
+                                        timestamp: Date.now(),
+                                        transcription: transcriptionText.trim(),
+                                        type: 'speaker'
+                                    });
+                                    
+                                    // Send to clue engine for suggestion generation
+                                    try {
+                                        sendToRenderer('clue-suggestions-loading', true);
+                                        const suggestions = await generateClueSuggestions(transcriptionText.trim());
+                                        sendToRenderer('clue-suggestions-update', suggestions);
+                                        sendToRenderer('clue-suggestions-loading', false);
+                                    } catch (error) {
+                                        console.error('🔍 [CLUE_MODE_INTERRUPTION_ERROR] Error generating suggestions:', error);
+                                        sendToRenderer('clue-suggestions-loading', false);
+                                    }
+                                    
+                                    // Reset state and return (don't process through main AI)
+                                    contextAccumulator = '';
+                                    pendingInput = '';
+                                    isAiResponding = false;
+                                    return;
+                                }
+                                
                                 // Validate and log current response buffer before interruption
                                 if (messageBuffer) {
                                     const integrity = validateResponseIntegrity(messageBuffer);
@@ -1116,13 +1322,40 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             }
                             
                             // Set new timer to process after delay (wait for complete input)
-                            inputDebounceTimer = setTimeout(() => {
+                            inputDebounceTimer = setTimeout(async () => {
                                 if (pendingInput.trim()) {
                                     console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
                                     
                                     // Double-check speaker detection is still enabled before processing
                                     if (!isSpeakerDetectionEnabled) {
                                         console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
+                                        pendingInput = '';
+                                        return;
+                                    }
+                                    
+                                    // Check if clue mode is enabled - if so, send to clue engine instead
+                                    if (isClueMode) {
+                                        console.log('🔍 [CLUE_MODE_PROCESSING] Clue mode enabled, sending to clue engine:', pendingInput.trim());
+                                        
+                                        // Save transcription to history
+                                        speakerConversationHistory.push({
+                                            timestamp: Date.now(),
+                                            transcription: pendingInput.trim(),
+                                            type: 'speaker'
+                                        });
+                                        
+                                        // Send to clue engine for suggestion generation
+                                        try {
+                                            sendToRenderer('clue-suggestions-loading', true);
+                                            const suggestions = await generateClueSuggestions(pendingInput.trim());
+                                            sendToRenderer('clue-suggestions-update', suggestions);
+                                            sendToRenderer('clue-suggestions-loading', false);
+                                        } catch (error) {
+                                            console.error('🔍 [CLUE_MODE_ERROR] Error generating suggestions:', error);
+                                            sendToRenderer('clue-suggestions-loading', false);
+                                        }
+                                        
+                                        // Reset pending input and return (don't process through main AI)
                                         pendingInput = '';
                                         return;
                                     }
@@ -1231,8 +1464,8 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                         }
                     }
 
-                    // Handle AI model response when microphone is not active OR when processing a text message
-                    if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.modelTurn?.parts) {
+                    // Handle AI model response when microphone is not active AND clue mode is not active OR when processing a text message
+                    if ((!isMicrophoneActive && !isClueMode || isProcessingTextMessage) && message.serverContent?.modelTurn?.parts) {
                         for (const part of message.serverContent.modelTurn.parts) {
                             if (part.text) {
                                 // If this is the first part of a new response, ensure new-response-starting is sent
@@ -1310,7 +1543,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                         }
                     }
 
-                    if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.generationComplete) {
+                    if ((!isMicrophoneActive && !isClueMode || isProcessingTextMessage) && message.serverContent?.generationComplete) {
                         console.log('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
                         
                         // DISABLED: Final integrity check and reconstruction logic
@@ -2220,6 +2453,36 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
+
+    // Clue mode IPC handlers
+    ipcMain.handle('set-clue-mode', async (event, enabled) => {
+        try {
+            setClueMode(enabled);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting clue mode:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('is-clue-mode-enabled', async (event) => {
+        try {
+            return { success: true, enabled: isClueModeCurrent() };
+        } catch (error) {
+            console.error('Error getting clue mode state:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('generate-clue-suggestions', async (event, transcriptionText) => {
+        try {
+            const suggestions = await generateClueSuggestions(transcriptionText);
+            return { success: true, suggestions };
+        } catch (error) {
+            console.error('Error generating clue suggestions:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 module.exports = {
@@ -2244,5 +2507,8 @@ module.exports = {
     sendMicrophoneAudioToGemini,
     setSpeakerDetectionEnabled,
     isSpeakerDetectionCurrentlyEnabled,
+    setClueMode,
+    isClueModeCurrent,
+    generateClueSuggestions,
 };
 
