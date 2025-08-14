@@ -128,7 +128,7 @@ export class ClueSuggestionsPanel extends LitElement {
             background: var(--card-background, #2a2a2a);
             border: 1px solid var(--border-color, #333);
             border-radius: 6px;
-            padding: 10px;
+            padding: 7px;
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
@@ -306,7 +306,7 @@ export class ClueSuggestionsPanel extends LitElement {
             }
             
             .suggestion-card {
-                padding: 12px;
+                padding: 6px;
                 gap: 10px;
             }
             

@@ -9,8 +9,8 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         const params = options.processorOptions || {};
         this.sampleRate = params.sampleRate || 24000;
         this.frameSize = params.frameSize || 480; // 20ms at 24kHz
-        this.energyThreshold = params.energyThreshold || 0.002;
-        this.silenceFrames = params.silenceFrames || 8;
+        this.energyThreshold = params.energyThreshold || 0.0005;
+        this.silenceFrames = params.silenceFrames || 3;
         this.speechFrames = params.speechFrames || 1;
         this.chunkDuration = params.chunkDuration || 0.5; // seconds
         
@@ -224,12 +224,18 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
             this.updateVisualization(frame);
             
             // Send VAD events
-            if (vadResult.speechStart || vadResult.speechEnd) {
-                this.port.postMessage({
-                    type: 'vadEvent',
-                    data: vadResult
-                });
-            }
+        if (vadResult.speechStart || vadResult.speechEnd) {
+            console.log(`🔊 [WORKLET_VAD] ${vadResult.speechStart ? 'Speech Start' : 'Speech End'} - Energy: ${vadResult.energy.toFixed(4)}, Threshold: ${this.energyThreshold}`);
+            this.port.postMessage({
+                type: 'vadEvent',
+                data: vadResult
+            });
+        }
+        
+        // Debug: Log energy levels periodically to understand background noise
+        if (this.processedFrames % 100 === 0) {
+            console.log(`🔊 [WORKLET_DEBUG] Frame ${this.processedFrames}: Energy: ${vadResult.energy.toFixed(4)}, Threshold: ${this.energyThreshold}, Speaking: ${this.isSpeaking}, SilenceFrames: ${this.currentSilenceFrames}/${this.silenceFrames}`);
+        }
             
             this.processedFrames++;
         }
@@ -246,7 +252,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
             this.port.postMessage({
                 type: 'audioChunk',
                 data: {
-                    audio: base64,
+                    base64Data: base64,
                     timestamp: currentTime,
                     isSpeaking: this.isSpeaking,
                     energy: this.calculateEnergy(chunk)

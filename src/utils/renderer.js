@@ -265,8 +265,8 @@ async function startCapture(screenshotIntervalSeconds = 5, imageQuality = 'mediu
 
             console.log('Windows capture started with loopback audio');
 
-            // Setup audio processing for Windows loopback audio only
-            setupWindowsLoopbackProcessing();
+            // Setup audio processing for Windows loopback audio with VAD support
+            await setupWindowsLoopbackProcessing();
         }
 
         console.log('MediaStream obtained:', {
@@ -325,8 +325,76 @@ function setupLinuxMicProcessing(micStream) {
     audioProcessor = micProcessor;
 }
 
-function setupWindowsLoopbackProcessing() {
-    // Setup audio processing for Windows loopback audio only
+async function setupWindowsLoopbackProcessing() {
+    try {
+        // Setup audio processing for Windows loopback audio with VAD support
+        audioContext = new AudioContext({ 
+            sampleRate: SAMPLE_RATE,
+            latencyHint: 'interactive'
+        });
+        
+        // Load AudioWorklet processor for VAD support
+        console.log('🔄 Loading AudioWorklet module for speaker audio...');
+        await audioContext.audioWorklet.addModule('/src/utils/audioWorkletProcessor.js');
+        console.log('✅ AudioWorklet module loaded successfully for speaker audio');
+        
+        const source = audioContext.createMediaStreamSource(mediaStream);
+        
+        // Create worklet node with VAD configuration optimized for clue mode
+        const workletNode = new AudioWorkletNode(audioContext, 'jarvis-audio-processor', {
+            processorOptions: {
+                sampleRate: SAMPLE_RATE,
+                frameSize: 480,
+                energyThreshold: 0.0005, // Very low threshold for sensitive speech detection in clue mode
+                silenceFrames: 3, // Reduced to 60ms for faster speechEnd detection in clue mode
+                speechFrames: 1, // Single frame to start speech detection - more responsive
+                chunkDuration: AUDIO_CHUNK_DURATION
+            }
+        });
+        
+        // Handle messages from the worklet
+        workletNode.port.onmessage = async (event) => {
+            const { type, data } = event.data;
+            
+            switch (type) {
+                case 'audioChunk':
+                    // Send audio chunk to backend
+                    await ipcRenderer.invoke('send-audio-content', {
+                        data: data.base64Data,
+                        mimeType: 'audio/pcm;rate=24000',
+                    });
+                    break;
+                    
+                case 'vadEvent':
+                    // Forward VAD events for speaker audio to backend
+                    if (window.cheddar && window.cheddar.handleSpeakerVADEvent) {
+                        await window.cheddar.handleSpeakerVADEvent(data);
+                    }
+                    break;
+                    
+                case 'error':
+                    console.error('Speaker audio worklet error:', data);
+                    break;
+            }
+        };
+        
+        source.connect(workletNode);
+        workletNode.connect(audioContext.destination);
+        
+        // Store processor reference for cleanup
+        audioProcessor = workletNode;
+        
+        console.log('✅ Windows loopback processing with VAD initialized');
+        
+    } catch (error) {
+        console.error('❌ Failed to setup Windows loopback processing with VAD:', error);
+        // Fallback to original ScriptProcessor approach
+        setupWindowsLoopbackProcessingFallback();
+    }
+}
+
+function setupWindowsLoopbackProcessingFallback() {
+    // Fallback: Setup audio processing for Windows loopback audio without VAD
     audioContext = new AudioContext({ sampleRate: SAMPLE_RATE });
     const source = audioContext.createMediaStreamSource(mediaStream);
     audioProcessor = audioContext.createScriptProcessor(BUFFER_SIZE, 1, 1);
@@ -359,6 +427,8 @@ function setupWindowsLoopbackProcessing() {
 
     source.connect(audioProcessor);
     audioProcessor.connect(audioContext.destination);
+    
+    console.log('⚠️ Using fallback ScriptProcessor for speaker audio (no VAD)');
 }
 
 async function captureScreenshot(imageQuality = 'medium', isManual = false) {
@@ -961,6 +1031,22 @@ cheddar.isClueModeEnabled = async () => {
     if (window.require) {
         const { ipcRenderer } = window.require('electron');
         return await ipcRenderer.invoke('is-clue-mode-enabled');
+    }
+    return { success: false, error: 'IPC not available' };
+};
+
+// Add VAD event handler functions to cheddar object
+cheddar.handleMicrophoneVADEvent = async (vadEvent) => {
+    if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        return await ipcRenderer.invoke('handle-microphone-vad-event', vadEvent);
+    }
+    return { success: false, error: 'IPC not available' };
+};
+cheddar.handleSpeakerVADEvent = async (vadEvent) => {
+    if (window.require) {
+        const { ipcRenderer } = window.require('electron');
+        return await ipcRenderer.invoke('handle-speaker-vad-event', vadEvent);
     }
     return { success: false, error: 'IPC not available' };
 };

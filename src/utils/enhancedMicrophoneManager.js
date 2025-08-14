@@ -131,6 +131,16 @@ class EnhancedMicrophoneManager {
             this.endTranscriptSegment();
         }
         
+        // Send VAD event to backend for clue mode processing
+        if (window.cheddar && window.cheddar.handleMicrophoneVADEvent) {
+            const vadEvent = {
+                type: data.speechStart ? 'speechStart' : data.speechEnd ? 'speechEnd' : 'speaking',
+                energy: data.energy,
+                timestamp: Date.now()
+            };
+            window.cheddar.handleMicrophoneVADEvent(vadEvent);
+        }
+        
         if (this.onVADEvent) {
             this.onVADEvent(data);
         }

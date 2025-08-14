@@ -33,15 +33,18 @@ let microphoneWordCount = 0;
 let isProcessingTextMessage = false;
 const MAX_MICROPHONE_WORDS = 200;
 
-// Microphone clue mode processing
-let microphoneInputDebounceTimer = null;
+// VAD-based clue mode processing
 let pendingMicrophoneInput = '';
-const MICROPHONE_INPUT_DEBOUNCE_DELAY = 200; // 5 seconds delay for microphone input
+let pendingSpeakerInput = '';
+// Debounce timer for processing accumulated speaker input in clue mode
+let speakerClueDebounceTimer = null; // processes after brief silence
+let microphoneVADActive = false;
+let speakerVADActive = false;
 
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 200; // 8 seconds delay to wait for complete input
+const INPUT_DEBOUNCE_DELAY = 2500; // 2.5 seconds delay to wait for complete input
 
 // Context and question queue management variables
 let contextAccumulator = '';
@@ -158,20 +161,20 @@ async function processQuestionQueue(geminiSession) {
     // Combine all queued questions with proper separation
     const combinedQuestions = validQuestions.join(' ').trim();
     
-    // Check for duplicate questions against recent conversation history
+    // Check for exact duplicate questions against recent conversation history
     const isDuplicateQuestion = conversationHistory.some(entry => {
-        const similarity = entry.transcription.trim() === combinedQuestions.trim() ||
-                          entry.transcription.includes(combinedQuestions.trim()) ||
-                          combinedQuestions.includes(entry.transcription.trim());
-        const isRecent = (Date.now() - entry.timestamp) < 20000; // Within 20 seconds
-        return similarity && isRecent;
+        const exactMatch = entry.transcription.trim() === combinedQuestions.trim();
+        const isRecent = (Date.now() - entry.timestamp) < 5000; // Within 5 seconds only
+        return exactMatch && isRecent;
     });
     
     if (isDuplicateQuestion) {
-        console.log('🚫 [DUPLICATE_QUESTION] Skipping duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
+        console.log('🚫 [DUPLICATE_QUESTION] Skipping exact duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
         questionQueue = []; // Clear the queue
         return;
     }
+    
+    console.log('✅ [DUPLICATE_CHECK] Question passed duplicate validation, proceeding with processing');
     
     questionQueue = []; // Clear the queue
     
@@ -569,32 +572,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                             if (isClueMode) {
                                 // Accumulate microphone input for clue processing
                                 pendingMicrophoneInput += transcriptionText + ' ';
-                                
-                                // Clear existing timer
-                                if (microphoneInputDebounceTimer) {
-                                    clearTimeout(microphoneInputDebounceTimer);
-                                }
-                                
-                                // Set new timer to process after delay
-                                microphoneInputDebounceTimer = setTimeout(async () => {
-                                    if (pendingMicrophoneInput.trim()) {
-                                        console.log('🔍 [MICROPHONE_CLUE_MODE] Processing microphone input for clue suggestions:', pendingMicrophoneInput.trim());
-                                        
-                                        // Send to clue engine for suggestion generation
-                                        try {
-                                            sendToRenderer('clue-suggestions-loading', true);
-                                            const suggestions = await generateClueSuggestions(pendingMicrophoneInput.trim());
-                                            sendToRenderer('clue-suggestions-update', suggestions);
-                                            sendToRenderer('clue-suggestions-loading', false);
-                                        } catch (error) {
-                                            console.error('🔍 [MICROPHONE_CLUE_MODE_ERROR] Error generating suggestions:', error);
-                                            sendToRenderer('clue-suggestions-loading', false);
-                                        }
-                                        
-                                        // Reset pending input
-                                        pendingMicrophoneInput = '';
-                                    }
-                                }, MICROPHONE_INPUT_DEBOUNCE_DELAY);
+                                console.log('🔍 [MICROPHONE_CLUE_MODE] Accumulating microphone input:', pendingMicrophoneInput.trim());
                             }
 
                             //console.log(microphoneConversationHistory);
@@ -837,6 +815,97 @@ function setClueMode(enabled) {
 
 function isClueModeCurrent() {
     return isClueMode;
+}
+
+// VAD event handlers for clue mode processing
+function handleMicrophoneVADEvent(vadEvent) {
+    if (!isClueMode) return;
+    
+    console.log('🔍 [MICROPHONE_VAD] VAD Event:', vadEvent.type, 'Energy:', vadEvent.energy);
+    
+    if (vadEvent.type === 'speechStart') {
+        microphoneVADActive = true;
+        console.log('🔍 [MICROPHONE_VAD] Speech started - beginning accumulation');
+    } else if (vadEvent.type === 'speechEnd') {
+        microphoneVADActive = false;
+        console.log('🔍 [MICROPHONE_VAD] Speech ended - processing accumulated input');
+        
+        // Process accumulated microphone input when speech ends
+        if (pendingMicrophoneInput.trim()) {
+            processMicrophoneClueInput(pendingMicrophoneInput.trim());
+            pendingMicrophoneInput = '';
+        }
+    }
+}
+
+function handleSpeakerVADEvent(vadEvent) {
+    console.log('🎤 [SPEAKER_VAD] VAD Event received:', vadEvent.type, 'Energy:', vadEvent.energy, 'Timestamp:', vadEvent.timestamp);
+    
+    if (vadEvent.type === 'speechStart') {
+        speakerVADActive = true;
+        console.log('🎤 [SPEAKER_VAD] Speech started - beginning accumulation');
+    } else if (vadEvent.type === 'speechEnd') {
+        speakerVADActive = false;
+        console.log('🎤 [SPEAKER_VAD] Speech ended - processing accumulated input');
+        console.log('🎤 [SPEAKER_VAD] Pending speaker input:', JSON.stringify(pendingSpeakerInput));
+        
+        // Process accumulated speaker input when speech ends
+        if (pendingSpeakerInput.trim()) {
+            if (isClueMode) {
+                // In clue mode, debounce timer handles processing; skip immediate processing on speechEnd
+                console.log('🔍 [SPEAKER_VAD_CLUE] Speech ended - awaiting debounce processing');
+            } else {
+                // Normal mode: send to AI for response
+                console.log('🤖 [SPEAKER_VAD_AI] Processing for AI response:', pendingSpeakerInput.trim());
+                console.log('🤖 [SPEAKER_VAD_AI] Session available:', !!global.geminiSessionRef?.current);
+                console.log('🤖 [SPEAKER_VAD_AI] AI responding:', isAiResponding);
+                console.log('🤖 [SPEAKER_VAD_AI] Queue length before:', questionQueue.length);
+                
+                // Add to question queue for normal AI processing
+                questionQueue.push(pendingSpeakerInput.trim());
+                console.log('🤖 [SPEAKER_VAD_AI] Queue length after:', questionQueue.length);
+                
+                // Process the queue if AI is not responding and session is available
+                if (!isAiResponding && global.geminiSessionRef?.current) {
+                    console.log('🤖 [SPEAKER_VAD_AI] Calling processQuestionQueue...');
+                    processQuestionQueue(global.geminiSessionRef.current);
+                } else {
+                    console.log('🤖 [SPEAKER_VAD_AI] Cannot process queue - AI responding:', isAiResponding, 'Session:', !!global.geminiSessionRef?.current);
+                }
+            }
+            pendingSpeakerInput = '';
+        }
+    }
+}
+
+// Process microphone input for clue suggestions
+async function processMicrophoneClueInput(inputText) {
+    console.log('🔍 [MICROPHONE_CLUE_MODE] Processing microphone input for clue suggestions:', inputText);
+    
+    try {
+        sendToRenderer('clue-suggestions-loading', true);
+        const suggestions = await generateClueSuggestions(inputText);
+        sendToRenderer('clue-suggestions-update', suggestions);
+        sendToRenderer('clue-suggestions-loading', false);
+    } catch (error) {
+        console.error('🔍 [MICROPHONE_CLUE_MODE_ERROR] Error generating suggestions:', error);
+        sendToRenderer('clue-suggestions-loading', false);
+    }
+}
+
+// Process speaker input for clue suggestions
+async function processSpeakerClueInput(inputText) {
+    console.log('🔍 [SPEAKER_CLUE_MODE] Processing speaker input for clue suggestions:', inputText);
+    
+    try {
+        sendToRenderer('clue-suggestions-loading', true);
+        const suggestions = await generateClueSuggestions(inputText);
+        sendToRenderer('clue-suggestions-update', suggestions);
+        sendToRenderer('clue-suggestions-loading', false);
+    } catch (error) {
+        console.error('🔍 [SPEAKER_CLUE_MODE_ERROR] Error generating suggestions:', error);
+        sendToRenderer('clue-suggestions-loading', false);
+    }
 }
 
 // Clue engine function to generate suggestions from transcription
@@ -1323,6 +1392,23 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 return;
                             }
                             
+                            // Handle clue mode processing for speaker input
+                            if (isClueMode) {
+                                // Accumulate speaker input for clue processing
+                                pendingSpeakerInput += transcriptionText + ' ';
+                                console.log('🔍 [SPEAKER_CLUE_MODE] Accumulating speaker input:', pendingSpeakerInput.trim());
+                                // Debounce processing to trigger clue suggestions after brief pause
+                                if (speakerClueDebounceTimer) clearTimeout(speakerClueDebounceTimer);
+                                speakerClueDebounceTimer = setTimeout(() => {
+                                    if (pendingSpeakerInput.trim()) {
+                                        console.log('🔍 [SPEAKER_CLUE_MODE] Debounce timeout reached, generating suggestions');
+                                        processSpeakerClueInput(pendingSpeakerInput.trim());
+                                        pendingSpeakerInput = '';
+                                    }
+                                }, 1200); // 1.2s pause indicates end of phrase
+                                return; // Skip further processing when in clue mode
+                            }
+                            
                             // Set new timer to process after delay (wait for complete input)
                             inputDebounceTimer = setTimeout(async () => {
                                 if (pendingInput.trim()) {
@@ -1331,33 +1417,6 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     // Double-check speaker detection is still enabled before processing
                                     if (!isSpeakerDetectionEnabled) {
                                         console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
-                                        pendingInput = '';
-                                        return;
-                                    }
-                                    
-                                    // Check if clue mode is enabled - if so, send to clue engine instead
-                                    if (isClueMode) {
-                                        console.log('🔍 [CLUE_MODE_PROCESSING] Clue mode enabled, sending to clue engine:', pendingInput.trim());
-                                        
-                                        // Save transcription to history
-                                        speakerConversationHistory.push({
-                                            timestamp: Date.now(),
-                                            transcription: pendingInput.trim(),
-                                            type: 'speaker'
-                                        });
-                                        
-                                        // Send to clue engine for suggestion generation
-                                        try {
-                                            sendToRenderer('clue-suggestions-loading', true);
-                                            const suggestions = await generateClueSuggestions(pendingInput.trim());
-                                            sendToRenderer('clue-suggestions-update', suggestions);
-                                            sendToRenderer('clue-suggestions-loading', false);
-                                        } catch (error) {
-                                            console.error('🔍 [CLUE_MODE_ERROR] Error generating suggestions:', error);
-                                            sendToRenderer('clue-suggestions-loading', false);
-                                        }
-                                        
-                                        // Reset pending input and return (don't process through main AI)
                                         pendingInput = '';
                                         return;
                                     }
@@ -2482,6 +2541,27 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: true, suggestions };
         } catch (error) {
             console.error('Error generating clue suggestions:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // VAD event handlers for clue mode
+    ipcMain.handle('handle-microphone-vad-event', async (event, vadEvent) => {
+        try {
+            handleMicrophoneVADEvent(vadEvent);
+            return { success: true };
+        } catch (error) {
+            console.error('Error handling microphone VAD event:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    ipcMain.handle('handle-speaker-vad-event', async (event, vadEvent) => {
+        try {
+            handleSpeakerVADEvent(vadEvent);
+            return { success: true };
+        } catch (error) {
+            console.error('Error handling speaker VAD event:', error);
             return { success: false, error: error.message };
         }
     });
