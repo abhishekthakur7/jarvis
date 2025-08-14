@@ -155,6 +155,8 @@ export class AssistantApp extends LitElement {
         this.microphoneTranscription = '';
         this.speakerDetectionEnabled = localStorage.getItem('speakerDetectionEnabled') !== 'false'; // Default to true
         this.previousSpeakerDetectionState = this.speakerDetectionEnabled; // Track previous state for microphone toggle
+        
+
 
         // Auto-scroll settings
         this.autoScrollEnabled = localStorage.getItem('autoScrollEnabled') !== 'false';
@@ -189,6 +191,10 @@ export class AssistantApp extends LitElement {
             ipcRenderer.on('toggle-auto-scroll', () => {
                 this.toggleAutoScroll();
             });
+            ipcRenderer.on('microphone-transcription-update', (_, data) => {
+                this.handleMicrophoneTranscriptionUpdate(data);
+            });
+
         }
         
         // Add keyboard event listener for microphone shortcut
@@ -568,98 +574,58 @@ export class AssistantApp extends LitElement {
                 throw new Error('Failed to initialize microphone session: ' + sessionResult.error);
             }
 
-            // Import microphone utilities
-            const { MicrophoneProcessor } = await import('../../microphoneUtils.js');
+            // Import enhanced microphone manager
+            const { EnhancedMicrophoneManager } = await import('../../utils/enhancedMicrophoneManager.js');
             
-            // Request microphone permission
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    sampleRate: 24000,
-                    channelCount: 1,
-                    echoCancellation: false, // Disable to preserve more audio detail
-                    noiseSuppression: false, // Disable to allow quieter speech
-                    autoGainControl: false // Disable to prevent audio level adjustment
+            // Initialize enhanced microphone manager
+            this.microphoneManager = new EnhancedMicrophoneManager();
+            
+            // Set up callbacks for the manager
+            this.microphoneManager.setCallbacks({
+                onAudioChunk: async (audioData) => {
+                    try {                    
+                        // audioData is already Int16Array from EnhancedMicrophoneManager
+                        // Convert directly to base64 without double conversion
+                        const uint8Array = new Uint8Array(audioData.buffer);
+                        const base64Data = btoa(String.fromCharCode.apply(null, uint8Array));
+                        
+                        // Send audio to Gemini microphone session
+                        await window.cheddar.sendMicrophoneAudio({
+                            data: base64Data,
+                            mimeType: 'audio/pcm;rate=24000'
+                        });
+                    } catch (error) {
+                        console.error('Failed to send audio to Gemini:', error);
+                    }
                 },
-                video: false
-            });
-
-            console.log('Microphone access granted');
-
-            // Initialize microphone processor
-            this.microphoneProcessor = new MicrophoneProcessor();
-            
-            // Set up callbacks for the processor
-            this.microphoneProcessor.setAudioChunkCallback(async (audioData) => {
-                //console.log('Audio chunk received:', audioData.length, 'samples');
-                try {                    
-                    // audioData is already Int16Array from MicrophoneProcessor.convertFloat32ToInt16
-                    // Convert directly to base64 without double conversion
-                    const uint8Array = new Uint8Array(audioData.buffer);
-                    const base64Data = btoa(String.fromCharCode.apply(null, uint8Array));
+                onVADEvent: (vadEvent) => {
+                    // Update microphone state based on VAD
+                    let newState = 'recording';
+                    if (vadEvent.type === 'speechStart' || vadEvent.isSpeaking) {
+                        newState = 'speaking';
+                    }
                     
-                    // Send audio to Gemini microphone session
-                    await window.cheddar.sendMicrophoneAudio({
-                        data: base64Data,
-                        mimeType: 'audio/pcm;rate=24000'
-                    });
-                    //console.log('Audio sent to Gemini successfully');
-                } catch (error) {
-                    console.error('Failed to send audio to Gemini:', error);
+                    if (this.microphoneState !== newState) {
+                        this.microphoneState = newState;
+                        this.updateAssistantViewMicrophoneState();
+                        console.log('Microphone state updated to:', newState);
+                    }
+                },
+                onError: (error) => {
+                    console.error('Enhanced microphone manager error:', error);
+                    this.setStatus('Microphone error: ' + error.message);
                 }
             });
             
-            this.microphoneProcessor.setSpeechStateCallback((state) => {
-                //console.log('Speech state change:', state);
-                // Update microphone state based on VAD
-                let newState = 'recording';
-                if (state.type === 'speaking' || state.type === 'speechStart') {
-                    newState = 'speaking';
-                }
-                
-                if (this.microphoneState !== newState) {
-                    this.microphoneState = newState;
-                    this.updateAssistantViewMicrophoneState();
-                    console.log('Microphone state updated to:', newState);
-                }
-            });
-            
-            // Start recording
-            this.microphoneProcessor.startRecording();
-            
-            // Set up audio processing
-            const audioContext = new AudioContext({ sampleRate: 24000 });
-            const source = audioContext.createMediaStreamSource(stream);
-            const processor = audioContext.createScriptProcessor(4096, 1, 1);
-            
-            processor.onaudioprocess = (e) => {
-                const inputData = e.inputBuffer.getChannelData(0);
-                // Calculate RMS to check if audio is being received
-                let rms = 0;
-                for (let i = 0; i < inputData.length; i++) {
-                    rms += inputData[i] * inputData[i];
-                }
-                rms = Math.sqrt(rms / inputData.length);
-                
-                // if (rms > 0.001) { // Only log when there's significant audio
-                //     console.log('Audio input detected, RMS:', rms.toFixed(4));
-                // }
-                
-                this.microphoneProcessor.processAudio(inputData);
-            };
-            
-            source.connect(processor);
-            processor.connect(audioContext.destination);
-            
-            // Store references for cleanup
-            this.microphoneStream = stream;
-            this.microphoneAudioContext = audioContext;
-            this.microphoneAudioProcessor = processor;
+            // Initialize and start recording
+            await this.microphoneManager.initialize();
+            await this.microphoneManager.startRecording();
             
             this.microphoneEnabled = true;
             this.microphoneState = 'recording';
             this.updateAssistantViewMicrophoneState();
             
-            console.log('Microphone capture started successfully');
+            console.log('Enhanced microphone capture started successfully');
             
         } catch (error) {
             console.error('Failed to start microphone capture:', error);
@@ -674,25 +640,10 @@ export class AssistantApp extends LitElement {
         try {
             // Close microphone session
             await window.cheddar.closeMicrophoneSession();
-
-            if (this.microphoneAudioProcessor) {
-                this.microphoneAudioProcessor.disconnect();
-                this.microphoneAudioProcessor = null;
-            }
-
-            if (this.microphoneStream) {
-                this.microphoneStream.getTracks().forEach(track => track.stop());
-                this.microphoneStream = null;
-            }
             
-            if (this.microphoneAudioContext) {
-                await this.microphoneAudioContext.close();
-                this.microphoneAudioContext = null;
-            }
-            
-            if (this.microphoneProcessor) {
-                this.microphoneProcessor.stopRecording();
-                this.microphoneProcessor = null;
+            if (this.microphoneManager) {
+                await this.microphoneManager.stopRecording();
+                this.microphoneManager = null;
             }
             
             this.microphoneEnabled = false;
@@ -721,6 +672,19 @@ export class AssistantApp extends LitElement {
             jarvisView.requestUpdate();
         }
     }
+
+    handleMicrophoneTranscriptionUpdate(data) {
+        console.log('Received microphone transcription update:', data);
+        // Pass transcription updates to the enhanced microphone manager
+        if (this.microphoneManager && this.microphoneManager.updateTranscript) {
+            console.log('Passing transcription to microphone manager:', data.text);
+            this.microphoneManager.updateTranscript(data.text, data.isFinal);
+        } else {
+            console.warn('Microphone manager not available or updateTranscript method missing');
+        }
+    }
+
+
     
     async initializeSpeakerDetectionState() {
         // Wait for cheddar to be available

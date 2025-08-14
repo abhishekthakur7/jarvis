@@ -4,6 +4,7 @@ const { spawn } = require('child_process');
 const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
 const { getMultipleNotionContents } = require('./notion');
+const apiKeyManagerInstance = require('./apiKeyManager');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -13,6 +14,9 @@ let isInitializingSession = false;
 let isInitializingMicrophoneSession = false;
 let isMicrophoneActive = false;
 let isSpeakerDetectionEnabled = true; // Default to enabled
+
+// API key management
+let apiKeyManager = null;
 
 // Audio capture variables
 let systemAudioProc = null;
@@ -507,6 +511,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                     console.log('Microphone transcription session connected');
                 },
                 onmessage: function (message) {
+                    console.log('Microphone session message received:', message);
                     // Handle transcription input for microphone
                     if (message.serverContent?.inputTranscription?.text) {
                         const transcriptionText = message.serverContent.inputTranscription.text;
@@ -547,8 +552,17 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                                 type: 'microphone'
                             });
 
+                            // Send transcription update to renderer for progressive transcript display
+                            console.log('Sending transcription update to renderer:', transcriptionText);
+                            sendToRenderer('microphone-transcription-update', {
+                                text: transcriptionText,
+                                isFinal: false // Gemini sends partial transcriptions
+                            });
+
                             //console.log(microphoneConversationHistory);
                         }
+                    } else {
+                        console.log('No transcription text found in message');
                     }
                 },
                 onerror: function (e) {
@@ -922,7 +936,7 @@ async function attemptReconnection() {
     }
 }
 
-async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'interview', language = 'en-IN', isReconnection = false) {
+async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'interview', language = 'en-IN', isReconnection = false) {
     if (isInitializingSession) {
         return false;
     }
@@ -930,9 +944,18 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
     isInitializingSession = true;
     sendToRenderer('session-initializing', true);
 
+    // Initialize API key manager if not already done
+    if (!apiKeyManager) {
+        apiKeyManager = apiKeyManagerInstance;
+        
+        // Set API keys (can be comma-separated string or array)
+        const keyString = Array.isArray(apiKeys) ? apiKeys.join(',') : apiKeys;
+        apiKeyManager.setApiKeys(keyString);
+    }
+
     if (!isReconnection) {
         lastSessionParams = {
-            apiKey,
+            apiKeys,
             customPrompt,
             profile,
             language,
@@ -940,10 +963,18 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
         reconnectionAttempts = 0;
     }
 
+    // Get current API key to use
+    const currentApiKey = apiKeyManager.getCurrentApiKey();
+    if (!currentApiKey) {
+        throw new Error('No valid API keys available');
+    }
+
     const client = new GoogleGenAI({
         vertexai: false,
-        apiKey: apiKey,
+        apiKey: currentApiKey,
     });
+
+    console.log(`🔑 Using API key: ${currentApiKey.substring(0, 8)}...`);
 
     const enabledTools = await getEnabledTools();
     const googleSearchEnabled = enabledTools.some(tool => tool.googleSearch);
@@ -1163,6 +1194,13 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
                                     
                                     // Save to speaker transcription and conversation history
                                     speakerTranscription += pendingInput;
+                                    
+                                    // Send speaker transcription update to renderer
+                                    sendToRenderer('speaker-transcription-update', {
+                                        text: pendingInput.trim(),
+                                        isFinal: false,
+                                        timestamp: Date.now()
+                                    });
                                     
                                     // Count words and manage cleanup to retain most recent words
                                     const words = speakerTranscription.trim().split(/\s+/);
@@ -1551,8 +1589,24 @@ async function initializeGeminiSession(apiKey, customPrompt = '', profile = 'int
         return session;
     } catch (error) {
         console.error('Failed to initialize Gemini session:', error);
+        
+        // Try fallback API key if available
+        if (apiKeyManager) {
+            try {
+                const fallbackKey = await apiKeyManager.getNextApiKey();
+                if (fallbackKey) {
+                    console.log('🔄 Trying fallback API key...');
+                    isInitializingSession = false;
+                    return await initializeGeminiSession(apiKeys, customPrompt, profile, language, isReconnection);
+                }
+            } catch (fallbackError) {
+                console.error('Fallback API key also failed:', fallbackError);
+            }
+        }
+        
         isInitializingSession = false;
         sendToRenderer('session-initializing', false);
+        sendToRenderer('update-status', 'Failed to connect: All API keys exhausted');
         return null;
     }
 }
@@ -2191,3 +2245,4 @@ module.exports = {
     setSpeakerDetectionEnabled,
     isSpeakerDetectionCurrentlyEnabled,
 };
+
