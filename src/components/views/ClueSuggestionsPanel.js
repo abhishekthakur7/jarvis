@@ -19,7 +19,7 @@ export class ClueSuggestionsPanel extends LitElement {
         }
 
         .panel-header {
-            padding: 16px 20px;
+            padding: 8px 12px;
             border-bottom: 1px solid var(--border-color, #333);
             background: var(--header-background, #2a2a2a);
             display: flex;
@@ -29,13 +29,13 @@ export class ClueSuggestionsPanel extends LitElement {
         }
 
         .panel-title {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 12px;
+            font-weight: 500;
             color: var(--text-color, #ffffff);
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
             cursor: pointer;
         }
 
@@ -54,9 +54,9 @@ export class ClueSuggestionsPanel extends LitElement {
         }
 
         .dropdown-item {
-            padding: 8px 16px;
+            padding: 6px 12px;
             color: var(--text-color, #fff);
-            font-size: 14px;
+            font-size: 12px;
             transition: background 0.2s ease;
         }
 
@@ -65,30 +65,32 @@ export class ClueSuggestionsPanel extends LitElement {
         }
 
         .more-actions {
-            margin-top: 24px;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color, #333);
         }
 
         .actions-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 12px;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .action-btn {
             background: var(--card-background, #2a2a2a);
             border: 1px solid var(--border-color, #333);
-            border-radius: 10px;
-            padding: 16px 12px;
-            font-size: 13px;
+            border-radius: 4px;
+            padding: 8px;
+            font-size: 10px;
             color: var(--text-color, #fff);
-            text-align: center;
+            text-align: left;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
-            flex-direction: column;
+            flex-direction: row;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         }
 
@@ -100,9 +102,10 @@ export class ClueSuggestionsPanel extends LitElement {
         }
 
         .action-btn-icon {
-            width: 20px;
-            height: 20px;
+            width: 12px;
+            height: 12px;
             opacity: 0.7;
+            flex-shrink: 0;
         }
 
         .action-btn:hover .action-btn-icon {
@@ -111,44 +114,44 @@ export class ClueSuggestionsPanel extends LitElement {
 
         .panel-content {
             flex: 1;
-            padding: 20px;
+            padding: 12px;
             overflow-y: auto;
         }
 
         .suggestions-list {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 6px;
         }
 
         .suggestion-card {
             background: var(--card-background, #2a2a2a);
             border: 1px solid var(--border-color, #333);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 6px;
+            padding: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
             position: relative;
             display: flex;
-            align-items: flex-start;
-            gap: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 6px;
         }
 
         .suggestion-card:hover {
             background: var(--hover-background, #3a3a3a);
             border-color: var(--accent-color, #007aff);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
         }
 
         .suggestion-icon {
-            width: 24px;
-            height: 24px;
+            width: 16px;
+            height: 16px;
             flex-shrink: 0;
-            opacity: 0.8;
+            opacity: 0.7;
             transition: opacity 0.2s ease;
-            margin-top: 2px;
         }
 
         .suggestion-card:hover .suggestion-icon {
@@ -159,67 +162,74 @@ export class ClueSuggestionsPanel extends LitElement {
             flex: 1;
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 2px;
         }
 
         .suggestion-title {
-            font-size: 15px;
-            font-weight: 600;
-            line-height: 1.3;
+            font-size: 12px;
+            font-weight: 500;
+            line-height: 1.2;
             color: var(--text-color, #ffffff);
             margin: 0;
         }
 
         .suggestion-text {
-            font-size: 13px;
-            line-height: 1.4;
-            color: var(--text-color-secondary, #b0b0b0);
+            font-size: 12px;
+            line-height: 1.3;
+            color: var(--text-color-secondary, #888);
             margin: 0;
+            display: none;
         }
 
         .suggestion-arrow {
-            position: absolute;
-            top: 20px;
-            right: 16px;
-            width: 16px;
-            height: 16px;
-            opacity: 0.4;
+            width: 12px;
+            height: 12px;
+            opacity: 0.3;
             transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
         .suggestion-card:hover .suggestion-arrow {
-            opacity: 1;
+            opacity: 0.6;
             transform: translateX(2px);
         }
 
         .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 12px;
             text-align: center;
-            padding: 40px 20px;
             color: var(--text-color-secondary, #888);
         }
 
         .empty-state-icon {
-            width: 48px;
-            height: 48px;
-            margin: 0 auto 16px;
-            opacity: 0.5;
+            width: 24px;
+            height: 24px;
+            margin-bottom: 8px;
+            opacity: 0.3;
         }
 
         .empty-state-text {
-            font-size: 14px;
-            line-height: 1.4;
+            font-size: 10px;
+            line-height: 1.3;
         }
 
         .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 12px;
             text-align: center;
-            padding: 40px 20px;
             color: var(--text-color-secondary, #888);
         }
 
         .loading-spinner {
-            width: 24px;
-            height: 24px;
-            margin: 0 auto 16px;
+            width: 18px;
+            height: 18px;
+            margin-bottom: 8px;
             border: 2px solid var(--border-color, #333);
             border-top: 2px solid var(--accent-color, #007aff);
             border-radius: 50%;
@@ -229,6 +239,85 @@ export class ClueSuggestionsPanel extends LitElement {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive scaling for different layout modes */
+        @media (max-width: 400px) {
+            .panel-header {
+                padding: 6px 8px;
+            }
+            
+            .panel-title {
+                font-size: 10px;
+                gap: 3px;
+            }
+            
+            .panel-content {
+                padding: 8px;
+            }
+            
+            .suggestion-card {
+                padding: 8px;
+                gap: 6px;
+                margin-bottom: 4px;
+            }
+            
+            .suggestion-title {
+                font-size: 10px;
+            }
+            
+            .suggestion-icon {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .suggestion-arrow {
+                width: 10px;
+                height: 10px;
+            }
+            
+            .action-btn {
+                padding: 6px;
+                font-size: 9px;
+                gap: 4px;
+            }
+            
+            .action-btn-icon {
+                width: 10px;
+                height: 10px;
+            }
+            
+            .actions-grid {
+                gap: 4px;
+            }
+        }
+        
+        @media (min-width: 600px) {
+            .panel-header {
+                padding: 10px 14px;
+            }
+            
+            .panel-title {
+                font-size: 13px;
+            }
+            
+            .panel-content {
+                padding: 14px;
+            }
+            
+            .suggestion-card {
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .suggestion-title {
+                font-size: 13px;
+            }
+            
+            .action-btn {
+                padding: 10px;
+                font-size: 11px;
+            }
         }
     `;
 
@@ -258,6 +347,15 @@ export class ClueSuggestionsPanel extends LitElement {
         this.views = ['Live Insights', 'User Instructions', 'Summary', 'Show Transcript'];
         this.selectedView = 'Live Insights';
         this._dropdownOpen = false;
+    }
+
+    // Reset the suggestions panel to initial state
+    reset() {
+        this.suggestions = [];
+        this.isLoading = false;
+        this._dropdownOpen = false;
+        this.selectedView = 'Live Insights';
+        console.log('🔄 [CLUE_PANEL] Suggestions panel reset');
     }
 
     getSuggestionIcon(suggestion) {
@@ -375,7 +473,6 @@ export class ClueSuggestionsPanel extends LitElement {
                               ${this.suggestions.map(
                                   (suggestion, index) => {
                                       const title = this.getSuggestionTitle(suggestion);
-                                      const description = this.getSuggestionDescription(suggestion);
                                       return html`
                                           <div
                                               class="suggestion-card"
@@ -386,7 +483,6 @@ export class ClueSuggestionsPanel extends LitElement {
                                               </div>
                                               <div class="suggestion-content">
                                                   <h4 class="suggestion-title">${title}</h4>
-                                                  ${description ? html`<p class="suggestion-text">${description}</p>` : ''}
                                               </div>
                                               <svg class="suggestion-arrow" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                   <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

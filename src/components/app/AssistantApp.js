@@ -371,6 +371,15 @@ export class AssistantApp extends LitElement {
                 console.log('Microphone turned off during session close');
             }
 
+            // Reset clue suggestions panel before closing session
+            const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+            if (jarvisView) {
+                const clueSuggestionsPanel = jarvisView.shadowRoot.querySelector('clue-suggestions-panel');
+                if (clueSuggestionsPanel) {
+                    clueSuggestionsPanel.reset();
+                }
+            }
+
             // Close the session
             if (window.require) {
                 const { ipcRenderer } = window.require('electron');
@@ -436,6 +445,17 @@ export class AssistantApp extends LitElement {
         this.currentResponseIndex = -1;
         this._awaitingNewResponse = false;
         this.shouldAnimateResponse = false;
+        
+        // Reset clue suggestions panel
+        if (this.currentView === 'jarvis') {
+            const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+            if (jarvisView) {
+                const clueSuggestionsPanel = jarvisView.shadowRoot.querySelector('clue-suggestions-panel');
+                if (clueSuggestionsPanel) {
+                    clueSuggestionsPanel.reset();
+                }
+            }
+        }
         
         // Reinitialize Gemini session
         await cheddar.initializeGemini(this.selectedProfile, this.selectedLanguage);

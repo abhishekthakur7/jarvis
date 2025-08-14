@@ -36,12 +36,12 @@ const MAX_MICROPHONE_WORDS = 200;
 // Microphone clue mode processing
 let microphoneInputDebounceTimer = null;
 let pendingMicrophoneInput = '';
-const MICROPHONE_INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay for microphone input
+const MICROPHONE_INPUT_DEBOUNCE_DELAY = 200; // 5 seconds delay for microphone input
 
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input
+const INPUT_DEBOUNCE_DELAY = 200; // 8 seconds delay to wait for complete input
 
 // Context and question queue management variables
 let contextAccumulator = '';
@@ -865,18 +865,20 @@ async function generateClueSuggestions(transcriptionText) {
         // Create a focused prompt for suggestion generation
         const cluePrompt = `Based on this transcribed speech: "${transcriptionText}"
 
-Generate 3-5 concise, actionable question suggestions that would help the speaker elaborate or clarify their thoughts. Each suggestion should:
-- Be a complete, well-formed question
-- Help explore the topic deeper
-- Be relevant to the context
-- Be under 15 words
+Extract and identify the specific questions that were asked in the transcription. Present them as clear, well-formatted questions. Each question should:
+- Be exactly what was asked in the transcription
+- Be properly formatted as a question
+- Be concise and clear
+- Maintain the original intent and meaning
 
-Format as a simple JSON array of strings, nothing else:
+If no explicit questions were asked, identify the main topic or concern being discussed and present it as a question that captures what the speaker is trying to understand or figure out.
+
+Format as a clean JSON array with no additional text:
 ["Question 1?", "Question 2?", "Question 3?"]`;
 
         // Send to Gemini for suggestion generation using the correct API
         const response = await ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             contents: cluePrompt,
         });
         
