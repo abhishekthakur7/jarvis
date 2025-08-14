@@ -2070,4 +2070,4 @@ export class AssistantView extends LitElement {
     }
 }
 
-customElements.define('jarvis-view', AssistantView);
+customElements.define('assistant-view', AssistantView);

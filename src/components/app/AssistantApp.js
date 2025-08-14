@@ -5,6 +5,7 @@ import { CustomizeView } from '../views/CustomizeView.js';
 import { HelpView } from '../views/HelpView.js';
 import { HistoryView } from '../views/HistoryView.js';
 import { AssistantView } from '../views/AssistantView.js';
+import { JarvisView } from '../views/JarvisView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
 
@@ -117,6 +118,9 @@ export class AssistantApp extends LitElement {
         focusMode: { type: Boolean },
         advancedMode: { type: Boolean },
         interviewMode: { type: Boolean },
+        clueMode: { type: Boolean },
+        clueSuggestions: { type: Array },
+        clueSuggestionsLoading: { type: Boolean },
         _viewInstances: { type: Object, state: true },
         _isClickThrough: { state: true },
         _awaitingNewResponse: { state: true },
@@ -143,6 +147,9 @@ export class AssistantApp extends LitElement {
         this.focusMode = localStorage.getItem('focusMode') === 'true';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
         this.interviewMode = false;
+        this.clueMode = false;
+        this.clueSuggestions = [];
+        this.clueSuggestionsLoading = false;
         this.responses = [];
         this.currentResponseIndex = -1;
         this._viewInstances = new Map();
@@ -757,6 +764,12 @@ export class AssistantApp extends LitElement {
             this.handleLayoutModeCycle();
         }
         
+        // Shift+Alt+Delete for clue mode toggle (only in jarvis view)
+        if (e.shiftKey && e.altKey && e.key === 'Delete' && this.currentView === 'jarvis') {
+            e.preventDefault();
+            this.handleClueModeToggle();
+        }
+        
         // Ctrl+Enter or Cmd+Enter to send message (only in jarvis view)
         if (e.shiftKey && e.altKey && e.key === '4') {
             if (this.currentView === 'jarvis') {                
@@ -984,6 +997,9 @@ export class AssistantApp extends LitElement {
                         .speakerDetectionEnabled=${this.speakerDetectionEnabled}
                         .autoScrollEnabled=${this.autoScrollEnabled}
                         .scrollSpeed=${this.scrollSpeed}
+                        .clueMode=${this.clueMode}
+                        .clueSuggestions=${this.clueSuggestions}
+                        .clueSuggestionsLoading=${this.clueSuggestionsLoading}
                         @response-index-changed=${this.handleResponseIndexChanged}
                         @response-animation-complete=${() => { this.shouldAnimateResponse = false; this.requestUpdate(); }}
                         @microphone-toggle=${this.handleMicrophoneToggle}
@@ -1012,6 +1028,7 @@ export class AssistantApp extends LitElement {
                         .startTime=${this.startTime}
                         .advancedMode=${this.advancedMode}
                         .interviewMode=${this.interviewMode}
+                        .clueMode=${this.clueMode}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}
@@ -1020,6 +1037,7 @@ export class AssistantApp extends LitElement {
                         .onBackClick=${() => this.handleBackClick()}
                         .onHideToggleClick=${() => this.handleHideToggle()}
                         .onInterviewModeToggle=${() => this.handleInterviewModeToggle()}
+                        .onClueModeToggle=${() => this.handleClueModeToggle()}
                         ?isClickThrough=${this._isClickThrough}
                     ></app-header>
                     <div class="${mainContentClass}">
@@ -1209,6 +1227,11 @@ export class AssistantApp extends LitElement {
             await ipcRenderer.invoke('toggle-interview-mode', this.interviewMode);
         }
         
+        this.requestUpdate();
+    }
+
+    handleClueModeToggle() {
+        this.clueMode = !this.clueMode;
         this.requestUpdate();
     }
 }

@@ -126,6 +126,11 @@ export class AppHeader extends LitElement {
             border: 3px solid white;
         }
 
+        .interview-mode-checkbox.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .interview-mode-checkbox svg {
             width: 10px;
             height: 10px;
@@ -140,6 +145,59 @@ export class AppHeader extends LitElement {
         }
 
         .interview-mode-checkbox svg path {
+            stroke: white !important;
+        }
+
+        .clue-mode-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            -webkit-app-region: no-drag;
+        }
+
+        .clue-mode-label {
+            font-size: var(--header-font-size-small);
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .clue-mode-checkbox {
+            width: 10px;
+            height: 10px;
+            margin-right: 6px;
+            border: 2px solid white;
+            border-radius: 2px;
+            background: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .clue-mode-checkbox:hover {
+            background: var(--hover-background);
+        }
+
+        .clue-mode-checkbox.checked {
+            background: var(--accent-color, #007aff);
+            border: 3px solid white;
+        }
+
+        .clue-mode-checkbox svg {
+            width: 10px;
+            height: 10px;
+            color: white;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .clue-mode-checkbox.checked svg {
+            opacity: 1;
+            color: white !important;
+        }
+
+        .clue-mode-checkbox svg path {
             stroke: white !important;
         }
     `;
@@ -159,6 +217,8 @@ export class AppHeader extends LitElement {
         onAdvancedClick: { type: Function },
         interviewMode: { type: Boolean },
         onInterviewModeToggle: { type: Function },
+        clueMode: { type: Boolean },
+        onClueModeToggle: { type: Function },
     };
 
     constructor() {
@@ -177,6 +237,8 @@ export class AppHeader extends LitElement {
         this.onAdvancedClick = () => {};
         this.interviewMode = false;
         this.onInterviewModeToggle = () => {};
+        this.clueMode = false;
+        this.onClueModeToggle = () => {};
         this._timerInterval = null;
     }
 
@@ -282,8 +344,19 @@ export class AppHeader extends LitElement {
                 <div class="interview-mode-container">
                     <span class="interview-mode-label">IM</span>
                     <div 
-                        class="interview-mode-checkbox ${this.interviewMode ? 'checked' : ''}"
-                        @click=${this.onInterviewModeToggle}
+                        class="interview-mode-checkbox ${this.interviewMode ? 'checked' : ''} ${this.clueMode ? 'disabled' : ''}"
+                        @click=${this.clueMode ? null : this.onInterviewModeToggle}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="clue-mode-container">
+                    <span class="clue-mode-label">Clue</span>
+                    <div 
+                        class="clue-mode-checkbox ${this.clueMode ? 'checked' : ''}"
+                        @click=${this.onClueModeToggle}
                     >
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

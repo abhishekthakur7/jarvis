@@ -131,6 +131,10 @@ function createWindow(sendToRenderer, geminiSessionRef) {
 
     setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef);
 
+    // Show the window after everything is set up
+    mainWindow.show();
+    console.log('Window shown on startup');
+
     return mainWindow;
 }
 
@@ -208,10 +212,14 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
     if (keybinds.toggleVisibility) {
         try {
             globalShortcut.register(keybinds.toggleVisibility, () => {
+                console.log('Toggle visibility shortcut triggered!');
                 if (mainWindow.isVisible()) {
+                    console.log('Hiding window');
                     mainWindow.hide();
                 } else {
-                    mainWindow.showInactive();
+                    console.log('Showing window');
+                    mainWindow.show();
+                    mainWindow.focus();
                 }
             });
             console.log(`Registered toggleVisibility: ${keybinds.toggleVisibility}`);
@@ -244,15 +252,21 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
     if (keybinds.microphoneToggle) {
         try {
             globalShortcut.register(keybinds.microphoneToggle, () => {
-                console.log('Microphone toggle shortcut triggered');
+                console.log('🎯 Microphone toggle shortcut triggered!');
                 // Use the correct shortcut key format for microphone toggle
                 const shortcutKey = 'shift+alt+8';
                 
                 // Use the handleShortcut function to trigger microphone toggle
                 mainWindow.webContents.executeJavaScript(`
-                    cheddar.handleShortcut('${shortcutKey}');
+                    console.log('🎯 About to call cheddar.handleShortcut');
+                    if (typeof cheddar !== 'undefined') {
+                        console.log('🎯 cheddar object exists');
+                        cheddar.handleShortcut('${shortcutKey}');
+                    } else {
+                        console.error('🎯 cheddar object is undefined!');
+                    }
                 `).catch(error => {
-                    console.error('Error executing microphone toggle JavaScript:', error);
+                    console.error('🎯 Error executing microphone toggle JavaScript:', error);
                 });
             });
             console.log(`Registered microphoneToggle: ${keybinds.microphoneToggle}`);
