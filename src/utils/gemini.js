@@ -29,6 +29,8 @@ let microphoneTranscription = '';
 let microphoneConversationHistory = [];
 let speakerTranscription = '';
 let speakerConversationHistory = [];
+let speakerFragments = [];
+const SPEAKER_BUFFER_WINDOW_MS = 120000; // 2-minute sliding window for speaker clue buffer
 let microphoneWordCount = 0;
 let isProcessingTextMessage = false;
 const MAX_MICROPHONE_WORDS = 200;
@@ -1328,32 +1330,18 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             if (shouldInterrupt(transcriptionText)) {
                                 console.log('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
                                 
-                                // Check if clue mode is enabled - if so, send to clue engine instead of processing immediately
+                                // If clue mode is enabled, accumulate the fragment and rely on the existing debounce
+                                // flow to generate Gemini suggestions, preventing duplicate requests.
                                 if (isClueMode) {
-                                    console.log('🔍 [CLUE_MODE_INTERRUPTION] Clue mode enabled during interruption, sending to clue engine:', transcriptionText.trim());
+                                    const cleanFragment = transcriptionText.trim();
+                                    const nowTs = Date.now();
+                                    speakerFragments.push({ text: cleanFragment, timestamp: nowTs });
+                                    speakerFragments = speakerFragments.filter(f => nowTs - f.timestamp <= SPEAKER_BUFFER_WINDOW_MS);
+                                    pendingSpeakerInput += cleanFragment + ' ';
+                                    console.log('🔍 [CLUE_MODE_INTERRUPTION] Accumulated speaker input during interruption:', pendingSpeakerInput.trim());
                                     
-                                    // Clean up interrupted response
+                                    // Clean up any ongoing response and reset state without triggering suggestions here.
                                     cleanupResponseBuffer();
-                                    
-                                    // Save transcription to history
-                                    speakerConversationHistory.push({
-                                        timestamp: Date.now(),
-                                        transcription: transcriptionText.trim(),
-                                        type: 'speaker'
-                                    });
-                                    
-                                    // Send to clue engine for suggestion generation
-                                    try {
-                                        sendToRenderer('clue-suggestions-loading', true);
-                                        const suggestions = await generateClueSuggestions(transcriptionText.trim());
-                                        sendToRenderer('clue-suggestions-update', suggestions);
-                                        sendToRenderer('clue-suggestions-loading', false);
-                                    } catch (error) {
-                                        console.error('🔍 [CLUE_MODE_INTERRUPTION_ERROR] Error generating suggestions:', error);
-                                        sendToRenderer('clue-suggestions-loading', false);
-                                    }
-                                    
-                                    // Reset state and return (don't process through main AI)
                                     contextAccumulator = '';
                                     pendingInput = '';
                                     isAiResponding = false;
@@ -1394,15 +1382,27 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             
                             // Handle clue mode processing for speaker input
                             if (isClueMode) {
-                                // Accumulate speaker input for clue processing
-                                pendingSpeakerInput += transcriptionText + ' ';
+                                // Accumulate speaker input for clue processing with collapsed whitespace
+                                const cleanFragment = transcriptionText;
+                                // Store fragment with timestamp for sliding buffer
+                                const nowTs = Date.now();
+                                speakerFragments.push({ text: cleanFragment, timestamp: nowTs });
+                                // Retain only fragments from the last 2 minutes
+                                speakerFragments = speakerFragments.filter(f => nowTs - f.timestamp <= SPEAKER_BUFFER_WINDOW_MS);
+                                 pendingSpeakerInput += cleanFragment + ' ';
                                 console.log('🔍 [SPEAKER_CLUE_MODE] Accumulating speaker input:', pendingSpeakerInput.trim());
                                 // Debounce processing to trigger clue suggestions after brief pause
                                 if (speakerClueDebounceTimer) clearTimeout(speakerClueDebounceTimer);
                                 speakerClueDebounceTimer = setTimeout(() => {
                                     if (pendingSpeakerInput.trim()) {
                                         console.log('🔍 [SPEAKER_CLUE_MODE] Debounce timeout reached, generating suggestions');
-                                        processSpeakerClueInput(pendingSpeakerInput.trim());
+                                        // Build text from recent fragments within sliding window
+                                        const nowTs = Date.now();
+                                        speakerFragments = speakerFragments.filter(f => nowTs - f.timestamp <= SPEAKER_BUFFER_WINDOW_MS);
+                                        const textForGemini = speakerFragments.map(f => f.text).join(' ')
+  .trim();
+
+                                        processSpeakerClueInput(textForGemini);
                                         pendingSpeakerInput = '';
                                     }
                                 }, 1200); // 1.2s pause indicates end of phrase

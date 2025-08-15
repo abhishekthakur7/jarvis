@@ -387,7 +387,7 @@ export class ClueSuggestionsPanel extends LitElement {
         if (suggestion.toLowerCase().includes('merge conflicts')) {
             return suggestion.split('?')[0] + '?';
         }
-        return suggestion.length > 50 ? suggestion.substring(0, 47) + '...' : suggestion;
+        return suggestion.length > 150 ? suggestion.substring(0, 149) + '...' : suggestion;
     }
 
     getSuggestionDescription(suggestion) {
@@ -505,21 +505,6 @@ export class ClueSuggestionsPanel extends LitElement {
                               </div>
                           </div>
                       `}
-                <div class="more-actions">
-                    <h3 class="panel-title" style="font-size:14px; font-weight:500;">More Actions</h3>
-                    <div class="actions-grid">
-                        ${this.actions.map(
-                            action => html`
-                                <div class="action-btn" @click=${() => this.onActionSelect(action)}>
-                                    <div class="action-btn-icon">
-                                        ${this.getActionIcon(action)}
-                                    </div>
-                                    <span>${action}</span>
-                                </div>
-                            `
-                        )}
-                    </div>
-                </div>
             </div>
         `;
     }

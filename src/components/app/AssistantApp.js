@@ -165,6 +165,7 @@ export class AssistantApp extends LitElement {
         
 
 
+
         // Auto-scroll settings
         this.autoScrollEnabled = localStorage.getItem('autoScrollEnabled') !== 'false';
         this.scrollSpeed = Number(localStorage.getItem('scrollSpeed')) || 2;
@@ -202,7 +203,10 @@ export class AssistantApp extends LitElement {
                 this.handleMicrophoneTranscriptionUpdate(data);
             });
             ipcRenderer.on('clue-suggestions-update', (_, suggestions) => {
-                this.clueSuggestions = suggestions;
+                // Merge new suggestions, keeping the most recent at the top and max 4 items
+                const incoming = Array.isArray(suggestions) ? suggestions : [];
+                const dedupedNew = incoming.filter(s => !!s && !this.clueSuggestions.includes(s));
+                this.clueSuggestions = [...dedupedNew, ...this.clueSuggestions].slice(0, 4);
                 this.requestUpdate();
             });
             ipcRenderer.on('clue-suggestions-loading', (_, isLoading) => {
