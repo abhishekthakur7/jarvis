@@ -42,4 +42,4 @@ jobs:
                   release: false
                   args: -w --x64
               env:
-                  GH_TOKEN: ${{ secrets.github_token }}
+                  GH_TOKEN: ${{ secrets.gh_token_dev }}
