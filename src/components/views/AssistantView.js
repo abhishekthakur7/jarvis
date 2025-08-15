@@ -819,6 +819,7 @@ export class AssistantView extends LitElement {
         scrollSpeed: { type: Number },
         _autoScrollPaused: { type: Boolean },
         lastResponseTime: { type: Number },
+
     };
 
     constructor() {
@@ -1489,6 +1490,8 @@ export class AssistantView extends LitElement {
             
             ipcRenderer.on('layout-mode-changed', this.handleLayoutModeChange);
         }
+        
+
     }
 
     disconnectedCallback() {
@@ -1518,6 +1521,7 @@ export class AssistantView extends LitElement {
         // Clean up event listeners
         document.removeEventListener('keydown', this._handleKeydown, true);
         document.removeEventListener('mousedown', this._handleMousedown, true);
+
         
         if (this.shadowRoot) {
             this.shadowRoot.removeEventListener('keydown', this._handleKeydown, true);
@@ -1579,6 +1583,10 @@ export class AssistantView extends LitElement {
         }));
         this.requestUpdate();
     }
+
+
+
+
 
     increaseScrollSpeed() {
         if (this.scrollSpeed < 10) {
@@ -1980,6 +1988,8 @@ export class AssistantView extends LitElement {
 
         return html`
             <div class="response-container"></div>
+            
+
 
             <div class="text-input-container">
                 <button class="nav-button" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0}>
@@ -2028,6 +2038,10 @@ export class AssistantView extends LitElement {
                         <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                     </svg>
                 </button>
+                
+
+                
+
                 
                 ${(() => {
                     const timeDisplay = this.getResponseTimeDisplay();
