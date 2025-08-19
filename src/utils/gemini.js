@@ -1,5 +1,6 @@
 const { GoogleGenAI } = require('@google/genai');
 const { BrowserWindow, ipcMain } = require('electron');
+const { v4: uuidv4 } = require('uuid');
 const { spawn } = require('child_process');
 const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
@@ -64,6 +65,9 @@ let lastSessionParams = null;
 
 // Flag to suppress rendering during reconnection
 let isSuppressingRender = false;
+// Abort management for in-flight Gemini requests
+let currentAbortController = null;
+let currentConversationId = null;
 
 function sendToRenderer(channel, data) {
     const windows = BrowserWindow.getAllWindows();
@@ -85,6 +89,62 @@ function sanitizeText(text) {
     return sanitized;
 }
 
+// --- Prompt size & history management ---
+const MAX_TURNS_IN_HISTORY = 25;
+const MAX_SUMMARY_CHAR = 800;
+function summariseHistoryIfNeeded() {
+    if (conversationHistory.length <= MAX_TURNS_IN_HISTORY) return;
+    // Keep most recent 10 turns intact, summarise older ones
+    const preserveCount = 10;
+    const toSummarise = conversationHistory.splice(0, conversationHistory.length - preserveCount);
+    const aggregated = toSummarise.map(t=>t.transcription).join(' ').slice(0, MAX_SUMMARY_CHAR);
+    conversationHistory.unshift({
+        timestamp: Date.now(),
+        transcription: `Summary: ${aggregated}`,
+        type: 'summary',
+        processed: true
+    });
+}
+
+// --- Metrics collection ---
+const metricsLog = [];
+let lastAiRequestStart = null;
+function recordMetric(event, data = {}) {
+    metricsLog.push({ event, ...data, timestamp: Date.now() });
+    console.log('📈 [Metrics collection]', event, data);
+}
+function computeQualityScore(responseText) {
+    const len = responseText.trim().split(/\s+/).length;
+    return Math.min(1, len / 150);
+}
+
+// Generic Gemini input sender with exponential backoff retry
+async function sendInputWithRetry(session, payload, maxRetries = 3, baseDelayMs = 500) {
+    let attempt = 0;
+    while (attempt <= maxRetries) {
+        try {
+            return await session.sendRealtimeInput(payload);
+        } catch (err) {
+            attempt++;
+            if (attempt > maxRetries) throw err;
+            const delay = baseDelayMs * Math.pow(2, attempt - 1);
+            console.warn(`🔁 [RETRY] Attempt ${attempt}/${maxRetries} failed. Retrying in ${delay}ms`, err.message || err);
+            await new Promise(res => setTimeout(res, delay));
+        }
+    }
+}
+
+function performTextRequest(text, session) {
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+    currentConversationId = uuidv4();
+    lastAiRequestStart = Date.now();
+    recordMetric('ai_request_start', { conversationId: currentConversationId, textLength: text.length });
+    return sendInputWithRetry(session, { text, conversationId: currentConversationId, signal: currentAbortController.signal });
+}
+
 // Question detection and context management functions
 function isCompleteQuestion(text) {
     if (!text || text.trim().length < 3) return false;
@@ -103,6 +163,23 @@ function isCompleteQuestion(text) {
         return words.length >= 4;
     }
     
+    return false;
+}
+
+// Enhanced completeness heuristic combining classic question detection with buffer thresholds
+const MAX_BUFFER_WORDS = 40; // Force send if buffer hits this word count
+const MAX_BUFFER_CHARS = 200; // Fallback char limit
+function isSemanticallyComplete(text) {
+    if (!text || text.trim().length === 0) return false;
+    const trimmed = text.trim();
+    // If classic rules say it's a complete question, respect that
+    if (isCompleteQuestion(trimmed)) return true;
+    // Force-trigger if buffer grows too large (prevents endless accumulation)
+    const words = trimmed.split(/\s+/);
+    if (words.length >= MAX_BUFFER_WORDS) return true;
+    if (trimmed.length >= MAX_BUFFER_CHARS) return true;
+    // Trigger on explicit punctuation end even without leading question word
+    if (/[\?\.!]$/.test(trimmed)) return true;
     return false;
 }
 
@@ -182,13 +259,22 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     }
     
     console.log('🚀 [AI_REQUEST] Preparing to send new AI request with complete isolation');
+
+    // Abort any previous request in flight
+    if (currentAbortController) {
+        console.log('🛑 [ABORT] Cancelling previous Gemini request');
+        currentAbortController.abort();
+    }
+    // Create a fresh AbortController and conversationId for this request
+    currentAbortController = new AbortController();
+    currentConversationId = `${Date.now()}-${Math.random().toString(36).substring(2,8)}`;
     
     // CRITICAL FIX: Clear any pending debounce timer when starting new AI request
     if (inputDebounceTimer) {
         clearTimeout(inputDebounceTimer);
         inputDebounceTimer = null;
         pendingInput = '';
-        console.log('🧹 [DEBOUNCE_CLEARED] Cleared pending debounce timer before new AI request');
+        //console.log('🧹 [DEBOUNCE_CLEARED] Cleared pending debounce timer before new AI request');
     }
     
     // Ensure complete buffer cleanup and context isolation
@@ -226,7 +312,9 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     
     try {
         // Send the combined text to Gemini using the correct method
-        await geminiSession.sendRealtimeInput({ text: combinedText.trim() });
+        lastAiRequestStart = Date.now();
+          recordMetric('ai_request_start', { conversationId: currentConversationId, textLength: combinedText.length });
+          await sendInputWithRetry(geminiSession, { text: combinedText.trim(), conversationId: currentConversationId, signal: currentAbortController.signal });
         console.log('✅ [AI_REQUEST] Successfully sent validated questions to AI');
     } catch (error) {
         console.error('❌ [AI_REQUEST_ERROR] Error sending combined questions to AI:', error);
@@ -423,6 +511,7 @@ function resetReconstructionState() {
 
 // Complete context isolation function to prevent context bleeding
 function enforceContextBoundary() {
+    summariseHistoryIfNeeded();
     console.log('🚧 [CONTEXT_BOUNDARY] Enforcing complete context isolation');
     
     // Clear all response-related buffers
@@ -1175,7 +1264,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     contextAccumulator += pendingInput + ' ';
                                     
                                     // Check if this is a complete question
-                                    if (isCompleteQuestion(pendingInput.trim())) {
+                                    if (isSemanticallyComplete(pendingInput.trim())) {
                                         console.log('❓ [COMPLETE_QUESTION] Complete question detected:', pendingInput.trim());
                                         
                                         // Add to question queue
@@ -1312,6 +1401,9 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
 
                     if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.generationComplete) {
                         console.log('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
+                        const latencyMs = lastAiRequestStart ? (Date.now() - lastAiRequestStart) : null;
+                        const quality = computeQualityScore(messageBuffer);
+                        recordMetric('ai_response_complete', { latencyMs, responseLength: messageBuffer.length, quality });
                         
                         // DISABLED: Final integrity check and reconstruction logic
                         // const finalIntegrity = validateResponseIntegrity(messageBuffer);
@@ -1412,14 +1504,14 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             clearTimeout(inputDebounceTimer);
                             inputDebounceTimer = null;
                             pendingInput = '';
-                            console.log('🧹 [DEBOUNCE_CLEARED] Cleared debounce timer after AI response completion');
+                            //console.log('🧹 [DEBOUNCE_CLEARED] Cleared debounce timer after AI response completion');
                         }
                         
                         // CRITICAL FIX: Clear context accumulator to prevent reprocessing same content
                         contextAccumulator = '';
-                        console.log('🧹 [CONTEXT_CLEARED] Cleared context accumulator to prevent duplicate processing');
+                        //console.log('🧹 [CONTEXT_CLEARED] Cleared context accumulator to prevent duplicate processing');
                         
-                        console.log('🔄 [STATE_RESET] AI response state reset, checking for queued questions');
+                        //console.log('🔄 [STATE_RESET] AI response state reset, checking for queued questions');
                         
                         // Process any queued questions after response completion
                         if (questionQueue.length > 0) {
@@ -1879,7 +1971,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             console.log('📄 [TRANSCRIPT_CONTENT]', text.trim());
             
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
-            await geminiSessionRef.current.sendRealtimeInput({ text: text.trim() });
+            await performTextRequest(text.trim(), geminiSessionRef.current);
             return { success: true };
         } catch (error) {
             console.error('Error sending text:', error);
@@ -2002,7 +2094,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Store the complete transcription for saving after AI response
             global.pendingContextTranscription = completeTranscription.trim();
             
-            await geminiSessionRef.current.sendRealtimeInput({ text: completeTranscription.trim() });
+            await performTextRequest(completeTranscription.trim(), geminiSessionRef.current);
             return { success: true };
         } catch (error) {
             console.error('\nError sending context-with-screenshot:', error);
