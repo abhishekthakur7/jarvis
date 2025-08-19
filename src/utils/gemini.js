@@ -1969,6 +1969,15 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
             console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini via IPC:');
             console.log('📄 [TRANSCRIPT_CONTENT]', text.trim());
+
+            // Save to conversation history immediately to prevent duplicate processing
+            conversationHistory.push({
+                timestamp: requestStartTime,
+                transcription: text.trim(),
+                type: 'user_request',
+                processed: true
+            });
+            console.log('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
             
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
             await performTextRequest(text.trim(), geminiSessionRef.current);

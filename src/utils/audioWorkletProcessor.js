@@ -18,6 +18,14 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         this.currentSilenceFrames = 0;
         this.currentSpeechFrames = 0;
         this.isSpeaking = false;
+
+        // Adaptive silence tracking
+        this.MIN_SILENCE_FRAMES = 4; // lower bound ~80 ms at 24 kHz
+        this.MAX_SILENCE_FRAMES = 30; // upper bound ~600 ms
+        this.pauseDurations = []; // recent pause lengths (in frames)
+        this.maxPauseSamplesToTrack = 20;
+        this.lastSpeechEndTime = null;
+        this.lastPauseFrames = null;
         
         // Audio buffering
         this.audioBuffer = [];
@@ -125,6 +133,21 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
                 this.isSpeaking = true;
                 vadResult.isSpeaking = true;
                 vadResult.speechStart = true;
+
+                // Update adaptive silence threshold using previous pause duration
+                if (this.lastPauseFrames) {
+                    this.pauseDurations.push(this.lastPauseFrames);
+                    if (this.pauseDurations.length > this.maxPauseSamplesToTrack) {
+                        this.pauseDurations.shift();
+                    }
+                    const avg = this.pauseDurations.reduce((a, b) => a + b, 0) / this.pauseDurations.length;
+                    const adaptive = Math.max(this.MIN_SILENCE_FRAMES, Math.min(this.MAX_SILENCE_FRAMES, Math.round(avg)));
+                    if (adaptive !== this.silenceFrames) {
+                        this.silenceFrames = adaptive;
+                        // Inform main thread of the update for debugging/visualization
+                        this.port.postMessage({ type: 'silenceFramesUpdated', data: { silenceFrames: adaptive } });
+                    }
+                }
             }
         } else {
             this.currentSilenceFrames++;
@@ -134,6 +157,10 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
                 this.isSpeaking = false;
                 vadResult.isSpeaking = false;
                 vadResult.speechEnd = true;
+
+                // Record pause duration for adaptive VAD
+                this.lastPauseFrames = this.currentSilenceFrames;
+                this.lastSpeechEndTime = now;
             }
         }
         
