@@ -1915,7 +1915,13 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             `;
 
             // Get the generative model
-            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction });
+            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction 
+                // ,config: {
+                //     thinkingConfig: {
+                //         thinkingBudget: 0,
+                //     },
+                // }
+            });
 
             // Reuse logic from standard handler to build transcription
             let completeTranscription = `\n----- START: USER-CONTEXT -----\n`;
