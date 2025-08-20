@@ -239,6 +239,15 @@ export class HelpView extends LitElement {
     }
 
     getDefaultKeybinds() {
+        // Centralized shortcut configuration
+        if (window.getDefaultKeybinds) return window.getDefaultKeybinds();
+        try {
+            return require('../../utils/shortcutConfig.js').getDefaultKeybinds();
+        } catch (e) {
+            console.error('Failed to load default keybinds:', e);
+            return {};
+        }
+    /* Legacy inline defaults removed in favor of centralized config
         const isMac = cheddar.isMacOS || navigator.platform.includes('Mac');
         return {
             moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
@@ -258,6 +267,7 @@ export class HelpView extends LitElement {
             scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
             toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
         };
+    }*/
     }
 
     loadKeybinds() {

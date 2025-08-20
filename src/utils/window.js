@@ -135,8 +135,14 @@ function createWindow(sendToRenderer, geminiSessionRef) {
 }
 
 function getDefaultKeybinds() {
-    const isMac = process.platform === 'darwin';
-    return {
+    // Delegate to centralized shortcut configuration to avoid duplication
+    const { getDefaultKeybinds } = require('./shortcutConfig.js');
+    return getDefaultKeybinds();
+}
+
+/* Legacy hardcoded defaults removed in favor of centralized config
+const isMac = process.platform === 'darwin';
+return {
         moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
         moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
         moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
@@ -154,9 +160,10 @@ function getDefaultKeybinds() {
         scrollDown: isMac ? 'Shift+Alt+2' : 'Shift+Alt+2',
         toggleLayoutMode: 'Shift+Alt+/',
         toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
-        windowClose: 'Shift+Alt+;',
+        windowClose: 'Shift+Alt+;'
     };
 }
+*/
 
 function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef) {
     console.log('Updating global shortcuts with:', keybinds);
