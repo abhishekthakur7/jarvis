@@ -1937,7 +1937,12 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             isProcessingTextMessage = true;
             global.pendingContextTranscription = completeTranscription.trim();
 
-            const result = await model.generateContentStream(completeTranscription.trim());
+            // Build parts array for multimodal request
+            const contentParts = [{ text: completeTranscription.trim() }];
+            if (global.latestScreenshotBase64) {
+                contentParts.push({ inlineData: { mimeType: 'image/jpeg', data: global.latestScreenshotBase64 } });
+            }
+            const result = await model.generateContentStream(contentParts);
 
             let aiResponse = '';
             for await (const chunk of result.stream) {
@@ -2030,6 +2035,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             }
 
             process.stdout.write('!');
+            // Cache latest screenshot for use by Gemini Pro handler
+            global.latestScreenshotBase64 = data;
             await geminiSessionRef.current.sendRealtimeInput({
                 media: { data: data, mimeType: 'image/jpeg' },
             });
