@@ -1960,7 +1960,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             let aiResponse = '';
             for await (const chunk of result.stream) {
                 const chunkText = chunk.text();
-                console.log('Received chunk:', chunkText);
+                //console.log('Received chunk:', chunkText);
                 aiResponse += chunkText;
                 sendToRenderer('update-response', aiResponse);
             }
