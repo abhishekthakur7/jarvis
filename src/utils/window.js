@@ -135,8 +135,14 @@ function createWindow(sendToRenderer, geminiSessionRef) {
 }
 
 function getDefaultKeybinds() {
-    const isMac = process.platform === 'darwin';
-    return {
+    // Delegate to centralized shortcut configuration to avoid duplication
+    const { getDefaultKeybinds } = require('./shortcutConfig.js');
+    return getDefaultKeybinds();
+}
+
+/* Legacy hardcoded defaults removed in favor of centralized config
+const isMac = process.platform === 'darwin';
+return {
         moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
         moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
         moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
@@ -147,15 +153,17 @@ function getDefaultKeybinds() {
         speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
         reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
         nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
+        nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
         previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
         nextResponse: isMac ? 'Cmd+Alt+]' : 'Ctrl+Alt+]',
         scrollUp: isMac ? 'Shift+Alt+1' : 'Shift+Alt+1',
         scrollDown: isMac ? 'Shift+Alt+2' : 'Shift+Alt+2',
         toggleLayoutMode: 'Shift+Alt+/',
         toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
-        windowClose: 'Shift+Alt+;',
+        windowClose: 'Shift+Alt+;'
     };
 }
+*/
 
 function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessionRef) {
     console.log('Updating global shortcuts with:', keybinds);
@@ -323,6 +331,25 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered nextStep: ${keybinds.nextStep}`);
         } catch (error) {
             console.error(`Failed to register nextStep (${keybinds.nextStep}):`, error);
+        }
+    }
+
+    // Register next step pro shortcut (screenshot to gemini-2.5-pro)
+    if (keybinds.nextStepPro) {
+        try {
+            globalShortcut.register(keybinds.nextStepPro, async () => {
+                console.log('Next step Pro shortcut triggered');
+                const isMac = process.platform === 'darwin';
+                const shortcutKey = isMac ? 'shift+alt+,' : 'shift+Alt+,';
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('${shortcutKey}');
+                `).catch(error => {
+                    console.error('Error executing next step pro JavaScript:', error);
+                });
+            });
+            console.log(`Registered nextStepPro: ${keybinds.nextStepPro}`);
+        } catch (error) {
+            console.error(`Failed to register nextStepPro (${keybinds.nextStepPro}):`, error);
         }
     }
 

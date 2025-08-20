@@ -67,10 +67,17 @@ class MicrophoneProcessor {
         this.bufferSize = options.bufferSize || 4096;
         this.chunkDuration = options.chunkDuration || 0.5; // seconds - reduced for more responsive logging
         
+        // Adaptive silence detection parameters
+        this.MIN_SILENCE_FRAMES = 6;
+        this.MAX_SILENCE_FRAMES = 20;
+        this.pauseDurations = []; // store last N pause durations (frames)
+        this.maxPauseSamplesToTrack = 20;
+        this.lastSpeechEndTimestamp = null;
+
         this.vad = new MicrophoneVAD({
             sampleRate: this.sampleRate,
             energyThreshold: 0.002, // Much lower threshold for better sensitivity
-            silenceFrames: 8, // Reduced silence frames for quicker response
+            silenceFrames: 8, // default, will adapt
             speechFrames: 1 // Only 1 frame needed to start speech detection
         });
         
@@ -107,8 +114,28 @@ class MicrophoneProcessor {
             if (this.onSpeechStateChange) {
                 if (vadResult.speechStart) {
                     this.onSpeechStateChange({ type: 'speechStart', energy: vadResult.energy });
+
+                    // Calculate pause duration since last speechEnd
+                    if (this.lastSpeechEndTimestamp) {
+                        const pauseMs = Date.now() - this.lastSpeechEndTimestamp;
+                        const frames = Math.round(pauseMs / 20); // each frame ~20ms at 24kHz
+                        if (frames > 0) {
+                            this.pauseDurations.push(frames);
+                            if (this.pauseDurations.length > this.maxPauseSamplesToTrack) {
+                                this.pauseDurations.shift();
+                            }
+                            // Compute mean pause frames
+                            const meanFrames = this.pauseDurations.reduce((a,b)=>a+b,0) / this.pauseDurations.length;
+                            const adaptiveFrames = Math.min(this.MAX_SILENCE_FRAMES, Math.max(this.MIN_SILENCE_FRAMES, Math.round(meanFrames)));
+                            if (adaptiveFrames !== this.vad.silenceFrames) {
+                                console.log(`Adaptive VAD: updating silenceFrames from ${this.vad.silenceFrames} -> ${adaptiveFrames}`);
+                                this.vad.silenceFrames = adaptiveFrames;
+                            }
+                        }
+                    }
                 } else if (vadResult.speechEnd) {
                     this.onSpeechStateChange({ type: 'speechEnd', energy: vadResult.energy });
+                    this.lastSpeechEndTimestamp = Date.now();
                 } else if (vadResult.isSpeaking) {
                     this.onSpeechStateChange({ type: 'speaking', energy: vadResult.energy });
                 }

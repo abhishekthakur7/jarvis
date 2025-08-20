@@ -239,6 +239,15 @@ export class HelpView extends LitElement {
     }
 
     getDefaultKeybinds() {
+        // Centralized shortcut configuration
+        if (window.getDefaultKeybinds) return window.getDefaultKeybinds();
+        try {
+            return require('../../utils/shortcutConfig.js').getDefaultKeybinds();
+        } catch (e) {
+            console.error('Failed to load default keybinds:', e);
+            return {};
+        }
+    /* Legacy inline defaults removed in favor of centralized config
         const isMac = cheddar.isMacOS || navigator.platform.includes('Mac');
         return {
             moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
@@ -251,12 +260,14 @@ export class HelpView extends LitElement {
             reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
             toggleLayoutMode: 'Shift+Alt+/',
             nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
+            nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
             previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
             nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
             scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
             scrollDown: isMac ? 'Cmd+Shift+Down' : 'Ctrl+Shift+Down',
             toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
         };
+    }*/
     }
 
     loadKeybinds() {
@@ -360,6 +371,10 @@ export class HelpView extends LitElement {
                             <div class="shortcut-item">
                                 <span class="shortcut-description">Take screenshot and ask for next step</span>
                                 <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStep)}</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-description">Take screenshot and ask for next step (Pro)</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStepPro)}</div>
                             </div>
                         </div>
 

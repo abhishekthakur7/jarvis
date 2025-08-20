@@ -1940,9 +1940,15 @@ export class AssistantView extends LitElement {
             // Replace pronouns in the response content
             this.replacePronounsInResponse();
             
-            // Always reset scroll position to top after content update
+            // Always reset scroll position to top only when navigating
             requestAnimationFrame(() => {
-                container.scrollTop = 0;
+                if (this._isNavigationUpdate) {
+                    // Moving to a different response – start at the top
+                    container.scrollTop = 0;
+                } else if (this.autoScrollEnabled) {
+                    // Stay pinned to the bottom while the answer is growing
+                    this.scrollToBottom();
+                }
                 
                 // Re-enable auto-scroll for new responses after scroll reset
                 if (isNewResponse && wasAutoScrollEnabled) {
