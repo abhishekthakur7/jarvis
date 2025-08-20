@@ -2256,6 +2256,21 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
+    // Close Gemini Pro client (2.5) session to free resources
+    ipcMain.handle('close-gemini-pro-session', async event => {
+        try {
+            if (geminiProClient) {
+                geminiProClient = null;
+            }
+            geminiProSessionRef.current = null;
+            global.latestScreenshotBase64 = null;
+            return { success: true };
+        } catch (error) {
+            console.error('Error closing Gemini Pro session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     // Conversation history IPC handlers
     ipcMain.handle('get-current-session', async event => {
         try {
