@@ -1,3 +1,4 @@
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { GoogleGenAI } = require('@google/genai');
 const { BrowserWindow, ipcMain } = require('electron');
 const { v4: uuidv4 } = require('uuid');
@@ -44,7 +45,7 @@ let lastQuestionTime = null;
 let isAiResponding = false;
 let questionQueue = [];
 const CONTEXT_RESET_TIMEOUT = 60000; // 1 minute context window
-const QUESTION_WORDS = ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'can', 'could', 'would', 'should', 'is', 'are', 'do', 'does', 'did', 'will', 'have', 'has'];
+const QUESTION_WORDS = ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'can', 'could', 'would', 'should', 'is', 'are', 'do', 'does', 'did', 'will', 'have', 'has', 'define'];
 const REFERENCE_WORDS = ['it', 'this', 'that', 'they', 'them', 'these', 'those', 'also', 'and', 'but', 'however', 'moreover', 'furthermore'];
 
 // Response reconstruction variables
@@ -1852,6 +1853,11 @@ async function sendAudioToGemini(base64Data, geminiSessionRef) {
 function setupGeminiIpcHandlers(geminiSessionRef) {
     // Store the geminiSessionRef globally for reconnection access
     global.geminiSessionRef = geminiSessionRef;
+    // Reference holder for Gemini 2.5 Pro session
+    const geminiProSessionRef = { current: null };
+    // Cached Gemini Pro client instance (initialized on first use)
+    let geminiProClient = null; 
+    global.geminiProSessionRef = geminiProSessionRef;
 
     // Remove any existing handlers to prevent duplicates
     ipcMain.removeHandler('initialize-gemini');
@@ -1880,6 +1886,89 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success };
         } catch (error) {
             console.error('Error during manual reconnection:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
+    // ====================== PRO VERSION HANDLER ============================
+    ipcMain.handle('process-context-with-screenshot-pro', async (event) => {
+        try {
+            // Lazily create Gemini Pro client when first needed
+            if (!geminiProClient) {
+                const proApiKey = apiKeyManager ? apiKeyManager.getCurrentApiKey() : null;
+                if (!proApiKey) {
+                    throw new Error('No valid API key for Gemini Pro');
+                }
+                geminiProClient = new GoogleGenerativeAI(proApiKey);
+            }
+
+            // Get the generative model
+            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro"});
+
+            // Reuse logic from standard handler to build transcription
+            let completeTranscription = '\n';
+            const recentMicrophoneHistory = getRecentTranscriptions(60 * 1000, microphoneConversationHistory);
+            const recentSpeakerHistory = getRecentTranscriptions(60 * 1000, speakerConversationHistory);
+            const allConversations = [];
+            if (recentMicrophoneHistory?.length) allConversations.push(...recentMicrophoneHistory.filter(item => item.transcription?.trim().length));
+            if (recentSpeakerHistory?.length) allConversations.push(...recentSpeakerHistory.filter(item => item.transcription?.trim().length));
+            if (allConversations.length) {
+                allConversations.sort((a,b)=>a.timestamp-b.timestamp);
+                let currentGroup={type:null,transcriptions:[],speaker:''};
+                const grouped=[];
+                for (const conv of allConversations){
+                    const speaker = conv.type==='microphone'? 'Interviewee/User':'Interviewer';
+                    if(currentGroup.type!==conv.type){
+                        if(currentGroup.transcriptions.length){grouped.push({speaker:currentGroup.speaker,text:currentGroup.transcriptions.join(' ').trim()});}
+                        currentGroup={type:conv.type,transcriptions:[conv.transcription],speaker};
+                    } else {
+                        currentGroup.transcriptions.push(conv.transcription);
+                    }
+                }
+                if(currentGroup.transcriptions.length){grouped.push({speaker:currentGroup.speaker,text:currentGroup.transcriptions.join(' ').trim()});}
+                for(const g of grouped){completeTranscription+=`${g.speaker} says: ${g.text}\n`;}
+                completeTranscription+='\n';
+            }
+            if(!completeTranscription.trim().length){completeTranscription='Please analyze the current screen and provide assistance.';}
+
+            // Send new-response-starting event
+            sendToRenderer('new-response-starting');
+            requestStartTime = Date.now();
+            isProcessingTextMessage = true;
+            global.pendingContextTranscription = completeTranscription.trim();
+
+            const result = await model.generateContentStream(completeTranscription.trim());
+
+            let aiResponse = '';
+            for await (const chunk of result.stream) {
+                const chunkText = chunk.text();
+                console.log('Received chunk:', chunkText);
+                aiResponse += chunkText;
+                sendToRenderer('update-response', aiResponse);
+            }
+
+            // Send the final accumulated response to mark the end with timing data
+            const responseWithTiming = {
+                content: aiResponse,
+                timestamp: Date.now()
+            };
+            sendToRenderer('update-response', responseWithTiming);
+
+            // Save the full conversation turn
+            saveConversationTurn(global.pendingContextTranscription, aiResponse, false);
+
+            // Cleanup
+            isAiResponding = false;
+            isProcessingTextMessage = false;
+            cleanupResponseBuffer();
+            contextAccumulator = '';
+            sendToRenderer('response-end');
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error in process-context-with-screenshot-pro:', error);
+            isAiResponding = false;
+            isProcessingTextMessage = false;
             return { success: false, error: error.message };
         }
     });

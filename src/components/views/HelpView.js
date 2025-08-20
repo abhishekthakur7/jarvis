@@ -251,6 +251,7 @@ export class HelpView extends LitElement {
             reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
             toggleLayoutMode: 'Shift+Alt+/',
             nextStep: isMac ? 'Cmd+Enter' : 'Ctrl+Enter',
+            nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
             previousResponse: isMac ? 'Cmd+[' : 'Ctrl+[',
             nextResponse: isMac ? 'Cmd+]' : 'Ctrl+]',
             scrollUp: isMac ? 'Cmd+Shift+Up' : 'Ctrl+Shift+Up',
@@ -360,6 +361,10 @@ export class HelpView extends LitElement {
                             <div class="shortcut-item">
                                 <span class="shortcut-description">Take screenshot and ask for next step</span>
                                 <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStep)}</div>
+                            </div>
+                            <div class="shortcut-item">
+                                <span class="shortcut-description">Take screenshot and ask for next step (Pro)</span>
+                                <div class="shortcut-keys">${this.formatKeybind(this.keybinds.nextStepPro)}</div>
                             </div>
                         </div>
 

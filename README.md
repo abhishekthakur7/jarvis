@@ -79,6 +79,7 @@ Jarvis provides extensive keyboard shortcuts for efficient operation. All shortc
 | Action | Windows/Linux | macOS | Description |
 |--------|---------------|-------|-------------|
 | **Ask Next Step** | `Shift+Alt+4` | `Shift+Alt+4` | Take screenshot and ask AI for next step suggestion |
+| **Ask Next Step (Pro)** | `Shift+Alt+,` | `Shift+Alt+,` | Take screenshot and ask AI for next step with Gemini Pro |
 | **Reinitialize Session** | `Ctrl+G` | `Cmd+G` | Restart the AI session |
 | **Previous Response** | `Ctrl+Alt+[` | `Cmd+Alt+[` | Navigate to the previous AI response |
 | **Next Response** | `Ctrl+Alt+]` | `Cmd+Alt+]` | Navigate to the next AI response |

@@ -540,6 +540,30 @@ async function captureScreenshotAndSendContext(imageQuality = null) {
     }
 }
 
+// Pro version of screenshot + context to Gemini 2.5 Pro
+async function captureScreenshotAndSendContextPro(imageQuality = null) {
+    console.log('Sending screenshot and context to Gemini Pro');
+    const quality = imageQuality || currentImageQuality;
+    await captureScreenshot(quality, true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const app = cheddar.element();
+    if (app && app._awaitingNewResponse !== undefined) {
+        app._awaitingNewResponse = true;
+    }
+    try {
+        const result = await ipcRenderer.invoke('process-context-with-screenshot-pro');
+        if (result.success) {
+            console.log('Contextual message (Pro) sent successfully');
+        } else {
+            console.error('Failed to send contextual message (Pro):', result.error);
+        }
+        return result;
+    } catch (error) {
+        console.error('Error sending contextual message (Pro):', error);
+        return { success: false, error: error.message };
+    }
+}
+
 // Expose functions to global scope for external access
 window.captureManualScreenshot = captureManualScreenshot;
 
@@ -710,6 +734,12 @@ function handleShortcut(shortcutKey) {
             cheddar.element().handleStart();
         } else {
             captureScreenshotAndSendContext();
+        }
+    } else if (shortcutKey === 'shift+alt+,' || shortcutKey === 'shift+Alt+,') {
+        if (currentView === 'main') {
+            cheddar.element().handleStart();
+        } else {
+            captureScreenshotAndSendContextPro();
         }
     } else if (shortcutKey === 'shift+alt+8' || shortcutKey === 'shift+Alt+8') {
         if (currentView === 'jarvis') {

@@ -147,6 +147,7 @@ function getDefaultKeybinds() {
         speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
         reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
         nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
+        nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
         previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
         nextResponse: isMac ? 'Cmd+Alt+]' : 'Ctrl+Alt+]',
         scrollUp: isMac ? 'Shift+Alt+1' : 'Shift+Alt+1',
@@ -323,6 +324,25 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
             console.log(`Registered nextStep: ${keybinds.nextStep}`);
         } catch (error) {
             console.error(`Failed to register nextStep (${keybinds.nextStep}):`, error);
+        }
+    }
+
+    // Register next step pro shortcut (screenshot to gemini-2.5-pro)
+    if (keybinds.nextStepPro) {
+        try {
+            globalShortcut.register(keybinds.nextStepPro, async () => {
+                console.log('Next step Pro shortcut triggered');
+                const isMac = process.platform === 'darwin';
+                const shortcutKey = isMac ? 'shift+alt+,' : 'shift+Alt+,';
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('${shortcutKey}');
+                `).catch(error => {
+                    console.error('Error executing next step pro JavaScript:', error);
+                });
+            });
+            console.log(`Registered nextStepPro: ${keybinds.nextStepPro}`);
+        } catch (error) {
+            console.error(`Failed to register nextStepPro (${keybinds.nextStepPro}):`, error);
         }
     }
 

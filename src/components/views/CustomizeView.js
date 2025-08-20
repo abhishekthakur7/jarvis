@@ -615,6 +615,7 @@ export class CustomizeView extends LitElement {
             reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
             toggleLayoutMode: 'Shift+Alt+/',
             nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
+            nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
             previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
             nextResponse: isMac ? 'Cmd+Alt+]' : 'Ctrl+Alt+]',
             scrollUp: 'Shift+Alt+1',
