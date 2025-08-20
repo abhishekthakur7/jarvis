@@ -1902,11 +1902,23 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 geminiProClient = new GoogleGenerativeAI(proApiKey);
             }
 
+            const systemInstruction = `
+                ----- START: SYSTEM PROMPT -----
+                    INPUT: Screenshot and User-Context transcription (optional, if not present only refer to screenshot and provide assistance accordingly)
+                    INSTRUCTIONS:
+                        1. The tone of the response should be simple words, clear and concise, conversational and the setting is technical interview. You're a candidate who's providing solution/answer to a given question. So, each word should be such that a candidate is speaking in a technical interview.
+                        2. For DSA or Coding problem solving, the approach should follow three structured steps. 
+                            Step 2.1: Brute-force Approach – start by choosing sample inputs for a dry run, then explain the brute-force solution step by step along with edge cases like overflows or negative scenarios. Provide complete executable Java code with a main method and inline  comments for clarity, and conclude with time and space complexity analysis, justified in one sentence. 
+                            Step 2.2: Optimized Approach – explain how the solution is improved and what trade-offs are made, perform a dry run on the same inputs, provide complete executable Java code with comments that justify specific choices (for example, using a HashMap for O(1) lookups),  and again analyze time and space complexity with justification. 
+                            Step 2.3: Key Takeaway – summarize the core trade-off or lesson in 1-2 clear sentences.
+                    ----- END: SYSTEM PROMPT -----
+            `;
+
             // Get the generative model
-            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro"});
+            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction });
 
             // Reuse logic from standard handler to build transcription
-            let completeTranscription = '\n';
+            let completeTranscription = `\n----- START: USER-CONTEXT -----\n`;
             const recentMicrophoneHistory = getRecentTranscriptions(60 * 1000, microphoneConversationHistory);
             const recentSpeakerHistory = getRecentTranscriptions(60 * 1000, speakerConversationHistory);
             const allConversations = [];
@@ -1929,7 +1941,8 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 for(const g of grouped){completeTranscription+=`${g.speaker} says: ${g.text}\n`;}
                 completeTranscription+='\n';
             }
-            if(!completeTranscription.trim().length){completeTranscription='Please analyze the current screen and provide assistance.';}
+
+            completeTranscription += '----- END: USER-CONTEXT -----';
 
             // Send new-response-starting event
             sendToRenderer('new-response-starting');
