@@ -346,7 +346,43 @@ This will generate the necessary files in the `out` directory.
 #### Font Loading Fix
 - **Resolved font family loading issues**: Fixed CSS font-family declarations for better cross-platform compatibility
 
-### Debug Mode
+### Environment Variables
+
+Jarvis reads several environment variables and local configuration values:
+
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `GOOGLE_GEMINI_API_KEY` | Credentials for Google Gemini API calls | **Yes** |
+| `NOTION_API_KEY` | Integration token for Notion features | No |
+| `DEBUG_AUDIO` | Enable verbose audio-processing logs | No |
+| `NODE_ENV` | Set to `development` for extended logging | No |
+
+> Tip: You can create a `.env` file in the project root during development.
+
+## Development Scripts
+
+The project exposes handy npm scripts:
+
+| Script | Description |
+|--------|-------------|
+| `npm start` | Run the app in development with hot-reload |
+| `npm run lint` | ESLint codebase check |
+| `npm run format` | Prettier auto-format source files |
+| `npm run make` | Build distributable packages via Electron Forge |
+| `npm run package` | Package without rebuilding installer |
+
+## Centralized Shortcut Configuration
+
+All default keybindings now live in <mcfile name="shortcutConfig.js" path="src/utils/shortcutConfig.js"></mcfile>.  Both renderer and views import this single source of truth, making shortcut updates trivial—edit the object once and every view picks up the change automatically.
+
+## Changelog
+
+### v0.9.0 (Unreleased)
+* Added Gemini **2.5-Pro** support for richer reasoning
+* New **Ask Next Step (Pro)** shortcut: `Shift+Alt+,`
+* Unified keybinds in `src/utils/shortcutConfig.js`
+
+## Debug Mode
 
 For development and troubleshooting, you can enable debug mode by setting environment variables:
 
