@@ -45,9 +45,8 @@ Jarvis is a desktop application built with Electron that acts as a personal AI a
 *   **Content Protection:** Stealth mode for sensitive environments
 
 ### Views & Navigation
-*   **Multiple Views:** Main, Customize, Help, History, Assistant, and Advanced views
+*   **Multiple Views:** Main, Customize, History, Assistant, and Advanced views
 *   **Onboarding:** Guided setup process for new users
-*   **Help System:** Built-in documentation and keyboard shortcut reference
 *   **Settings Management:** Comprehensive customization options
 
 ### Cross-Platform Support
@@ -103,17 +102,12 @@ Jarvis provides extensive keyboard shortcuts for efficient operation. All shortc
 
 ### Quick Access
 *All shortcuts are fully customizable through the Customize view*
-*Use the Help view to see current shortcut assignments*
 
 ## Supported Profiles
 
 Jarvis comes with specialized AI profiles optimized for different scenarios:
 
 *   **Job Interview** - Get help with answering interview questions and responses
-*   **Sales Call** - Assistance with sales conversations and objection handling
-*   **Business Meeting** - Support for professional meetings and discussions
-*   **Presentation** - Help with presentations and public speaking
-*   **Negotiation** - Guidance for business negotiations and deals
 
 Each profile includes tailored prompts and behavior patterns optimized for the specific use case.
 
@@ -138,7 +132,7 @@ Each profile includes tailored prompts and behavior patterns optimized for the s
 ### Navigation
 *   Browse through AI responses using Previous/Next shortcuts
 *   Use auto-scroll for hands-free reading
-*   Access different views (Main, Customize, Help, History, Advanced) via the header
+*   Access different views (Main, Customize, History, Advanced) via the header
 
 ## Tech Stack
 
@@ -165,7 +159,6 @@ jarvis/
 │   │       ├── MainView.js    # Primary interface for AI interaction
 │   │       ├── CustomizeView.js # Settings and profile configuration
 │   │       ├── AdvancedView.js # Advanced settings and Notion integration
-│   │       ├── HelpView.js    # Documentation and keyboard shortcuts
 │   │       ├── HistoryView.js # Conversation history browser
 │   │       ├── AssistantView.js # AI response display
 │   │       └── OnboardingView.js # First-time user setup

@@ -159,7 +159,6 @@ export class AppHeader extends LitElement {
         statusText: { type: String },
         startTime: { type: Number },
         onCustomizeClick: { type: Function },
-        onHelpClick: { type: Function },
         onHistoryClick: { type: Function },
         onCloseClick: { type: Function },
         onBackClick: { type: Function },
@@ -179,7 +178,6 @@ export class AppHeader extends LitElement {
         this.statusText = '';
         this.startTime = null;
         this.onCustomizeClick = () => {};
-        this.onHelpClick = () => {};
         this.onHistoryClick = () => {};
         this.onCloseClick = () => {};
         this.onBackClick = () => {};
@@ -251,7 +249,6 @@ export class AppHeader extends LitElement {
             onboarding: 'Welcome to jarvis',
             main: 'jarvis',
             customize: 'Customize',
-            help: 'Help & Shortcuts',
             history: 'Conversation History',
             advanced: 'Advanced Tools',
             jarvis: 'jarvis',
@@ -283,7 +280,7 @@ export class AppHeader extends LitElement {
     }
 
     isNavigationView() {
-        const navigationViews = ['customize', 'help', 'history', 'advanced'];
+        const navigationViews = ['customize', 'history', 'advanced'];
         return navigationViews.includes(this.currentView);
     }
 
@@ -418,39 +415,6 @@ export class AppHeader extends LitElement {
                                       ></path>
                                       <path
                                           d="M19.6224 10.3954L18.5247 7.7448L20 6L18 4L16.2647 5.48295L13.5578 4.36974L12.9353 2H10.981L10.3491 4.40113L7.70441 5.51596L6 4L4 6L5.45337 7.78885L4.3725 10.4463L2 11V13L4.40111 13.6555L5.51575 16.2997L4 18L6 20L7.79116 18.5403L10.397 19.6123L11 22H13L13.6045 19.6132L16.2551 18.5155C16.6969 18.8313 18 20 18 20L20 18L18.5159 16.2494L19.6139 13.598L21.9999 12.9772L22 11L19.6224 10.3954Z"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                  </svg>
-                              </button>
-                              <button class="icon-button" @click=${this.onHelpClick}>
-                                  <?xml version="1.0" encoding="UTF-8"?><svg
-                                      width="24px"
-                                      height="24px"
-                                      stroke-width="1.7"
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      color="currentColor"
-                                  >
-                                      <path
-                                          d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                      <path
-                                          d="M9 9C9 5.49997 14.5 5.5 14.5 9C14.5 11.5 12 10.9999 12 13.9999"
-                                          stroke="currentColor"
-                                          stroke-width="1.7"
-                                          stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                      ></path>
-                                      <path
-                                          d="M12 18.01L12.01 17.9989"
                                           stroke="currentColor"
                                           stroke-width="1.7"
                                           stroke-linecap="round"
