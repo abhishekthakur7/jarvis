@@ -602,38 +602,36 @@ export class CustomizeView extends LitElement {
     }
 
     getDefaultKeybinds() {
-        // Centralized shortcut configuration
-        if (window.getDefaultKeybinds) return window.getDefaultKeybinds();
-        try {
-            return require('../../utils/shortcutConfig.js').getDefaultKeybinds();
-        } catch (e) {
-            console.error('Failed to load default keybinds:', e);
-            return {};
-        }
-    /*
-            const isMac = cheddar.isMacOS || navigator.platform.includes('Mac');
-            return {
-                moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
-                moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
-                moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
-                moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
-                toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
-                toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
-                microphoneToggle: isMac ? 'Shift+Alt+8' : 'Shift+Alt+8',
-                speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
-                reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
-                toggleLayoutMode: 'Shift+Alt+/',
-                nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
-                nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
-                previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
-                nextResponse: isMac ? 'Cmd+Alt+]' : 'Ctrl+Alt+]',
-                scrollUp: 'Shift+Alt+1',
-                scrollDown: 'Shift+Alt+2',
-                toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
-                windowClose: 'Shift+Alt+;'
-            };
-        }
-        */
+        // // Centralized shortcut configuration
+        // if (window.getDefaultKeybinds) return window.getDefaultKeybinds();
+        // try {
+        //     console.log('Loading customize view shortcuts');
+        //     return require('../../utils/shortcutConfig.js').getDefaultKeybinds();
+        // } catch (e) {
+        //     console.error('Failed to load default keybinds:', e);
+        //     return {};
+        // }
+        const isMac = cheddar.isMacOS || navigator.platform.includes('Mac');
+        return {
+            moveUp: isMac ? 'Alt+Up' : 'Ctrl+Up',
+            moveDown: isMac ? 'Alt+Down' : 'Ctrl+Down',
+            moveLeft: isMac ? 'Alt+Left' : 'Ctrl+Left',
+            moveRight: isMac ? 'Alt+Right' : 'Ctrl+Right',
+            toggleVisibility: isMac ? 'Cmd+\\' : 'Ctrl+\\',
+            toggleClickThrough: isMac ? 'Cmd+M' : 'Ctrl+M',
+            microphoneToggle: isMac ? 'Shift+Alt+8' : 'Shift+Alt+8',
+            speakerDetectionToggle: isMac ? 'Shift+Alt+0' : 'Shift+Alt+0',
+            reinitializeSession: isMac ? 'Cmd+G' : 'Ctrl+G',
+            toggleLayoutMode: 'Shift+Alt+/',
+            nextStep: isMac ? 'Shift+Alt+4' : 'Shift+Alt+4',
+            nextStepPro: isMac ? 'Shift+Alt+,' : 'Shift+Alt+,',
+            previousResponse: isMac ? 'Cmd+Alt+[' : 'Ctrl+Alt+[',
+            nextResponse: isMac ? 'Cmd+Alt+]' : 'Ctrl+Alt+]',
+            scrollUp: 'Shift+Alt+1',
+            scrollDown: 'Shift+Alt+2',
+            toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
+            windowClose: 'Shift+Alt+;'
+        };
     }
 
     loadKeybinds() {
