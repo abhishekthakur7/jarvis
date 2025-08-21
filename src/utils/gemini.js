@@ -328,16 +328,16 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
 
 // Response buffer cleanup function
 function cleanupResponseBuffer() {
-    console.log('🧹 [BUFFER_CLEANUP] Starting comprehensive buffer isolation');
+    //console.log('🧹 [BUFFER_CLEANUP] Starting comprehensive buffer isolation');
     
     if (messageBuffer && messageBuffer.trim()) {
-        console.log('🧹 [BUFFER_CLEANUP] Clearing interrupted response buffer:', messageBuffer.substring(0, 100) + '...');
+        //console.log('🧹 [BUFFER_CLEANUP] Clearing interrupted response buffer:', messageBuffer.substring(0, 100) + '...');
         messageBuffer = '';
     }
     
     // Reset any partial response state
     if (global.pendingContextTranscription) {
-        console.log('🧹 [BUFFER_CLEANUP] Clearing pending context transcription');
+        //console.log('🧹 [BUFFER_CLEANUP] Clearing pending context transcription');
         global.pendingContextTranscription = null;
     }
     
@@ -346,7 +346,7 @@ function cleanupResponseBuffer() {
     
     // Clear speaker transcription to prevent context contamination
     if (speakerTranscription && speakerTranscription.trim()) {
-        console.log('🧹 [BUFFER_CLEANUP] Clearing speaker transcription to prevent context bleeding');
+        //console.log('🧹 [BUFFER_CLEANUP] Clearing speaker transcription to prevent context bleeding');
         speakerTranscription = '';
     }
     
@@ -354,7 +354,7 @@ function cleanupResponseBuffer() {
     isAiResponding = false;
     corruptionDetected = false;
     
-    console.log('✅ [BUFFER_CLEANUP] Complete buffer isolation achieved');
+    //console.log('✅ [BUFFER_CLEANUP] Complete buffer isolation achieved');
 }
 
 // Response integrity check function
@@ -396,7 +396,7 @@ function validateResponseIntegrity(responseText) {
     if (!isValid) {
         console.warn('⚠️ [INTEGRITY_CHECK] Response integrity issues detected:', issues);
     } else {
-        console.log('✅ [INTEGRITY_CHECK] Response integrity validated successfully');
+        //console.log('✅ [INTEGRITY_CHECK] Response integrity validated successfully');
     }
     
     return { isValid, issues };
