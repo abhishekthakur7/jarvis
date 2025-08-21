@@ -450,6 +450,8 @@ export class HistoryView extends LitElement {
                 if (window.Prism) {
                     window.Prism.highlightElement(codeBlock);
                 }
+
+
             }
         });
         

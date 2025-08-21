@@ -46,6 +46,8 @@ export class AssistantApp extends LitElement {
         .main-content {
             flex: 1;
             padding: 2px;
+            max-width: 850px;
+            margin: 0 auto;
             overflow-y: auto;
             margin-top: var(--main-content-margin-top);
             border-radius: var(--content-border-radius);

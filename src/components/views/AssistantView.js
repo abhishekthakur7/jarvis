@@ -1023,6 +1023,10 @@ export class AssistantView extends LitElement {
                 if (window.Prism) {
                     window.Prism.highlightElement(codeBlock);
                 }
+
+
+                
+
             }
         });
         
