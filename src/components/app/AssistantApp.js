@@ -120,6 +120,8 @@ export class AssistantApp extends LitElement {
         _viewInstances: { type: Object, state: true },
         _isClickThrough: { state: true },
         _awaitingNewResponse: { state: true },
+        _awaitingProResponse: { state: true },
+        _proResponseReceived: { state: true },
         shouldAnimateResponse: { type: Boolean },
         autoScrollEnabled: { type: Boolean },
         scrollSpeed: { type: Number },
@@ -148,6 +150,9 @@ export class AssistantApp extends LitElement {
         this._viewInstances = new Map();
         this._isClickThrough = false;
         this._awaitingNewResponse = false;
+        this._awaitingProResponse = false;
+        this._proResponseReceived = false;
+        this._proResponseReceived = false;
         this.shouldAnimateResponse = false;
         this.microphoneEnabled = false;
         this.microphoneState = 'off'; // 'off', 'recording', 'speaking'
@@ -262,7 +267,14 @@ export class AssistantApp extends LitElement {
             this.responses = [...this.responses, responseObj];
             this.currentResponseIndex = this.responses.length - 1;
             this._awaitingNewResponse = false;
-            
+            if (this._awaitingProResponse) {
+                this._proResponseReceived = true;
+                setTimeout(() => {
+                    this._proResponseReceived = false;
+                    this.requestUpdate();
+                }, 3000);
+            }
+            this._awaitingProResponse = false;
             // Enable auto-scroll for every new answer
             this.autoScrollEnabled = true;
             localStorage.setItem('autoScrollEnabled', 'true');
@@ -1012,6 +1024,8 @@ export class AssistantApp extends LitElement {
                         .startTime=${this.startTime}
                         .advancedMode=${this.advancedMode}
                         .interviewMode=${this.interviewMode}
+                        .awaitingProResponse=${this._awaitingProResponse}
+                        .proResponseReceived=${this._proResponseReceived}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}

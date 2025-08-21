@@ -142,6 +142,16 @@ export class AppHeader extends LitElement {
         .interview-mode-checkbox svg path {
             stroke: white !important;
         }
+
+        .pro-waiting-icon {
+            font-size: var(--header-font-size-small);
+            color: #FFA500;
+        }
+
+        .pro-done-icon {
+            font-size: var(--header-font-size-small);
+            color: #00C851;
+        }
     `;
 
     static properties = {
@@ -159,6 +169,8 @@ export class AppHeader extends LitElement {
         onAdvancedClick: { type: Function },
         interviewMode: { type: Boolean },
         onInterviewModeToggle: { type: Function },
+        awaitingProResponse: { type: Boolean },
+        proResponseReceived: { type: Boolean },
     };
 
     constructor() {
@@ -177,6 +189,8 @@ export class AppHeader extends LitElement {
         this.onAdvancedClick = () => {};
         this.interviewMode = false;
         this.onInterviewModeToggle = () => {};
+        this.awaitingProResponse = false;
+        this.proResponseReceived = false;
         this._timerInterval = null;
     }
 
@@ -289,6 +303,7 @@ export class AppHeader extends LitElement {
                             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                         </svg>
                     </div>
+                    ${this.proResponseReceived ? html`<span class="pro-done-icon">✔</span>` : this.awaitingProResponse ? html`<span class="pro-waiting-icon">⏳</span>` : ''}
                 </div>
                 <div class="header-actions">
                     ${this.currentView === 'jarvis'

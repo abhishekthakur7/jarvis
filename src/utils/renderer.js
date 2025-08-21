@@ -547,8 +547,16 @@ async function captureScreenshotAndSendContextPro(imageQuality = null) {
     await captureScreenshot(quality, true);
     await new Promise(resolve => setTimeout(resolve, 2000));
     const app = cheddar.element();
-    if (app && app._awaitingNewResponse !== undefined) {
-        app._awaitingNewResponse = true;
+    if (app) {
+        if (app._awaitingNewResponse !== undefined) {
+            app._awaitingNewResponse = true;
+        }
+        if (app._awaitingProResponse !== undefined) {
+            app._awaitingProResponse = true;
+        }
+        if (app._proResponseReceived !== undefined) {
+            app._proResponseReceived = false;
+        }
     }
     try {
         const result = await ipcRenderer.invoke('process-context-with-screenshot-pro');
