@@ -68,6 +68,7 @@ export class AssistantApp extends LitElement {
         }
 
         .view-container {
+            padding-top: 7px;
             opacity: 1;
             transform: translateY(0);
             transition:

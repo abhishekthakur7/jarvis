@@ -33,7 +33,7 @@ export class LayoutSettingsManager {
     static DEFAULT_SETTINGS = {
         normal: {
             transparency: 0.45,
-            fontSize: 12,
+            fontSize: 13,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 2,
@@ -42,8 +42,8 @@ export class LayoutSettingsManager {
         },
         compact: {
             transparency: 0.60,
-            fontSize: 11,
-            autoScroll: true,
+            fontSize: 12,
+            autoScroll: false,
             animateResponse: false,
             scrollSpeed: 2,
             width: 320,

@@ -98,7 +98,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container p {
-            margin: 1em 0;
+            margin: 0.05em 0;
             color: var(--text-color);
             line-height: 1.6;
             letter-spacing: 0.005em;
@@ -106,8 +106,8 @@ export class AssistantView extends LitElement {
 
         .response-container ul,
         .response-container ol {
-            margin: 1.2em 0;
-            padding-left: 1.8em;
+            margin: 0.2em 0;
+            padding-left: 1.2em;
             color: var(--text-color);
             line-height: 1.6;
         }
