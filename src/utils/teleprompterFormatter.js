@@ -313,14 +313,16 @@ export class TeleprompterFormatter {
                 letter-spacing: ${typography.code.letterSpacing};
                 background: var(--code-background, rgba(0, 0, 0, 0.3));
                 border-radius: 4px;
-                border-left: 3px solid var(--accent-color, #007aff);
+                border-left: 1px solid var(--accent-color, #007aff);
+                border-right: 1px solid var(--accent-color, #007aff);
+                border-top: 1px solid var(--accent-color, #007aff);
             }
             
             .key-term {
                 font-weight: 600;
                 color: var(--key-term-color, #ffd700);
                 background: var(--key-term-background, rgba(255, 215, 0, 0.1));
-                padding: 0.1em 0.3em;
+                padding: 0.1em 0.1em;
                 border-radius: 3px;
                 border-bottom: 1px solid var(--key-term-color, #ffd700);
             }

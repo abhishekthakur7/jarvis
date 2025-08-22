@@ -985,7 +985,9 @@ export class AssistantView extends LitElement {
             padding-left: 0.3em;
             padding-top: 0.2em;
             border-radius: 6px;
-            border-left: 3px solid var(--accent-color, #007aff);
+            border-left: 1px solid var(--accent-color, #007aff);
+            border-right: 1px solid var(--accent-color, #007aff);
+            border-top: 1px solid var(--accent-color, #007aff);
         }
         
         .priority-secondary {
@@ -1013,7 +1015,9 @@ export class AssistantView extends LitElement {
             letter-spacing: 0.03em;
             background: var(--code-background, rgba(0, 0, 0, 0.3));
             border-radius: 6px;
-            border-left: 3px solid var(--accent-color, #007aff);
+            border-left: 1px solid var(--accent-color, #007aff);
+            border-right: 1px solid var(--accent-color, #007aff);
+            border-top: 1px solid var(--accent-color, #007aff);
         }
         
         .content-type-steps {
@@ -1050,7 +1054,7 @@ export class AssistantView extends LitElement {
             font-weight: 600;
             color: var(--key-term-color, #ffd700);
             background: var(--key-term-background, rgba(255, 215, 0, 0.1));
-            padding: 0.1em 0.3em;
+            padding: 0.1em 0.1em;
             border-radius: 3px;
             border-bottom: 1px solid var(--key-term-color, #ffd700);
         }
@@ -1117,7 +1121,6 @@ export class AssistantView extends LitElement {
         }
             
             .response-container code {
-                font-size: 1em;
                 letter-spacing: 0.04em;
             }
         }
@@ -1184,6 +1187,9 @@ export class AssistantView extends LitElement {
         this._handleKeydown = this._handleKeydown.bind(this);
         this._handleMousedown = this._handleMousedown.bind(this);
         
+        // Bind auto scroll change handler for synchronization with CustomizeView
+        this.handleAutoScrollChange = this.handleAutoScrollChange.bind(this);
+        
         // Initialize enhanced keyboard shortcuts
         this._initializeEnhancedShortcuts();
     }
@@ -1198,9 +1204,49 @@ export class AssistantView extends LitElement {
         };
     }
 
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        
+        // Clean up event listeners
+        document.removeEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        
+        // Clean up IPC listeners if available
+        if (window.require) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.removeListener('navigate-previous-response', this.handlePreviousResponse);
+                ipcRenderer.removeListener('navigate-next-response', this.handleNextResponse);
+                ipcRenderer.removeListener('scroll-response-up', this.handleScrollUp);
+                ipcRenderer.removeListener('scroll-response-down', this.handleScrollDown);
+                ipcRenderer.removeListener('layout-mode-changed', this.handleLayoutModeChange);
+            } catch (error) {
+                console.warn('Failed to remove IPC listeners:', error);
+            }
+        }
+    }
+    
     /**
-     * Initialize enhanced keyboard shortcuts for teleprompter functionality
+     * Handle auto scroll changes from CustomizeView
      */
+    handleAutoScrollChange(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        // Handle changes from CustomizeView (including initialization and layout changes)
+        if (source === 'customize-view' || source === 'customize-view-init' || source === 'customize-view-layout-change') {
+            // Get current layout mode
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            
+            // Only update if the change is for the current layout mode
+            if (layoutMode === currentLayoutMode) {
+                this.autoScrollEnabled = enabled;
+                
+                // Trigger re-render to update the button state
+                this.requestUpdate();
+                
+                console.log(`[AssistantView] Auto scroll updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+            }
+        }
+    }
     _initializeEnhancedShortcuts() {
         this._enhancedShortcuts = {
             'shift+alt+p': () => this.pauseResumeReading(),
@@ -1726,21 +1772,23 @@ export class AssistantView extends LitElement {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
         if (layoutMode === 'normal') {
-            // Load normal layout settings
+            // Load normal layout settings with fallback to defaults
             const normalAutoScroll = localStorage.getItem('normalAutoScroll');
-            this.autoScrollEnabled = normalAutoScroll === 'true';
+            this.autoScrollEnabled = normalAutoScroll !== null ? normalAutoScroll === 'true' : false; // Default: false
             this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
         } else if (layoutMode === 'compact') {
-            // Load compact layout settings
+            // Load compact layout settings with fallback to defaults
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
-            this.autoScrollEnabled = compactAutoScroll === 'true';
+            this.autoScrollEnabled = compactAutoScroll !== null ? compactAutoScroll === 'true' : true; // Default: true
             this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
         } else if (layoutMode === 'system-design') {
-            // Load system design layout settings
+            // Load system design layout settings with fallback to defaults
             const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
-            this.autoScrollEnabled = systemDesignAutoScroll === 'true';
+            this.autoScrollEnabled = systemDesignAutoScroll !== null ? systemDesignAutoScroll === 'true' : false; // Default: false
             this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10) || 2;
         }
+        
+        console.log(`[AssistantView] Loaded auto scroll for ${layoutMode}: ${this.autoScrollEnabled}`);
     }
 
     updateLayoutModeClass() {
@@ -1795,20 +1843,24 @@ export class AssistantView extends LitElement {
             ipcRenderer.on('scroll-response-up', this.handleScrollUp);
             ipcRenderer.on('scroll-response-down', this.handleScrollDown);
             
-
-            
             // Listen for layout mode changes to reload settings
             this.handleLayoutModeChange = () => {
                 console.log('[AssistantView] Layout mode changed, reloading settings');
                 this.loadLayoutSpecificSettings();
                 this.updateLayoutModeClass();
                 this.requestUpdate();
+                console.log(`[AssistantView] After layout change - auto scroll: ${this.autoScrollEnabled}`);
             };
             
             ipcRenderer.on('layout-mode-changed', this.handleLayoutModeChange);
         }
         
-
+        // Listen for auto scroll changes from CustomizeView (outside IPC block)
+        document.addEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        
+        // Ensure auto scroll state is properly loaded and synchronized
+        this.loadLayoutSpecificSettings();
+        this.requestUpdate();
     }
 
     disconnectedCallback() {
@@ -1997,6 +2049,15 @@ export class AssistantView extends LitElement {
             detail: { enabled: this.autoScrollEnabled },
             bubbles: true,
             composed: true
+        }));
+        
+        // Dispatch event to notify CustomizeView about the change
+        document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+            detail: {
+                layoutMode,
+                enabled: this.autoScrollEnabled,
+                source: 'assistant-view'
+            }
         }));
     }
 

@@ -521,6 +521,34 @@ export class CustomizeView extends LitElement {
         this.handleFontSizeChange = this.handleFontSizeChange.bind(this);
         document.addEventListener('font-size-change', this.handleFontSizeChange);
         
+        // Listen for auto scroll changes from AssistantView
+        this.handleAutoScrollChangeFromAssistantView = this.handleAutoScrollChangeFromAssistantView.bind(this);
+        document.addEventListener('auto-scroll-change', this.handleAutoScrollChangeFromAssistantView);
+        
+        // Dispatch initial auto scroll state for the current layout mode to sync with AssistantView
+        requestAnimationFrame(() => {
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            let currentAutoScrollEnabled;
+            
+            if (currentLayoutMode === 'normal') {
+                currentAutoScrollEnabled = this.normalAutoScroll;
+            } else if (currentLayoutMode === 'compact') {
+                currentAutoScrollEnabled = this.compactAutoScroll;
+            } else if (currentLayoutMode === 'system-design') {
+                currentAutoScrollEnabled = this.systemDesignAutoScroll;
+            }
+            
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: currentLayoutMode,
+                    enabled: currentAutoScrollEnabled,
+                    source: 'customize-view-init'
+                }
+            }));
+            
+            console.log(`[CustomizeView] Initial sync - ${currentLayoutMode} auto scroll: ${currentAutoScrollEnabled}`);
+        });
+        
         // Resize window for this view
         resizeLayout();
     }
@@ -529,8 +557,33 @@ export class CustomizeView extends LitElement {
         super.disconnectedCallback();
         // Clean up event listeners
         document.removeEventListener('font-size-change', this.handleFontSizeChange);
+        document.removeEventListener('auto-scroll-change', this.handleAutoScrollChangeFromAssistantView);
     }
     
+    /**
+     * Handle auto scroll changes from AssistantView
+     */
+    handleAutoScrollChangeFromAssistantView(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        // Only handle if the change comes from AssistantView to avoid loops
+        if (source === 'assistant-view') {
+            // Update the appropriate layout mode auto scroll setting
+            if (layoutMode === 'normal') {
+                this.normalAutoScroll = enabled;
+            } else if (layoutMode === 'compact') {
+                this.compactAutoScroll = enabled;
+            } else if (layoutMode === 'system-design') {
+                this.systemDesignAutoScroll = enabled;
+            }
+            
+            // Trigger re-render to update the checkbox state
+            this.requestUpdate();
+            
+            console.log(`[CustomizeView] Auto scroll updated from AssistantView: ${layoutMode} mode = ${enabled}`);
+        }
+    }
+
     /**
      * Handle font size changes from AssistantView
      */
@@ -606,6 +659,29 @@ export class CustomizeView extends LitElement {
         this.layoutMode = e.target.value;
         localStorage.setItem('layoutMode', this.layoutMode);
         this.onLayoutModeChange(e.target.value);
+        
+        // Dispatch auto scroll state for the new layout mode to sync with AssistantView
+        requestAnimationFrame(() => {
+            let currentAutoScrollEnabled;
+            
+            if (this.layoutMode === 'normal') {
+                currentAutoScrollEnabled = this.normalAutoScroll;
+            } else if (this.layoutMode === 'compact') {
+                currentAutoScrollEnabled = this.compactAutoScroll;
+            } else if (this.layoutMode === 'system-design') {
+                currentAutoScrollEnabled = this.systemDesignAutoScroll;
+            }
+            
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: this.layoutMode,
+                    enabled: currentAutoScrollEnabled,
+                    source: 'customize-view-layout-change'
+                }
+            }));
+            
+            console.log(`[CustomizeView] Layout mode changed to ${this.layoutMode} - auto scroll: ${currentAutoScrollEnabled}`);
+        });
     }
 
     handleTeleprompterModeSelect(e) {
@@ -1156,6 +1232,19 @@ export class CustomizeView extends LitElement {
     handleNormalAutoScrollChange(e) {
         this.normalAutoScroll = e.target.checked;
         localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
+        
+        // Notify AssistantView if we're currently in normal layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'normal') {
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: 'normal',
+                    enabled: this.normalAutoScroll,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
         this.requestUpdate();
     }
 
@@ -1206,6 +1295,19 @@ export class CustomizeView extends LitElement {
     handleCompactAutoScrollChange(e) {
         this.compactAutoScroll = e.target.checked;
         localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
+        
+        // Notify AssistantView if we're currently in compact layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'compact') {
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: 'compact',
+                    enabled: this.compactAutoScroll,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
         this.requestUpdate();
     }
 
@@ -1256,6 +1358,19 @@ export class CustomizeView extends LitElement {
     handleSystemDesignAutoScrollChange(e) {
         this.systemDesignAutoScroll = e.target.checked;
         localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
+        
+        // Notify AssistantView if we're currently in system-design layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'system-design') {
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: 'system-design',
+                    enabled: this.systemDesignAutoScroll,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
         this.requestUpdate();
     }
 
