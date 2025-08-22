@@ -128,6 +128,7 @@ export class AssistantApp extends LitElement {
         microphoneEnabled: { type: Boolean },
         microphoneState: { type: String },
         speakerDetectionEnabled: { type: Boolean },
+        readingStats: { type: Object },
     };
 
     constructor() {
@@ -161,6 +162,7 @@ export class AssistantApp extends LitElement {
         this.microphoneTranscription = '';
         this.speakerDetectionEnabled = localStorage.getItem('speakerDetectionEnabled') !== 'false'; // Default to true
         this.previousSpeakerDetectionState = this.speakerDetectionEnabled; // Track previous state for microphone toggle
+        this.readingStats = null;
         
 
 
@@ -326,6 +328,18 @@ export class AssistantApp extends LitElement {
     handleAutoScrollToggle(event) {
         this.autoScrollEnabled = event.detail.enabled;
         localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
+        this.requestUpdate();
+    }
+
+    handleReadingStatsUpdate(event) {
+        this.readingStats = event.detail.stats;
+        
+        // Update the header with the new reading stats
+        const header = this.shadowRoot.querySelector('app-header');
+        if (header && header.updateReadingStats) {
+            header.updateReadingStats(this.readingStats);
+        }
+        
         this.requestUpdate();
     }
 
@@ -1005,6 +1019,7 @@ export class AssistantApp extends LitElement {
                         @speaker-detection-toggle=${this.handleSpeakerDetectionToggle}
                         @scroll-speed-change=${this.handleScrollSpeedChange}
                         @auto-scroll-toggle=${this.handleAutoScrollToggle}
+                        @reading-stats-update=${this.handleReadingStatsUpdate}
                     ></jarvis-view>
                 `;
 
@@ -1032,6 +1047,7 @@ export class AssistantApp extends LitElement {
                         .interviewMode=${this.interviewMode}
                         .awaitingProResponse=${this._awaitingProResponse}
                         .proResponseReceived=${this._proResponseReceived}
+                        .readingStats=${this.readingStats}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}

@@ -150,6 +150,18 @@ export class AppHeader extends LitElement {
             font-size: var(--header-font-size-small);
             color: #00C851;
         }
+
+        .reading-time-display {
+            font-size: var(--header-font-size-small);
+            color: #007aff;
+            margin-left: 4px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .reading-time-display .icon {
+            margin-right: 2px;
+        }
     `;
 
     static properties = {
@@ -168,6 +180,7 @@ export class AppHeader extends LitElement {
         onInterviewModeToggle: { type: Function },
         awaitingProResponse: { type: Boolean },
         proResponseReceived: { type: Boolean },
+        readingStats: { type: Object },
     };
 
     constructor() {
@@ -187,6 +200,7 @@ export class AppHeader extends LitElement {
         this.onInterviewModeToggle = () => {};
         this.awaitingProResponse = false;
         this.proResponseReceived = false;
+        this.readingStats = null;
         this._timerInterval = null;
     }
 
@@ -282,6 +296,34 @@ export class AppHeader extends LitElement {
         return navigationViews.includes(this.currentView);
     }
 
+    /**
+     * Update reading statistics
+     */
+    updateReadingStats(stats) {
+        this.readingStats = stats;
+        this.requestUpdate();
+    }
+
+    /**
+     * Get formatted reading time display
+     */
+    getReadingTimeDisplay() {
+        if (!this.readingStats || 
+            this.readingStats.estimatedTimeRemaining <= 0 || 
+            this.readingStats.progress >= 95) {
+            return null;
+        }
+
+        const minutes = Math.floor(this.readingStats.estimatedTimeRemaining / 60);
+        const seconds = this.readingStats.estimatedTimeRemaining % 60;
+        
+        if (minutes > 0) {
+            return `⏱ ${minutes}m ${seconds}s`;
+        } else {
+            return `⏱ ${seconds}s`;
+        }
+    }
+
     render() {
         const elapsedTimeDisplay = this.getElapsedTimeDisplay();
         const isWarning = this.isElapsedTimeWarning();
@@ -305,6 +347,9 @@ export class AppHeader extends LitElement {
                         ? html`
                               <span class="${isWarning ? 'elapsed-time-warning' : ''}">${elapsedTimeDisplay}</span>
                               <span>${this.statusText}</span>
+                              ${this.getReadingTimeDisplay() 
+                                  ? html`<span class="reading-time-display">${this.getReadingTimeDisplay()}</span>`
+                                  : ''}
                           `
                         : ''}
                     ${this.currentView === 'main'

@@ -3112,6 +3112,13 @@ export class AssistantView extends LitElement {
     _updateReadingStats(stats) {
         this._readingStats = stats;
         
+        // Dispatch reading stats event to parent for header display
+        this.dispatchEvent(new CustomEvent('reading-stats-update', {
+            detail: { stats },
+            bubbles: true,
+            composed: true
+        }));
+        
         // Update progress bar style based on reading speed
         const progressBar = this.shadowRoot.querySelector('.reading-progress-bar');
         if (progressBar) {
@@ -3126,58 +3133,8 @@ export class AssistantView extends LitElement {
             
             progressBar.style.background = `linear-gradient(90deg, ${progressColor}, ${progressColor}aa)`;
         }
-        
-        // Show reading time estimation tooltip
-        if (stats.estimatedTimeRemaining > 0 && stats.progress < 95) {
-            this._showReadingTimeTooltip(stats.estimatedTimeRemaining);
-        }
     }
     
-    /**
-     * Show reading time estimation tooltip
-     */
-    _showReadingTimeTooltip(timeInSeconds) {
-        // Remove existing tooltip
-        const existingTooltip = document.querySelector('.reading-time-tooltip');
-        if (existingTooltip) {
-            existingTooltip.remove();
-        }
-        
-        // Create new tooltip
-        const tooltip = document.createElement('div');
-        tooltip.className = 'reading-time-tooltip';
-        tooltip.style.cssText = `
-            position: fixed;
-            bottom: 30px;
-            right: 20px;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 11px;
-            font-weight: 500;
-            z-index: 1000;
-            pointer-events: none;
-            opacity: 0.7;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        `;
-        
-        const minutes = Math.floor(timeInSeconds / 60);
-        const seconds = timeInSeconds % 60;
-        const timeText = minutes > 0 ? `${minutes}m ${seconds}s remaining` : `${seconds}s remaining`;
-        tooltip.textContent = timeText;
-        
-        document.body.appendChild(tooltip);
-        
-        // Auto-remove after 3 seconds
-        setTimeout(() => {
-            if (tooltip.parentNode) {
-                tooltip.parentNode.removeChild(tooltip);
-            }
-        }, 3000);
-    }
-
     render() {
         const currentResponse = this.getCurrentResponse();
         const responseCounter = this.getResponseCounter();
