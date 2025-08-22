@@ -6,6 +6,7 @@ import { HistoryView } from '../views/HistoryView.js';
 import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
+import { LayoutSettingsManager } from '../../utils/layoutSettingsManager.js';
 
 export class AssistantApp extends LitElement {
     static styles = css`
@@ -1110,7 +1111,7 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.45 if not set
             const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : 0.45;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
             const fontSize = normalFontSize !== null ? parseInt(normalFontSize, 10) : 12;
@@ -1134,7 +1135,7 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.60 if not set
             const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : 0.60;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
             const fontSize = compactFontSize !== null ? parseInt(compactFontSize, 10) : 11;
@@ -1158,7 +1159,7 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.40 if not set
             const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : 0.40;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
             const fontSize = systemDesignFontSize !== null ? parseInt(systemDesignFontSize, 10) : 14;
@@ -1172,21 +1173,6 @@ export class AssistantApp extends LitElement {
             this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10) || 2;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
-    }
-
-    updateTransparency(transparency) {
-        const root = document.documentElement;
-        root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparency * 0.05})`);
-        root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparency * 0.375})`);
-        root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--preview-video-background', `rgba(0, 0, 0, ${transparency * 1.125})`);
-        root.style.setProperty('--screen-option-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
-        root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
     }
 
     async handleLayoutModeChange(layoutMode) {

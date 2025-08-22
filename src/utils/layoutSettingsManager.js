@@ -70,8 +70,8 @@ export class LayoutSettingsManager {
             max: 1,
             step: 0.01,
             unit: '%',
-            label: 'Background Transparency',
-            description: 'Background transparency for this layout mode',
+            label: 'Window Transparency',
+            description: 'Overall window transparency for this layout mode',
             formatValue: (value) => Math.round(value * 100),
             minLabel: 'Transparent',
             maxLabel: 'Opaque'
@@ -290,7 +290,7 @@ export class LayoutSettingsManager {
     }
 
     /**
-     * Update transparency CSS variables
+     * Update transparency CSS variables and window opacity
      * 
      * @param {number} transparency - Transparency value (0-1)
      */
@@ -310,6 +310,23 @@ export class LayoutSettingsManager {
         root.style.setProperty('--inline-code-background', `rgba(255, 255, 255, ${transparency * 0.08})`);
         root.style.setProperty('--pre-code-background', `rgba(0, 0, 0, ${transparency * 0.4})`);
         root.style.setProperty('--blockquote-background', `rgba(0, 122, 255, ${transparency * 0.08})`);
+        
+        // Update window opacity via IPC
+        if (typeof window !== 'undefined' && window.require) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                // Convert transparency to opacity (inverse relationship)
+                // Higher transparency value = more opaque window
+                const windowOpacity = Math.max(0.3, transparency); // Minimum 30% opacity for visibility
+                
+                ipcRenderer.invoke('update-window-opacity', windowOpacity)
+                    .catch(error => {
+                        console.error('Failed to update window opacity:', error);
+                    });
+            } catch (error) {
+                console.error('Error accessing ipcRenderer:', error);
+            }
+        }
     }
 
     /**

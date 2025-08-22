@@ -113,7 +113,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container li {
-            margin: 0.6em 0;
+            margin: 0.05em 0;
             line-height: 1.6;
             letter-spacing: 0.005em;
         }
@@ -154,7 +154,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container pre {
-            margin-top: -0.7em;
+            margin-top: -0.4em;
             background: var(--pre-code-background, rgba(0, 0, 0, 0.4));
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
@@ -951,7 +951,7 @@ export class AssistantView extends LitElement {
         }
 
         :host(.compact-mode) .response-container li {
-            margin: 0.5em 0;
+            margin: 0.05em 0;
             line-height: 1.8;
         }
 
