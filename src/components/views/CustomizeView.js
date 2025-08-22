@@ -410,18 +410,21 @@ export class CustomizeView extends LitElement {
         normalTransparency: { type: Number },
         normalFontSize: { type: Number },
         normalAutoScroll: { type: Boolean },
+        normalAnimateResponse: { type: Boolean },
         normalScrollSpeed: { type: Number },
         normalWidth: { type: Number },
         normalHeight: { type: Number },
         compactTransparency: { type: Number },
         compactFontSize: { type: Number },
         compactAutoScroll: { type: Boolean },
+        compactAnimateResponse: { type: Boolean },
         compactScrollSpeed: { type: Number },
         compactWidth: { type: Number },
         compactHeight: { type: Number },
         systemDesignTransparency: { type: Number },
         systemDesignFontSize: { type: Number },
         systemDesignAutoScroll: { type: Boolean },
+        systemDesignAnimateResponse: { type: Boolean },
         systemDesignScrollSpeed: { type: Number },
         systemDesignWidth: { type: Number },
         systemDesignHeight: { type: Number },
@@ -478,18 +481,21 @@ export class CustomizeView extends LitElement {
         this.normalTransparency = 0.45;
         this.normalFontSize = 12;
         this.normalAutoScroll = false;
+        this.normalAnimateResponse = false; // Default off
         this.normalScrollSpeed = 2;
         this.normalWidth = 450;
         this.normalHeight = 500;
         this.compactTransparency = 0.60;
         this.compactFontSize = 11;
         this.compactAutoScroll = true;
+        this.compactAnimateResponse = false; // Default off
         this.compactScrollSpeed = 2;
         this.compactWidth = 320;
         this.compactHeight = 270;
         this.systemDesignTransparency = 0.40;
         this.systemDesignFontSize = 14;
         this.systemDesignAutoScroll = false;
+        this.systemDesignAnimateResponse = false; // Default off
         this.systemDesignScrollSpeed = 2;
         this.systemDesignWidth = 900;
         this.systemDesignHeight = 500;
@@ -529,13 +535,17 @@ export class CustomizeView extends LitElement {
         requestAnimationFrame(() => {
             const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
             let currentAutoScrollEnabled;
+            let currentAnimateResponseEnabled;
             
             if (currentLayoutMode === 'normal') {
                 currentAutoScrollEnabled = this.normalAutoScroll;
+                currentAnimateResponseEnabled = this.normalAnimateResponse;
             } else if (currentLayoutMode === 'compact') {
                 currentAutoScrollEnabled = this.compactAutoScroll;
+                currentAnimateResponseEnabled = this.compactAnimateResponse;
             } else if (currentLayoutMode === 'system-design') {
                 currentAutoScrollEnabled = this.systemDesignAutoScroll;
+                currentAnimateResponseEnabled = this.systemDesignAnimateResponse;
             }
             
             document.dispatchEvent(new CustomEvent('auto-scroll-change', {
@@ -546,7 +556,16 @@ export class CustomizeView extends LitElement {
                 }
             }));
             
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: currentLayoutMode,
+                    enabled: currentAnimateResponseEnabled,
+                    source: 'customize-view-init'
+                }
+            }));
+            
             console.log(`[CustomizeView] Initial sync - ${currentLayoutMode} auto scroll: ${currentAutoScrollEnabled}`);
+            console.log(`[CustomizeView] Initial sync - ${currentLayoutMode} animate response: ${currentAnimateResponseEnabled} (normalAnimateResponse: ${this.normalAnimateResponse}, compactAnimateResponse: ${this.compactAnimateResponse}, systemDesignAnimateResponse: ${this.systemDesignAnimateResponse})`);
         });
         
         // Resize window for this view
@@ -663,13 +682,17 @@ export class CustomizeView extends LitElement {
         // Dispatch auto scroll state for the new layout mode to sync with AssistantView
         requestAnimationFrame(() => {
             let currentAutoScrollEnabled;
+            let currentAnimateResponseEnabled;
             
             if (this.layoutMode === 'normal') {
                 currentAutoScrollEnabled = this.normalAutoScroll;
+                currentAnimateResponseEnabled = this.normalAnimateResponse;
             } else if (this.layoutMode === 'compact') {
                 currentAutoScrollEnabled = this.compactAutoScroll;
+                currentAnimateResponseEnabled = this.compactAnimateResponse;
             } else if (this.layoutMode === 'system-design') {
                 currentAutoScrollEnabled = this.systemDesignAutoScroll;
+                currentAnimateResponseEnabled = this.systemDesignAnimateResponse;
             }
             
             document.dispatchEvent(new CustomEvent('auto-scroll-change', {
@@ -680,7 +703,16 @@ export class CustomizeView extends LitElement {
                 }
             }));
             
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: this.layoutMode,
+                    enabled: currentAnimateResponseEnabled,
+                    source: 'customize-view-layout-change'
+                }
+            }));
+            
             console.log(`[CustomizeView] Layout mode changed to ${this.layoutMode} - auto scroll: ${currentAutoScrollEnabled}`);
+            console.log(`[CustomizeView] Layout mode changed to ${this.layoutMode} - animate response: ${currentAnimateResponseEnabled}`);
         });
     }
 
@@ -1084,6 +1116,9 @@ export class CustomizeView extends LitElement {
         if (localStorage.getItem('normalAutoScroll') === null) {
             localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
         }
+        if (localStorage.getItem('normalAnimateResponse') === null) {
+            localStorage.setItem('normalAnimateResponse', this.normalAnimateResponse.toString());
+        }
         if (localStorage.getItem('normalScrollSpeed') === null) {
             localStorage.setItem('normalScrollSpeed', this.normalScrollSpeed.toString());
         }
@@ -1098,6 +1133,9 @@ export class CustomizeView extends LitElement {
         if (localStorage.getItem('compactAutoScroll') === null) {
             localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
         }
+        if (localStorage.getItem('compactAnimateResponse') === null) {
+            localStorage.setItem('compactAnimateResponse', this.compactAnimateResponse.toString());
+        }
         if (localStorage.getItem('compactScrollSpeed') === null) {
             localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
         }
@@ -1111,6 +1149,9 @@ export class CustomizeView extends LitElement {
         }
         if (localStorage.getItem('systemDesignAutoScroll') === null) {
             localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
+        }
+        if (localStorage.getItem('systemDesignAnimateResponse') === null) {
+            localStorage.setItem('systemDesignAnimateResponse', this.systemDesignAnimateResponse.toString());
         }
         if (localStorage.getItem('systemDesignScrollSpeed') === null) {
             localStorage.setItem('systemDesignScrollSpeed', this.systemDesignScrollSpeed.toString());
@@ -1136,6 +1177,10 @@ export class CustomizeView extends LitElement {
         const normalAutoScroll = localStorage.getItem('normalAutoScroll');
         if (normalAutoScroll !== null) {
             this.normalAutoScroll = normalAutoScroll === 'true';
+        }
+        const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
+        if (normalAnimateResponse !== null) {
+            this.normalAnimateResponse = normalAnimateResponse === 'true';
         }
         const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
         if (normalScrollSpeed !== null) {
@@ -1163,6 +1208,10 @@ export class CustomizeView extends LitElement {
         if (compactAutoScroll !== null) {
             this.compactAutoScroll = compactAutoScroll === 'true';
         }
+        const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
+        if (compactAnimateResponse !== null) {
+            this.compactAnimateResponse = compactAnimateResponse === 'true';
+        }
         const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
         if (compactScrollSpeed !== null) {
             this.compactScrollSpeed = parseInt(compactScrollSpeed, 10);
@@ -1188,6 +1237,10 @@ export class CustomizeView extends LitElement {
         const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
         if (systemDesignAutoScroll !== null) {
             this.systemDesignAutoScroll = systemDesignAutoScroll === 'true';
+        }
+        const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+        if (systemDesignAnimateResponse !== null) {
+            this.systemDesignAnimateResponse = systemDesignAnimateResponse === 'true';
         }
         const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
         if (systemDesignScrollSpeed !== null) {
@@ -1240,6 +1293,25 @@ export class CustomizeView extends LitElement {
                 detail: {
                     layoutMode: 'normal',
                     enabled: this.normalAutoScroll,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
+        this.requestUpdate();
+    }
+
+    handleNormalAnimateResponseChange(e) {
+        this.normalAnimateResponse = e.target.checked;
+        localStorage.setItem('normalAnimateResponse', this.normalAnimateResponse.toString());
+        
+        // Notify AssistantApp if we're currently in normal layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'normal') {
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: 'normal',
+                    enabled: this.normalAnimateResponse,
                     source: 'customize-view'
                 }
             }));
@@ -1311,6 +1383,25 @@ export class CustomizeView extends LitElement {
         this.requestUpdate();
     }
 
+    handleCompactAnimateResponseChange(e) {
+        this.compactAnimateResponse = e.target.checked;
+        localStorage.setItem('compactAnimateResponse', this.compactAnimateResponse.toString());
+        
+        // Notify AssistantApp if we're currently in compact layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'compact') {
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: 'compact',
+                    enabled: this.compactAnimateResponse,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
+        this.requestUpdate();
+    }
+
     handleCompactScrollSpeedChange(e) {
         this.compactScrollSpeed = parseInt(e.target.value, 10);
         localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
@@ -1366,6 +1457,25 @@ export class CustomizeView extends LitElement {
                 detail: {
                     layoutMode: 'system-design',
                     enabled: this.systemDesignAutoScroll,
+                    source: 'customize-view'
+                }
+            }));
+        }
+        
+        this.requestUpdate();
+    }
+
+    handleSystemDesignAnimateResponseChange(e) {
+        this.systemDesignAnimateResponse = e.target.checked;
+        localStorage.setItem('systemDesignAnimateResponse', this.systemDesignAnimateResponse.toString());
+        
+        // Notify AssistantApp if we're currently in system-design layout mode
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        if (currentLayoutMode === 'system-design') {
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: 'system-design',
+                    enabled: this.systemDesignAnimateResponse,
                     source: 'customize-view'
                 }
             }));
@@ -1784,6 +1894,21 @@ export class CustomizeView extends LitElement {
                                     Automatically scroll to new content when in normal layout mode
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="normal-animate-response"
+                                        class="checkbox-input"
+                                        .checked=${this.normalAnimateResponse}
+                                        @change=${this.handleNormalAnimateResponseChange}
+                                    />
+                                    <label for="normal-animate-response" class="checkbox-label">Animate Response</label>
+                                </div>
+                                <div class="form-description">
+                                    Word-by-word animation reveal for AI responses when in normal layout mode
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group full-width">
@@ -1937,6 +2062,21 @@ export class CustomizeView extends LitElement {
                                     Automatically scroll to new content when in compact layout mode
                                 </div>
                             </div>
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="compact-animate-response"
+                                        class="checkbox-input"
+                                        .checked=${this.compactAnimateResponse}
+                                        @change=${this.handleCompactAnimateResponseChange}
+                                    />
+                                    <label for="compact-animate-response" class="checkbox-label">Animate Response</label>
+                                </div>
+                                <div class="form-description">
+                                    Word-by-word animation reveal for AI responses when in compact layout mode
+                                </div>
+                            </div>
                         </div>
 
                         <div class="form-group full-width">
@@ -2088,6 +2228,21 @@ export class CustomizeView extends LitElement {
                                 </div>
                                 <div class="form-description">
                                     Automatically scroll to new content when in system design layout mode
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="checkbox-group">
+                                    <input
+                                        type="checkbox"
+                                        id="system-design-animate-response"
+                                        class="checkbox-input"
+                                        .checked=${this.systemDesignAnimateResponse}
+                                        @change=${this.handleSystemDesignAnimateResponseChange}
+                                    />
+                                    <label for="system-design-animate-response" class="checkbox-label">Animate Response</label>
+                                </div>
+                                <div class="form-description">
+                                    Word-by-word animation reveal for AI responses when in system design layout mode
                                 </div>
                             </div>
                         </div>

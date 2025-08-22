@@ -306,7 +306,23 @@ export class AssistantApp extends LitElement {
             }
         }
         
-        this.shouldAnimateResponse = true;
+        // Check current layout mode's animation preference instead of hardcoding to true
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        let animationEnabled = false;
+        
+        if (currentLayoutMode === 'normal') {
+            const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
+            animationEnabled = normalAnimateResponse !== null ? normalAnimateResponse === 'true' : false;
+        } else if (currentLayoutMode === 'compact') {
+            const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
+            animationEnabled = compactAnimateResponse !== null ? compactAnimateResponse === 'true' : false;
+        } else if (currentLayoutMode === 'system-design') {
+            const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+            animationEnabled = systemDesignAnimateResponse !== null ? systemDesignAnimateResponse === 'true' : false;
+        }
+        
+        this.shouldAnimateResponse = animationEnabled;
+        console.log(`[AssistantApp] Setting shouldAnimateResponse to ${animationEnabled} for ${currentLayoutMode} mode`);
         this.requestUpdate();
     }
 

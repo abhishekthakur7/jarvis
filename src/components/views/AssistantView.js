@@ -43,6 +43,13 @@ export class AssistantView extends LitElement {
             opacity: 1;
             filter: blur(0px);
         }
+        
+        /* Disable transitions when animations are disabled */
+        .response-container.no-animation [data-word] {
+            transition: none !important;
+            opacity: 1 !important;
+            filter: blur(0px) !important;
+        }
 
         /* Markdown styling */
         .response-container h1,
@@ -51,7 +58,6 @@ export class AssistantView extends LitElement {
         .response-container h4,
         .response-container h5,
         .response-container h6 {
-            margin: 1.5em 0 0.75em 0;
             color: var(--text-color);
             font-weight: 600;
             letter-spacing: -0.02em;
@@ -59,7 +65,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container h1 {
-            font-size: 1.8em;
+            font-size: 1.2em;
             font-weight: 700;
             background: linear-gradient(135deg, #ffffff, #e0e0e0);
             -webkit-background-clip: text;
@@ -67,17 +73,16 @@ export class AssistantView extends LitElement {
             background-clip: text;
         }
         .response-container h2 {
-            font-size: 1.5em;
+            font-size: 1.1em;
             font-weight: 650;
             color: #f0f0f0;
         }
         .response-container h3 {
-            font-size: 1.3em;
             font-weight: 600;
             color: #e8e8e8;
+            margin: -5px;
         }
         .response-container h4 {
-            font-size: 1.1em;
             font-weight: 600;
             color: #e0e0e0;
         }
@@ -137,7 +142,7 @@ export class AssistantView extends LitElement {
 
         .response-container code {
             background: var(--inline-code-background, rgba(255, 255, 255, 0.08));
-            padding: 0.2em 0.4em;
+            padding: 0.1em 0.2em;
             border-radius: 4px;
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
             font-size: 0.9em;
@@ -146,17 +151,16 @@ export class AssistantView extends LitElement {
             word-break: break-word;
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 500;
-            letter-spacing: 0.02em;
         }
 
         .response-container pre {
+            margin-top: -0.7em;
             background: var(--pre-code-background, rgba(0, 0, 0, 0.4));
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
-            padding: 1.2em;
+            padding: 0.3em;
             white-space: pre-wrap;
             word-break: break-word;
-            margin: 1.5em 0;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
@@ -757,7 +761,7 @@ export class AssistantView extends LitElement {
         
         /* Breathing and pacing visual cues */
         .breathing-cue {
-            display: inline-block;
+            display: none;
             width: 8px;
             height: 8px;
             background: rgba(255, 255, 255, 0.3);
@@ -937,8 +941,7 @@ export class AssistantView extends LitElement {
 
         :host(.compact-mode) .response-container code {
             font-size: 0.95em;
-            padding: 0.25em 0.5em;
-            letter-spacing: 0.03em;
+            padding: 0.1em 0.2em;
         }
 
         :host(.compact-mode) .response-container ul,
@@ -969,7 +972,6 @@ export class AssistantView extends LitElement {
             margin-top: -15px;
             line-height: var(--reading-line-height, 1.8);
             letter-spacing: var(--reading-letter-spacing, 0.02em);
-            word-spacing: var(--reading-word-spacing, 0.1em);
             font-feature-settings: "liga" 1, "kern" 1;
             text-rendering: optimizeLegibility;
         }
@@ -977,9 +979,8 @@ export class AssistantView extends LitElement {
         .priority-primary {
             font-size: 1.125em; /* 18px relative to 16px base */
             line-height: 1.8;
-            font-weight: 600;
+            font-weight: 500;
             letter-spacing: 0.02em;
-            word-spacing: 0.1em;
             color: var(--primary-text-color, #ffffff);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
             padding-left: 0.3em;
@@ -1054,7 +1055,6 @@ export class AssistantView extends LitElement {
             font-weight: 600;
             color: var(--key-term-color, #ffd700);
             background: var(--key-term-background, rgba(255, 215, 0, 0.1));
-            padding: 0.1em 0.1em;
             border-radius: 3px;
             border-bottom: 1px solid var(--key-term-color, #ffd700);
         }
@@ -1063,7 +1063,6 @@ export class AssistantView extends LitElement {
         .segment-boundary {
             border-bottom: 1px solid var(--segment-border, rgba(255, 255, 255, 0.1));
             margin-bottom: 1em;
-            padding-bottom: 0.5em;
         }
         
         .natural-pause {
@@ -1085,7 +1084,7 @@ export class AssistantView extends LitElement {
         /* Progress indication */
         .reading-progress {
             position: fixed;
-            bottom: 4px;
+            bottom: 0px;
             left: 4px;
             right: 4px;
             height: 2px;
@@ -1120,9 +1119,6 @@ export class AssistantView extends LitElement {
             padding: 12px;
         }
             
-            .response-container code {
-                letter-spacing: 0.04em;
-            }
         }
     `;
 
@@ -1156,10 +1152,26 @@ export class AssistantView extends LitElement {
         this.speakerDetectionEnabled = true; // Default to enabled
         this.lastResponseTime = null;
         
+        // Initialize shouldAnimateResponse to false by default (will be overridden by loadLayoutSpecificSettings)
+        this.shouldAnimateResponse = false;
+        console.log(`[AssistantView] Constructor - shouldAnimateResponse initialized to: ${this.shouldAnimateResponse}`);
+        
+        // Debug: Check current localStorage values
+        console.log(`[AssistantView] Constructor - Current localStorage values:`);
+        console.log(`  normalAnimateResponse: ${localStorage.getItem('normalAnimateResponse')}`);
+        console.log(`  compactAnimateResponse: ${localStorage.getItem('compactAnimateResponse')}`);
+        console.log(`  systemDesignAnimateResponse: ${localStorage.getItem('systemDesignAnimateResponse')}`);
+        console.log(`  layoutMode: ${localStorage.getItem('layoutMode')}`);
+        
+        
         // Teleprompter enhancements
         this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
         this.readingProgress = 0;
         this.contentAnalysis = null;
+        
+        // Track response state for animation optimization
+        this._lastResponseContent = '';
+        this._isStreamingResponse = false;
         
         // Initialize teleprompter formatter
         teleprompterFormatter.setLayoutMode(this.teleprompterMode);
@@ -1190,6 +1202,9 @@ export class AssistantView extends LitElement {
         // Bind auto scroll change handler for synchronization with CustomizeView
         this.handleAutoScrollChange = this.handleAutoScrollChange.bind(this);
         
+        // Bind animate response change handler for synchronization with CustomizeView
+        this.handleAnimateResponseChange = this.handleAnimateResponseChange.bind(this);
+        
         // Initialize enhanced keyboard shortcuts
         this._initializeEnhancedShortcuts();
     }
@@ -1209,6 +1224,7 @@ export class AssistantView extends LitElement {
         
         // Clean up event listeners
         document.removeEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        document.removeEventListener('animate-response-change', this.handleAnimateResponseChange);
         
         // Clean up IPC listeners if available
         if (window.require) {
@@ -1244,6 +1260,36 @@ export class AssistantView extends LitElement {
                 this.requestUpdate();
                 
                 console.log(`[AssistantView] Auto scroll updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+            }
+        }
+    }
+
+    /**
+     * Handle animate response changes from CustomizeView
+     */
+    handleAnimateResponseChange(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        console.log(`[AssistantView] handleAnimateResponseChange called - layoutMode: ${layoutMode}, enabled: ${enabled}, source: ${source}`);
+        
+        // Handle changes from CustomizeView (including initialization and layout changes)
+        if (source === 'customize-view' || source === 'customize-view-init' || source === 'customize-view-layout-change') {
+            // Get current layout mode
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            
+            console.log(`[AssistantView] Current layout mode: ${currentLayoutMode}, event layout mode: ${layoutMode}`);
+            
+            // Only update if the change is for the current layout mode
+            if (layoutMode === currentLayoutMode) {
+                console.log(`[AssistantView] Updating shouldAnimateResponse from ${this.shouldAnimateResponse} to ${enabled}`);
+                this.shouldAnimateResponse = enabled;
+                
+                // Trigger re-render to update any relevant UI
+                this.requestUpdate();
+                
+                console.log(`[AssistantView] Animate response updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+            } else {
+                console.log(`[AssistantView] Ignoring animate response change for different layout mode`);
             }
         }
     }
@@ -1771,24 +1817,41 @@ export class AssistantView extends LitElement {
     loadLayoutSpecificSettings() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
+        console.log(`[AssistantView] loadLayoutSpecificSettings called for mode: ${layoutMode}`);
+        
         if (layoutMode === 'normal') {
             // Load normal layout settings with fallback to defaults
             const normalAutoScroll = localStorage.getItem('normalAutoScroll');
             this.autoScrollEnabled = normalAutoScroll !== null ? normalAutoScroll === 'true' : false; // Default: false
             this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
+            
+            const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
+            this.shouldAnimateResponse = normalAnimateResponse !== null ? normalAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] Normal mode - normalAnimateResponse localStorage: '${normalAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'compact') {
             // Load compact layout settings with fallback to defaults
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
             this.autoScrollEnabled = compactAutoScroll !== null ? compactAutoScroll === 'true' : true; // Default: true
             this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
+            
+            const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
+            this.shouldAnimateResponse = compactAnimateResponse !== null ? compactAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] Compact mode - compactAnimateResponse localStorage: '${compactAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'system-design') {
             // Load system design layout settings with fallback to defaults
             const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
             this.autoScrollEnabled = systemDesignAutoScroll !== null ? systemDesignAutoScroll === 'true' : false; // Default: false
             this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10) || 2;
+            
+            const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+            this.shouldAnimateResponse = systemDesignAnimateResponse !== null ? systemDesignAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] System design mode - systemDesignAnimateResponse localStorage: '${systemDesignAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         }
         
-        console.log(`[AssistantView] Loaded auto scroll for ${layoutMode}: ${this.autoScrollEnabled}`);
+        console.log(`[AssistantView] Loaded settings for ${layoutMode} - autoScroll: ${this.autoScrollEnabled}, animateResponse: ${this.shouldAnimateResponse}`);
     }
 
     updateLayoutModeClass() {
@@ -1857,6 +1920,9 @@ export class AssistantView extends LitElement {
         
         // Listen for auto scroll changes from CustomizeView (outside IPC block)
         document.addEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        
+        // Listen for animate response changes from CustomizeView
+        document.addEventListener('animate-response-change', this.handleAnimateResponseChange);
         
         // Ensure auto scroll state is properly loaded and synchronized
         this.loadLayoutSpecificSettings();
@@ -2933,9 +2999,13 @@ export class AssistantView extends LitElement {
         super.updated(changedProperties);
         if (changedProperties.has('responses') || changedProperties.has('currentResponseIndex')) {
             if (changedProperties.has('currentResponseIndex')) {
+                // Only reset animation count when actually navigating between responses
                 this._lastAnimatedWordCount = 0;
                 // Mark this as a navigation update to ensure scroll reset
                 this._isNavigationUpdate = true;
+                // Reset response content tracking for new response
+                this._lastResponseContent = '';
+                this._isStreamingResponse = false;
             }
             this.updateResponseContent();
         }
@@ -2986,22 +3056,54 @@ export class AssistantView extends LitElement {
                 renderedResponse = this._applyContentSegmentation(renderedResponse);
             }
             
-            container.innerHTML = renderedResponse;
+            // Detect if this is a truly new response or a streaming update
+            const isNewResponseStart = this._isNavigationUpdate || 
+                                      this._lastResponseContent === '' || 
+                                      currentResponse.length < this._lastResponseContent.length || 
+                                      container.innerHTML.trim() === '';
             
-            // Apply teleprompter container class
-            container.classList.add('teleprompter-container');
+            // Check if this is an incremental update (streaming)
+            const isIncrementalUpdate = !isNewResponseStart && 
+                                       currentResponse.length > this._lastResponseContent.length &&
+                                       currentResponse.startsWith(this._lastResponseContent.substring(0, Math.min(this._lastResponseContent.length, 100)));
             
-            // Update reading progress
-            this._updateReadingProgress();
+            if (isIncrementalUpdate) {
+                // Incremental update: preserve existing content and animations
+                this._updateContentIncrementally(container, renderedResponse);
+                this._isStreamingResponse = true;
+            } else {
+                // Full update: complete re-render for new responses or navigation
+                container.innerHTML = renderedResponse;
+                
+                // Apply teleprompter container class
+                container.classList.add('teleprompter-container');
+                
+                // Apply or remove no-animation class based on shouldAnimateResponse
+                if (this.shouldAnimateResponse) {
+                    container.classList.remove('no-animation');
+                } else {
+                    container.classList.add('no-animation');
+                }
+                
+                // Update reading progress
+                this._updateReadingProgress();
+                
+                // Enhance reading experience with visual cues
+                this._enhanceReadingExperience();
+                
+                // Render mermaid diagrams after DOM insertion
+                this.renderMermaidDiagramsInDOM(container);
+                
+                // Replace pronouns in the response content
+                this.replacePronounsInResponse();
+                
+                // Reset animation tracking for new response
+                this._lastAnimatedWordCount = 0;
+                this._isStreamingResponse = false;
+            }
             
-            // Enhance reading experience with visual cues
-            this._enhanceReadingExperience();
-            
-            // Render mermaid diagrams after DOM insertion
-            this.renderMermaidDiagramsInDOM(container);
-            
-            // Replace pronouns in the response content
-            this.replacePronounsInResponse();
+            // Update the tracked response content
+            this._lastResponseContent = currentResponse;
             
             // Always reset scroll position to top only when navigating
             requestAnimationFrame(() => {
@@ -3021,14 +3123,96 @@ export class AssistantView extends LitElement {
             
             // Clear the navigation flag
             this._isNavigationUpdate = false;
-            const words = container.querySelectorAll('[data-word]');
+            
+            // Handle word animations
+            this._animateWords(container);
+        }
+    }
+    
+    /**
+     * Update content incrementally to avoid re-rendering existing animated words
+     */
+    _updateContentIncrementally(container, newRenderedResponse) {
+        // Create a temporary container to parse the new content
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newRenderedResponse;
+        
+        // Get current and new word counts
+        const currentWords = container.querySelectorAll('[data-word]');
+        const newWords = tempContainer.querySelectorAll('[data-word]');
+        
+        // Only perform update if we have significantly more new words (avoid micro-updates)
+        if (newWords.length > currentWords.length + 5) {
+            // Use a more sophisticated approach: replace entire content but preserve animation states
+            const animationStates = new Map();
+            
+            // Save current animation states for existing words
+            currentWords.forEach((word, index) => {
+                animationStates.set(index, {
+                    isVisible: word.classList.contains('visible'),
+                    textContent: word.textContent.trim()
+                });
+            });
+            
+            // Update the content
+            container.innerHTML = newRenderedResponse;
+            
+            // Apply teleprompter container class
+            container.classList.add('teleprompter-container');
+            
+            // Apply or remove no-animation class based on shouldAnimateResponse
             if (this.shouldAnimateResponse) {
-                for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
+                container.classList.remove('no-animation');
+            } else {
+                container.classList.add('no-animation');
+            }
+            
+            // Restore animation states for existing words that match
+            const updatedWords = container.querySelectorAll('[data-word]');
+            animationStates.forEach((state, index) => {
+                if (updatedWords[index] && 
+                    updatedWords[index].textContent.trim() === state.textContent) {
+                    if (state.isVisible) {
+                        updatedWords[index].classList.add('visible');
+                    } else {
+                        updatedWords[index].classList.remove('visible');
+                    }
+                }
+            });
+            
+            // Update enhancements only when content significantly changes
+            this._updateReadingProgress();
+            this._enhanceReadingExperience();
+            this.renderMermaidDiagramsInDOM(container);
+            this.replacePronounsInResponse();
+        }
+    }
+    
+    /**
+     * Handle word-by-word animations separately to avoid re-triggering
+     */
+    _animateWords(container) {
+        const words = container.querySelectorAll('[data-word]');
+        
+        console.log(`[AssistantView] _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
+        
+        if (this.shouldAnimateResponse) {
+            // Remove no-animation class to enable transitions
+            container.classList.remove('no-animation');
+            console.log(`[AssistantView] Animation enabled - removed no-animation class`);
+            
+            // Ensure previously animated words remain visible
+            for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
+                if (!words[i].classList.contains('visible')) {
                     words[i].classList.add('visible');
                 }
-                for (let i = this._lastAnimatedWordCount; i < words.length; i++) {
-                    words[i].classList.remove('visible');
-                    setTimeout(() => {
+            }
+            
+            // Animate only new words
+            for (let i = this._lastAnimatedWordCount; i < words.length; i++) {
+                words[i].classList.remove('visible');
+                setTimeout(() => {
+                    if (words[i]) { // Check if element still exists
                         words[i].classList.add('visible');
                         if (i === words.length - 1) {
                             this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
@@ -3037,16 +3221,24 @@ export class AssistantView extends LitElement {
                                 this.scrollToBottom();
                             }
                         }
-                    }, (i - this._lastAnimatedWordCount) * 100);
-                }
-                this._lastAnimatedWordCount = words.length;
-            } else {
-                words.forEach(word => word.classList.add('visible'));
-                this._lastAnimatedWordCount = words.length;
-                // Auto-scroll after content update
-                if (this.autoScrollEnabled) {
-                    this.scrollToBottom();
-                }
+                    }
+                }, (i - this._lastAnimatedWordCount) * 100);
+            }
+            this._lastAnimatedWordCount = words.length;
+        } else {
+            // No animation: add no-animation class to disable CSS transitions
+            container.classList.add('no-animation');
+            console.log(`[AssistantView] Animation disabled - added no-animation class`);
+            
+            // Make all words visible immediately without any transition effects
+            words.forEach(word => {
+                word.classList.add('visible');
+            });
+            this._lastAnimatedWordCount = words.length;
+            
+            // Auto-scroll after content update
+            if (this.autoScrollEnabled) {
+                this.scrollToBottom();
             }
         }
     }

@@ -275,7 +275,6 @@ export class TeleprompterFormatter {
                 margin-top: -15px;
                 font-size: var(--response-font-size, 16px); /* Inherit centralized font size */
                 line-height: var(--reading-line-height, 1.8);
-                letter-spacing: var(--reading-letter-spacing, 0.02em);
                 word-spacing: var(--reading-word-spacing, 0.1em);
                 font-feature-settings: "liga" 1, "kern" 1;
                 text-rendering: optimizeLegibility;
@@ -286,7 +285,6 @@ export class TeleprompterFormatter {
                 line-height: ${typography.primary.lineHeight};
                 font-weight: ${typography.primary.fontWeight};
                 letter-spacing: ${typography.primary.letterSpacing};
-                word-spacing: ${typography.primary.wordSpacing};
                 color: var(--primary-text-color, #ffffff);
             }
             
@@ -319,10 +317,10 @@ export class TeleprompterFormatter {
             }
             
             .key-term {
+                font-size: 0.9em;
                 font-weight: 600;
                 color: var(--key-term-color, #ffd700);
                 background: var(--key-term-background, rgba(255, 215, 0, 0.1));
-                padding: 0.1em 0.1em;
                 border-radius: 3px;
                 border-bottom: 1px solid var(--key-term-color, #ffd700);
             }
@@ -331,7 +329,6 @@ export class TeleprompterFormatter {
             .segment-boundary {
                 border-bottom: 1px solid var(--segment-border, rgba(255, 255, 255, 0.1));
                 margin-bottom: 1em;
-                padding-bottom: 0.5em;
             }
             
             .natural-pause {
