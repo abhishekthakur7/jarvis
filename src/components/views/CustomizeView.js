@@ -412,6 +412,8 @@ export class CustomizeView extends LitElement {
         advancedMode: { type: Boolean },
         // Unified layout settings object
         layoutSettings: { type: Object },
+        // Selected layout mode for configuration (separate from active layout mode)
+        selectedLayoutModeForConfig: { type: String },
         // Event handlers
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
@@ -455,6 +457,9 @@ export class CustomizeView extends LitElement {
         // Initialize layout settings using LayoutSettingsManager
         LayoutSettingsManager.initializeDefaultsInLocalStorage();
         this.layoutSettings = LayoutSettingsManager.loadAllSettings();
+        
+        // Set initial layout mode for configuration (defaults to current active layout mode)
+        this.selectedLayoutModeForConfig = localStorage.getItem('layoutMode') || 'normal';
 
         // Load other settings
         this.loadKeybinds();
@@ -583,8 +588,66 @@ export class CustomizeView extends LitElement {
         };
     }
 
+    /**
+     * Handle layout mode selection change for configuration
+     * This changes which layout mode's settings are being displayed/edited
+     * @param {Event} e - Change event
+     */
+    handleLayoutModeForConfigSelect(e) {
+        this.selectedLayoutModeForConfig = e.target.value;
+        console.log(`[CustomizeView] Switched to configuring ${this.selectedLayoutModeForConfig} layout settings`);
+        this.requestUpdate();
+    }
+
+    /**
+     * Render a unified layout settings section with dropdown selector
+     * @returns {TemplateResult} Unified layout settings HTML
+     */
+    renderUnifiedLayoutSettings() {
+        const layoutModes = LayoutSettingsManager.getAllLayoutModes();
+        const currentSettings = this.layoutSettings[this.selectedLayoutModeForConfig] || {};
+        const currentModeInfo = LayoutSettingsManager.LAYOUT_MODES[this.selectedLayoutModeForConfig];
+        
+        const settingKeys = LayoutSettingsManager.getSettingKeys();
+        const settingsGroups = this.groupSettingsForLayout(settingKeys, this.selectedLayoutModeForConfig);
+        
+        return UIComponentTemplates.section({
+            title: 'Layout Mode Settings',
+            content: html`
+                <!-- Layout Mode Selector -->
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        Configure Settings For
+                        <span class="current-selection">${currentModeInfo?.name || 'Unknown'}</span>
+                    </label>
+                    <select 
+                        class="form-control" 
+                        .value=${this.selectedLayoutModeForConfig} 
+                        @change=${this.handleLayoutModeForConfigSelect}
+                    >
+                        ${layoutModes.map(mode => html`
+                            <option 
+                                value="${mode.key}" 
+                                ?selected=${this.selectedLayoutModeForConfig === mode.key}
+                            >
+                                ${mode.name}
+                            </option>
+                        `)}
+                    </select>
+                    <div class="form-description">
+                        ${currentModeInfo?.description || 'Select a layout mode to configure its settings'}
+                    </div>
+                </div>
+                
+                <!-- Settings for Selected Layout Mode -->
+                <div class="layout-settings-content">
+                    ${settingsGroups.map(group => this.renderSettingsGroup(group, this.selectedLayoutModeForConfig, currentSettings))}
+                </div>
+            `
+        });
+    }
+
     handleProfileSelect(e) {
-        this.selectedProfile = e.target.value;
         localStorage.setItem('selectedProfile', this.selectedProfile);
         this.onProfileChange(this.selectedProfile);
     }
@@ -1448,10 +1511,8 @@ export class CustomizeView extends LitElement {
                     </div>
                 </div>
 
-                <!-- Layout-Specific Settings Sections -->
-                ${LayoutSettingsManager.getAllLayoutModes().map(layoutMode => 
-                    this.renderLayoutSection(layoutMode.key)
-                )}
+                <!-- Unified Layout Settings Section -->
+                ${this.renderUnifiedLayoutSettings()}
                 <!-- Screen Capture Section -->
                 ${UIComponentTemplates.section({
                     title: 'Screen Capture Settings',
