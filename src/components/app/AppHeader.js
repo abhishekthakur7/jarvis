@@ -12,7 +12,6 @@ export class AppHeader extends LitElement {
             -webkit-app-region: drag;
             display: flex;
             align-items: center;
-            padding: var(--header-padding);
             border: 1px solid var(--border-color);
             background: var(--header-background);
             border-radius: var(--border-radius);
@@ -55,7 +54,6 @@ export class AppHeader extends LitElement {
             background: none;
             color: var(--icon-button-color);
             border: none;
-            padding: var(--header-icon-padding);
             border-radius: 8px;
             font-size: var(--header-font-size-small);
             font-weight: 500;

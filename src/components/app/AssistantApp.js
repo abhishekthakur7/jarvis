@@ -1021,6 +1021,9 @@ export class AssistantApp extends LitElement {
         return html`
             <div class="window-container">
                 <div class="container">
+                    <div class="${mainContentClass}">
+                        <div class="view-container">${this.renderCurrentView()}</div>
+                    </div>
                     <app-header
                         .currentView=${this.currentView}
                         .statusText=${this.statusText}
@@ -1039,9 +1042,6 @@ export class AssistantApp extends LitElement {
                         .onInterviewModeToggle=${() => this.handleInterviewModeToggle()}
                         ?isClickThrough=${this._isClickThrough}
                     ></app-header>
-                    <div class="${mainContentClass}">
-                        <div class="view-container">${this.renderCurrentView()}</div>
-                    </div>
                 </div>
             </div>
         `;

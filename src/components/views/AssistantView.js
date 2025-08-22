@@ -1791,13 +1791,11 @@ export class AssistantView extends LitElement {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
         // Remove all layout mode classes
-        this.classList.remove('compact-mode', 'ultra-compact-mode', 'system-design-mode', 'focus-mode');
+        this.classList.remove('compact-mode', 'system-design-mode', 'focus-mode');
         
         // Add the current layout mode class
         if (layoutMode === 'compact') {
             this.classList.add('compact-mode');
-        } else if (layoutMode === 'ultra-compact') {
-            this.classList.add('ultra-compact-mode');
         } else if (layoutMode === 'system-design') {
             this.classList.add('system-design-mode');
         } else if (layoutMode === 'focus-mode') {
@@ -3230,59 +3228,39 @@ export class AssistantView extends LitElement {
                 
                 <!-- Reading Flow Controls -->
                 <div class="reading-flow-controls">
-                    <button class="flow-control-button" @click=${this.pauseResumeReading} title="Pause/Resume Reading (Shift+Alt+P)">
-                        <svg viewBox="0 0 24 24" class="flow-control-icon">
-                            ${this._autoScrollPaused ? 
-                                html`<path d="M8 5v14l11-7z"/>` : 
-                                html`<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`
-                            }
-                        </svg>
-                    </button>
                     
-                    <button class="flow-control-button" @click=${this.restartCurrentSection} title="Restart Section (Shift+Alt+R)">
+                    <!-- comment control buttons
+                    <button class="flow-control-button" @click=${this.restartCurrentSection} title="">
                         <svg viewBox="0 0 24 24" class="flow-control-icon">
                             <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
                         </svg>
                     </button>
                     
-                    <button class="flow-control-button" @click=${this.skipToNextKeyBlock} title="Skip to Key Block (Shift+Alt+S)">
+                    <button class="flow-control-button" @click=${this.skipToNextKeyBlock} title="">
                         <svg viewBox="0 0 24 24" class="flow-control-icon">
                             <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
                         </svg>
                     </button>
                     
-                    <button class="flow-control-button" @click=${this.jumpToResponseEnd} title="Jump to End (Shift+Alt+E)">
+                    <button class="flow-control-button" @click=${this.jumpToResponseEnd} title="">
                         <svg viewBox="0 0 24 24" class="flow-control-icon">
                             <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
                         </svg>
                     </button>
+                    -->
+                    <button class="microphone-button flow-control-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
+                        <svg class="microphone-icon" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+
+                    <button class="speaker-button flow-control-button ${this.speakerDetectionEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleSpeakerDetection}>
+                        <svg class="speaker-icon" viewBox="0 0 24 24">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                    </button>
                 </div>
-
-                <button class="microphone-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
-                    <svg class="microphone-icon" viewBox="0 0 24 24">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                    </svg>
-                </button>
-
-                <button class="speaker-button ${this.speakerDetectionEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleSpeakerDetection}>
-                    <svg class="speaker-icon" viewBox="0 0 24 24">
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                    </svg>
-                </button>
-                
-
-                
-
-                
-                ${(() => {
-                    const timeDisplay = this.getResponseTimeDisplay();
-                    return timeDisplay.text ? html`
-                        <div class="response-time-display ${timeDisplay.className}">
-                            ${timeDisplay.text}
-                        </div>
-                    ` : '';
-                })()}
 
                 <button class="nav-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
                     <?xml version="1.0" encoding="UTF-8"?><svg
