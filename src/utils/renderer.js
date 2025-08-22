@@ -780,24 +780,61 @@ function handleShortcut(shortcutKey) {
     }
 }
 
-// Create reference to the main app element
-const AssistantApp = document.querySelector('jarvis-app');
+// Create reference to the main app element - accessed dynamically
+function getAssistantApp() {
+    const app = document.querySelector('jarvis-app');
+    if (!app) {
+        console.error('jarvis-app element not found in DOM');
+        return null;
+    }
+    return app;
+}
 
 // Consolidated cheddar object - all functions in one place
 const cheddar = {
     // Element access
-    element: () => AssistantApp,
-    e: () => AssistantApp,
+    element: () => getAssistantApp(),
+    e: () => getAssistantApp(),
     
     // App state functions - access properties directly from the app element
-    getCurrentView: () => AssistantApp.currentView,
-    getLayoutMode: () => AssistantApp.layoutMode,
-    setLayoutMode: (layoutMode) => AssistantApp.handleLayoutModeChange(layoutMode),
-    handleLayoutModeCycle: () => AssistantApp.handleLayoutModeCycle(),
+    getCurrentView: () => {
+        const app = getAssistantApp();
+        return app ? app.currentView : null;
+    },
+    getLayoutMode: () => {
+        const app = getAssistantApp();
+        return app ? app.layoutMode : null;
+    },
+    setLayoutMode: (layoutMode) => {
+        const app = getAssistantApp();
+        if (app && typeof app.handleLayoutModeChange === 'function') {
+            return app.handleLayoutModeChange(layoutMode);
+        } else {
+            console.error('AssistantApp.handleLayoutModeChange is not available');
+        }
+    },
+    handleLayoutModeCycle: () => {
+        const app = getAssistantApp();
+        if (app && typeof app.handleLayoutModeCycle === 'function') {
+            return app.handleLayoutModeCycle();
+        } else {
+            console.error('AssistantApp.handleLayoutModeCycle is not available');
+        }
+    },
     
     // Status and response functions
-    setStatus: (text) => AssistantApp.setStatus(text),
-    setResponse: (response) => AssistantApp.setResponse(response),
+    setStatus: (text) => {
+        const app = getAssistantApp();
+        if (app && typeof app.setStatus === 'function') {
+            return app.setStatus(text);
+        }
+    },
+    setResponse: (response) => {
+        const app = getAssistantApp();
+        if (app && typeof app.setResponse === 'function') {
+            return app.setResponse(response);
+        }
+    },
     
     // Core functionality
     initializeGemini,

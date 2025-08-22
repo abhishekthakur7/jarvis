@@ -1070,7 +1070,7 @@ export class AssistantApp extends LitElement {
         // Apply the selected layout mode
         if (this.layoutMode === 'compact') {
             document.documentElement.classList.add('compact-layout');
-        }  else if (this.layoutMode === 'system-design') {
+        } else if (this.layoutMode === 'system-design') {
             document.documentElement.classList.add('system-design-layout');
         }
         
@@ -1184,7 +1184,7 @@ export class AssistantApp extends LitElement {
         if (window.require) {
             try {
                 const { ipcRenderer } = window.require('electron');
-                await ipcRenderer.invoke('update-sizes');
+                await ipcRenderer.invoke('layout-mode-update-sizes');
             } catch (error) {
                 console.error('Failed to update sizes in main process:', error);
             }
