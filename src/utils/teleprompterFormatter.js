@@ -7,17 +7,17 @@
 export class TeleprompterFormatter {
     constructor() {
         this.config = {
-            // Typography scales for different content types
+            // Typography scales for different content types (relative to centralized font size)
             typography: {
                 primary: {
-                    fontSize: '18px',
+                    //fontSize: '1.125em', // 18px relative to 16px base
                     lineHeight: 1.8,
                     letterSpacing: '0.02em',
                     wordSpacing: '0.1em',
                     fontWeight: 600
                 },
                 secondary: {
-                    fontSize: '16px', 
+                    //fontSize: '1em', // Use base font size
                     lineHeight: 1.6,
                     letterSpacing: '0.01em',
                     wordSpacing: '0.05em',
@@ -25,7 +25,7 @@ export class TeleprompterFormatter {
                     opacity: 0.9
                 },
                 tertiary: {
-                    fontSize: '14px',
+                    //fontSize: '0.875em', // 14px relative to 16px base
                     lineHeight: 1.5,
                     letterSpacing: '0.005em',
                     wordSpacing: '0.02em',
@@ -33,33 +33,33 @@ export class TeleprompterFormatter {
                     opacity: 0.75
                 },
                 code: {
-                    fontSize: '16px',
+                    //fontSize: '1em', // Use base font size
                     lineHeight: 1.7,
                     letterSpacing: '0.03em',
                     fontWeight: 500
                 }
             },
             
-            // Layout modes with optimized dimensions
+            // Layout modes with optimized dimensions (font sizes now inherited from centralized system)
             layoutModes: {
                 'ultra-discrete': {
                     width: 280,
                     height: 200,
-                    fontSize: '14px',
+                    fontSizeScale: 0.875, // 87.5% of base font size
                     lineHeight: 1.4,
                     maxLinesPerSection: 3
                 },
                 'balanced': {
                     width: 350,
                     height: 300,
-                    fontSize: '16px',
+                    fontSizeScale: 1.0, // 100% of base font size
                     lineHeight: 1.6,
                     maxLinesPerSection: 5
                 },
                 'presentation': {
                     width: 400,
                     height: 350,
-                    fontSize: '18px',
+                    fontSizeScale: 1.125, // 112.5% of base font size
                     lineHeight: 1.8,
                     maxLinesPerSection: 7
                 }
@@ -95,8 +95,13 @@ export class TeleprompterFormatter {
         const mode = this.config.layoutModes[this.currentMode];
         const root = document.documentElement;
         
-        // Apply teleprompter-specific CSS variables
-        root.style.setProperty('--teleprompter-font-size', mode.fontSize);
+        // Get current centralized font size and apply scale
+        const baseFontSize = getComputedStyle(root).getPropertyValue('--response-font-size') || '16px';
+        const baseFontSizeNum = parseInt(baseFontSize, 10);
+        const scaledFontSize = Math.round(baseFontSizeNum * mode.fontSizeScale);
+        
+        // Apply teleprompter-specific CSS variables (referencing centralized font size)
+        root.style.setProperty('--teleprompter-font-size', `${scaledFontSize}px`);
         root.style.setProperty('--teleprompter-line-height', mode.lineHeight);
         root.style.setProperty('--teleprompter-max-lines', mode.maxLinesPerSection);
         
@@ -265,9 +270,10 @@ export class TeleprompterFormatter {
         const { typography } = this.config;
         
         return `
-            /* Teleprompter Typography System */
+            /* Teleprompter Typography System - Inherits from centralized font size */
             .teleprompter-container {
                 margin-top: -15px;
+                font-size: var(--response-font-size, 16px); /* Inherit centralized font size */
                 line-height: var(--reading-line-height, 1.8);
                 letter-spacing: var(--reading-letter-spacing, 0.02em);
                 word-spacing: var(--reading-word-spacing, 0.1em);
@@ -276,7 +282,7 @@ export class TeleprompterFormatter {
             }
             
             .priority-primary {
-                font-size: ${typography.primary.fontSize};
+                font-size: ${typography.primary.fontSize}; /* Relative to container font size */
                 line-height: ${typography.primary.lineHeight};
                 font-weight: ${typography.primary.fontWeight};
                 letter-spacing: ${typography.primary.letterSpacing};
@@ -285,7 +291,7 @@ export class TeleprompterFormatter {
             }
             
             .priority-secondary {
-                font-size: ${typography.secondary.fontSize};
+                font-size: ${typography.secondary.fontSize}; /* Relative to container font size */
                 line-height: ${typography.secondary.lineHeight};
                 font-weight: ${typography.secondary.fontWeight};
                 opacity: ${typography.secondary.opacity};
@@ -293,7 +299,7 @@ export class TeleprompterFormatter {
             }
             
             .priority-tertiary {
-                font-size: ${typography.tertiary.fontSize};
+                font-size: ${typography.tertiary.fontSize}; /* Relative to container font size */
                 line-height: ${typography.tertiary.lineHeight};
                 font-weight: ${typography.tertiary.fontWeight};
                 opacity: ${typography.tertiary.opacity};
@@ -302,11 +308,10 @@ export class TeleprompterFormatter {
             
             .content-type-code {
                 font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
-                font-size: ${typography.code.fontSize};
+                font-size: ${typography.code.fontSize}; /* Relative to container font size */
                 line-height: ${typography.code.lineHeight};
                 letter-spacing: ${typography.code.letterSpacing};
                 background: var(--code-background, rgba(0, 0, 0, 0.3));
-                padding: 0.5em;
                 border-radius: 4px;
                 border-left: 3px solid var(--accent-color, #007aff);
             }

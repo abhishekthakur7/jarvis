@@ -516,8 +516,43 @@ export class CustomizeView extends LitElement {
         this.loadCodeFontFamily();
         // Load Google Fonts
         this.loadGoogleFonts();
+        
+        // Listen for font size changes from AssistantView
+        this.handleFontSizeChange = this.handleFontSizeChange.bind(this);
+        document.addEventListener('font-size-change', this.handleFontSizeChange);
+        
         // Resize window for this view
         resizeLayout();
+    }
+    
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        // Clean up event listeners
+        document.removeEventListener('font-size-change', this.handleFontSizeChange);
+    }
+    
+    /**
+     * Handle font size changes from AssistantView
+     */
+    handleFontSizeChange(event) {
+        const { layoutMode, fontSize, source } = event.detail;
+        
+        // Only handle if the change comes from AssistantView to avoid loops
+        if (source === 'assistant-view') {
+            // Update the appropriate layout mode font size
+            if (layoutMode === 'normal') {
+                this.normalFontSize = fontSize;
+            } else if (layoutMode === 'compact') {
+                this.compactFontSize = fontSize;
+            } else if (layoutMode === 'system-design') {
+                this.systemDesignFontSize = fontSize;
+            }
+            
+            // Trigger re-render to update the slider values
+            this.requestUpdate();
+            
+            console.log(`[CustomizeView] Font size updated: ${layoutMode} mode = ${fontSize}px`);
+        }
     }
 
     getProfiles() {

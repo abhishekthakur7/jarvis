@@ -73,6 +73,7 @@ export class AssistantApp extends LitElement {
                 opacity 0.15s ease-out,
                 transform 0.15s ease-out;
             height: 100%;
+            font-size: var(--response-font-size, 16px);
         }
 
         .view-container.entering {
@@ -1095,7 +1096,9 @@ export class AssistantApp extends LitElement {
             const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : 0.45;
             this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${normalFontSize || 12}px`);
+            // Apply layout-specific font size
+            const fontSize = normalFontSize !== null ? parseInt(normalFontSize, 10) : 12;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = normalAutoScroll === 'true';
@@ -1117,7 +1120,9 @@ export class AssistantApp extends LitElement {
             const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : 0.60;
             this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${compactFontSize || 11}px`);
+            // Apply layout-specific font size
+            const fontSize = compactFontSize !== null ? parseInt(compactFontSize, 10) : 11;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = compactAutoScroll === 'true';
@@ -1139,7 +1144,9 @@ export class AssistantApp extends LitElement {
             const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : 0.40;
             this.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${systemDesignFontSize || 14}px`);
+            // Apply layout-specific font size
+            const fontSize = systemDesignFontSize !== null ? parseInt(systemDesignFontSize, 10) : 14;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = systemDesignAutoScroll === 'true';

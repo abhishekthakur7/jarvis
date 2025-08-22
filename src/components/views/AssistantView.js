@@ -975,21 +975,21 @@ export class AssistantView extends LitElement {
         }
         
         .priority-primary {
-            font-size: 18px;
+            font-size: 1.125em; /* 18px relative to 16px base */
             line-height: 1.8;
             font-weight: 600;
             letter-spacing: 0.02em;
             word-spacing: 0.1em;
             color: var(--primary-text-color, #ffffff);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-            padding: 0.5em;
+            padding-left: 0.3em;
+            padding-top: 0.2em;
             border-radius: 6px;
-            margin: 0.8em 0;
             border-left: 3px solid var(--accent-color, #007aff);
         }
         
         .priority-secondary {
-            font-size: 16px;
+            font-size: 1em; /* Use base font size */
             line-height: 1.6;
             font-weight: 500;
             opacity: 0.9;
@@ -998,7 +998,7 @@ export class AssistantView extends LitElement {
         }
         
         .priority-tertiary {
-            font-size: 14px;
+            font-size: 0.875em; /* 14px relative to 16px base */
             line-height: 1.5;
             font-weight: 400;
             opacity: 0.75;
@@ -1008,14 +1008,12 @@ export class AssistantView extends LitElement {
         
         .content-type-code {
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
-            font-size: 16px;
+            font-size: 1em; /* Use base font size */
             line-height: 1.7;
             letter-spacing: 0.03em;
             background: var(--code-background, rgba(0, 0, 0, 0.3));
-            padding: 1em;
             border-radius: 6px;
             border-left: 3px solid var(--accent-color, #007aff);
-            margin: 1em 0;
         }
         
         .content-type-steps {
@@ -1101,19 +1099,19 @@ export class AssistantView extends LitElement {
         
         /* Layout mode specific enhancements */
         :host(.ultra-discrete-mode) .response-container {
-            font-size: var(--teleprompter-font-size, 14px);
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 14px));
             line-height: var(--teleprompter-line-height, 1.4);
             padding: 6px;
         }
         
         :host(.balanced-mode) .response-container {
-            font-size: var(--teleprompter-font-size, 16px);
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 16px));
             line-height: var(--teleprompter-line-height, 1.6);
             padding: 8px;
         }
         
         :host(.presentation-mode) .response-container {
-            font-size: var(--teleprompter-font-size, 18px);
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 18px));
             line-height: var(--teleprompter-line-height, 1.8);
             padding: 12px;
         }
@@ -1216,7 +1214,12 @@ export class AssistantView extends LitElement {
             'shift+alt+l': () => this.adjustLineSpacing(),
             'shift+alt+k': () => this.toggleKeyInformationEmphasis(),
             'shift+alt+t': () => this.adjustReadingTempo(),
-            'shift+alt+f': () => this.toggleFocusMode()
+            'shift+alt+f': () => this.toggleFocusMode(),
+            // Font size shortcuts
+            'ctrl+shift+=': () => this.increaseFontSize(),
+            'ctrl+shift+plus': () => this.increaseFontSize(),
+            'ctrl+shift+-': () => this.decreaseFontSize(),
+            'ctrl+shift+minus': () => this.decreaseFontSize()
         };
     }
 
@@ -1660,15 +1663,6 @@ export class AssistantView extends LitElement {
            console.log('Pronouns replaced in response');
        }
 
-    loadFontSize() {
-        const fontSize = localStorage.getItem('fontSize');
-        if (fontSize !== null) {
-            const fontSizeValue = parseInt(fontSize, 10) || 20;
-            const root = document.documentElement;
-            root.style.setProperty('--response-font-size', `${fontSizeValue}px`);
-        }
-    }
-
     loadFontFamily() {
         const savedFontFamily = localStorage.getItem('selectedFontFamily');
         if (savedFontFamily) {
@@ -1749,54 +1743,6 @@ export class AssistantView extends LitElement {
         }
     }
 
-    increaseFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.min(currentFontSize + 1, 24); // Max font size 24px
-        
-        if (layoutMode === 'normal') {
-            localStorage.setItem('normalFontSize', newFontSize.toString());
-        } else if (layoutMode === 'compact') {
-            localStorage.setItem('compactFontSize', newFontSize.toString());
-        } else {
-            localStorage.setItem('fontSize', newFontSize.toString());
-        }
-        
-        const root = document.documentElement;
-        root.style.setProperty('--response-font-size', `${newFontSize}px`);
-        this.requestUpdate(); // Trigger re-render to update font size display
-    }
-
-    decreaseFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.max(currentFontSize - 1, 8); // Min font size 8px
-        
-        if (layoutMode === 'normal') {
-            localStorage.setItem('normalFontSize', newFontSize.toString());
-        } else if (layoutMode === 'compact') {
-            localStorage.setItem('compactFontSize', newFontSize.toString());
-        } else {
-            localStorage.setItem('fontSize', newFontSize.toString());
-        }
-        
-        const root = document.documentElement;
-        root.style.setProperty('--response-font-size', `${newFontSize}px`);
-        this.requestUpdate(); // Trigger re-render to update font size display
-    }
-
-    getCurrentFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        
-        if (layoutMode === 'normal') {
-            return parseInt(localStorage.getItem('normalFontSize'), 10) || 12;
-        } else if (layoutMode === 'compact') {
-            return parseInt(localStorage.getItem('compactFontSize'), 10) || 11;
-        } else {
-            return parseInt(localStorage.getItem('fontSize'), 10) || 16;
-        }
-    }
-
     updateLayoutModeClass() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
@@ -1816,9 +1762,6 @@ export class AssistantView extends LitElement {
     connectedCallback() {
         super.connectedCallback();
 
-        // Load and apply font size
-        this.loadFontSize();
-        
         // Load and apply font family
         this.loadFontFamily();
         
@@ -2052,6 +1995,81 @@ export class AssistantView extends LitElement {
         // Dispatch event to parent to keep it in sync
         this.dispatchEvent(new CustomEvent('auto-scroll-toggle', {
             detail: { enabled: this.autoScrollEnabled },
+            bubbles: true,
+            composed: true
+        }));
+    }
+
+    /**
+     * Get current font size for the active layout mode
+     */
+    getCurrentFontSize() {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        let fontSize;
+        
+        if (layoutMode === 'normal') {
+            fontSize = localStorage.getItem('normalFontSize');
+        } else if (layoutMode === 'compact') {
+            fontSize = localStorage.getItem('compactFontSize');
+        } else if (layoutMode === 'system-design') {
+            fontSize = localStorage.getItem('systemDesignFontSize');
+        }
+        
+        return parseInt(fontSize, 10) || 12;
+    }
+
+    /**
+     * Increase font size for the current layout mode
+     */
+    increaseFontSize() {
+        const currentSize = this.getCurrentFontSize();
+        if (currentSize < 32) {
+            const newSize = currentSize + 1;
+            this.updateFontSizeForCurrentLayout(newSize);
+            console.log(`Font size increased to ${newSize}px`);
+        }
+    }
+
+    /**
+     * Decrease font size for the current layout mode
+     */
+    decreaseFontSize() {
+        const currentSize = this.getCurrentFontSize();
+        if (currentSize > 10) {
+            const newSize = currentSize - 1;
+            this.updateFontSizeForCurrentLayout(newSize);
+            console.log(`Font size decreased to ${newSize}px`);
+        }
+    }
+
+    /**
+     * Update font size for the current layout mode
+     */
+    updateFontSizeForCurrentLayout(fontSize) {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        
+        // Save to layout-specific localStorage
+        if (layoutMode === 'normal') {
+            localStorage.setItem('normalFontSize', fontSize.toString());
+        } else if (layoutMode === 'compact') {
+            localStorage.setItem('compactFontSize', fontSize.toString());
+        } else if (layoutMode === 'system-design') {
+            localStorage.setItem('systemDesignFontSize', fontSize.toString());
+        }
+        
+        // Apply the font size immediately to the centralized CSS variable
+        document.documentElement.style.setProperty('--response-font-size', `${fontSize}px`);
+        
+        // Trigger re-render to update font size display
+        this.requestUpdate();
+        
+        // Dispatch event to notify other components (like CustomizeView) about the change
+        this.dispatchEvent(new CustomEvent('font-size-change', {
+            detail: { 
+                layoutMode,
+                fontSize,
+                source: 'assistant-view'
+            },
             bubbles: true,
             composed: true
         }));
@@ -3201,9 +3219,13 @@ export class AssistantView extends LitElement {
                     ${this.responses.length > 0 ? html` <span class="response-counter flow-control-button">${responseCounter}</span> ` : ''}
 
                     <div class="font-size-controls flow-control-button">
-                        <button class="font-size-button" @click=${this.increaseFontSize}>+</button>
-                        <span class="font-size-label">${this.getCurrentFontSize()}</span>
-                        <button class="font-size-button" @click=${this.decreaseFontSize}>-</button>
+                        <button class="font-size-button" @click=${this.decreaseFontSize} title="">
+                            -
+                        </button>
+                        <span class="font-size-label">${this.getCurrentFontSize()}px</span>
+                        <button class="font-size-button" @click=${this.increaseFontSize} title="">
+                            +
+                        </button>
                     </div>
 
                     <div class="scroll-speed-controls flow-control-button">

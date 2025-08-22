@@ -18,6 +18,7 @@ export class AdvancedView extends LitElement {
             padding: 12px;
             margin: 0 auto;
             max-width: 700px;
+            font-size: inherit; /* Inherit font size from view-container */
         }
 
         .advanced-container {
@@ -44,7 +45,7 @@ export class AdvancedView extends LitElement {
             align-items: center;
             gap: 8px;
             margin-bottom: 12px;
-            font-size: 14px;
+            font-size: 0.875em; /* Relative to centralized font size */
             font-weight: 600;
             color: var(--text-color);
             text-transform: uppercase;
