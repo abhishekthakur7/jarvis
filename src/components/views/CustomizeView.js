@@ -430,7 +430,9 @@ export class CustomizeView extends LitElement {
         onScreenshotIntervalChange: { type: Function },
         onImageQualityChange: { type: Function },
         onLayoutModeChange: { type: Function },
+        onTeleprompterModeChange: { type: Function },
         onFocusModeChange: { type: Function },
+        teleprompterMode: { type: String },
         advancedMode: { type: Boolean },
         onAdvancedModeChange: { type: Function },
     };
@@ -442,6 +444,7 @@ export class CustomizeView extends LitElement {
         this.selectedScreenshotInterval = '5';
         this.selectedImageQuality = 'medium';
         this.layoutMode = 'compact';
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
         this.focusMode = false;
         this.keybinds = this.getDefaultKeybinds();
         this.onProfileChange = () => {};
@@ -449,6 +452,7 @@ export class CustomizeView extends LitElement {
         this.onScreenshotIntervalChange = () => {};
         this.onImageQualityChange = () => {};
         this.onLayoutModeChange = () => {};
+        this.onTeleprompterModeChange = () => {};
         this.onFocusModeChange = () => {};
         this.onAdvancedModeChange = () => {};
 
@@ -567,6 +571,31 @@ export class CustomizeView extends LitElement {
         this.layoutMode = e.target.value;
         localStorage.setItem('layoutMode', this.layoutMode);
         this.onLayoutModeChange(e.target.value);
+    }
+
+    handleTeleprompterModeSelect(e) {
+        this.teleprompterMode = e.target.value;
+        localStorage.setItem('teleprompterMode', this.teleprompterMode);
+        this.onTeleprompterModeChange(e.target.value);
+    }
+
+    getTeleprompterModeDisplayName() {
+        switch (this.teleprompterMode) {
+            case 'ultra-discrete': return 'Ultra Discrete';
+            case 'presentation': return 'Presentation';
+            default: return 'Balanced';
+        }
+    }
+
+    getTeleprompterModeDescription() {
+        switch (this.teleprompterMode) {
+            case 'ultra-discrete':
+                return 'Minimal 280×200px interface with single-line key points for maximum discretion';
+            case 'presentation':
+                return 'Spacious 400×350px layout with enhanced visual indicators for clear presentation';
+            default:
+                return 'Balanced 350×300px layout with structured information blocks and moderate hierarchy';
+        }
     }
 
     handleFocusModeChange(e) {
@@ -1459,6 +1488,20 @@ export class CustomizeView extends LitElement {
                                 </select>
                                 <div class="form-description">
                                     ${this.getLayoutModeDescription()}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Teleprompter Mode
+                                    <span class="current-selection">${this.getTeleprompterModeDisplayName()}</span>
+                                </label>
+                                <select class="form-control" .value=${this.teleprompterMode} @change=${this.handleTeleprompterModeSelect}>
+                                    <option value="balanced" ?selected=${this.teleprompterMode === 'balanced'}>Balanced</option>
+                                    <option value="ultra-discrete" ?selected=${this.teleprompterMode === 'ultra-discrete'}>Ultra Discrete</option>
+                                    <option value="presentation" ?selected=${this.teleprompterMode === 'presentation'}>Presentation</option>
+                                </select>
+                                <div class="form-description">
+                                    ${this.getTeleprompterModeDescription()}
                                 </div>
                             </div>
                         </div>

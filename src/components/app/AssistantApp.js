@@ -113,6 +113,7 @@ export class AssistantApp extends LitElement {
         selectedScreenshotInterval: { type: String },
         selectedImageQuality: { type: String },
         layoutMode: { type: String },
+        teleprompterMode: { type: String },
         focusMode: { type: Boolean },
         advancedMode: { type: Boolean },
         interviewMode: { type: Boolean },
@@ -141,6 +142,7 @@ export class AssistantApp extends LitElement {
         this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || '5';
         this.selectedImageQuality = localStorage.getItem('selectedImageQuality') || 'medium';
         this.layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
         this.focusMode = localStorage.getItem('focusMode') === 'true';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
         this.interviewMode = false;
@@ -961,6 +963,7 @@ export class AssistantApp extends LitElement {
                         .selectedScreenshotInterval=${this.selectedScreenshotInterval}
                         .selectedImageQuality=${this.selectedImageQuality}
                         .layoutMode=${this.layoutMode}
+                        .teleprompterMode=${this.teleprompterMode}
                         .focusMode=${this.focusMode}
                         .advancedMode=${this.advancedMode}
                         .onProfileChange=${profile => this.handleProfileChange(profile)}
@@ -968,6 +971,7 @@ export class AssistantApp extends LitElement {
                         .onScreenshotIntervalChange=${interval => this.handleScreenshotIntervalChange(interval)}
                         .onImageQualityChange=${quality => this.handleImageQualityChange(quality)}
                         .onLayoutModeChange=${layoutMode => this.handleLayoutModeChange(layoutMode)}
+                        .onTeleprompterModeChange=${teleprompterMode => this.handleTeleprompterModeChange(teleprompterMode)}
                         .onFocusModeChange=${focusMode => this.handleFocusModeChange(focusMode)}
                         .onAdvancedModeChange=${advancedMode => this.handleAdvancedModeChange(advancedMode)}
                     ></customize-view>
@@ -1172,6 +1176,34 @@ export class AssistantApp extends LitElement {
             }
         }
 
+        this.requestUpdate();
+    }
+    
+    async handleTeleprompterModeChange(teleprompterMode) {
+        this.teleprompterMode = teleprompterMode;
+        localStorage.setItem('teleprompterMode', teleprompterMode);
+        
+        // Apply teleprompter mode to document
+        document.documentElement.classList.remove('ultra-discrete-mode', 'balanced-mode', 'presentation-mode');
+        document.documentElement.classList.add(`${teleprompterMode}-mode`);
+        
+        // Notify AssistantView about teleprompter mode change
+        const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+        if (jarvisView) {
+            jarvisView.teleprompterMode = teleprompterMode;
+        }
+        
+        // Notify main process about teleprompter mode change for window resizing
+        if (window.require) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                await ipcRenderer.invoke('update-sizes');
+            } catch (error) {
+                console.error('Failed to update sizes for teleprompter mode:', error);
+            }
+        }
+        
+        console.log(`Teleprompter mode changed to: ${teleprompterMode}`);
         this.requestUpdate();
     }
 

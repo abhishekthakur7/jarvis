@@ -1,4 +1,5 @@
 import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
+import { teleprompterFormatter } from '../../utils/teleprompterFormatter.js';
 
 export class AssistantView extends LitElement {
     static styles = css`
@@ -710,6 +711,168 @@ export class AssistantView extends LitElement {
         .auto-scroll-toggle.disabled .auto-scroll-icon {
             color: #666;
         }
+        
+        /* Reading Flow Controls */
+        .reading-flow-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .flow-control-button {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .flow-control-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .flow-control-button:active {
+            transform: scale(0.95);
+        }
+        
+        .flow-control-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        /* Breathing and pacing visual cues */
+        .breathing-cue {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        
+        .breathing-cue.long-pause {
+            animation-duration: 4s;
+            background: rgba(0, 122, 255, 0.5);
+        }
+        
+        .breathing-cue.short-pause {
+            animation-duration: 2s;
+            background: rgba(255, 215, 0, 0.5);
+        }
+        
+        /* Enhanced highlighting system */
+        .key-term.highlighted {
+            background: rgba(255, 215, 0, 0.4) !important;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+        }
+        
+        .priority-primary.current-focus {
+            background: rgba(0, 122, 255, 0.3) !important;
+            border-left-color: #007aff !important;
+            border-left-width: 5px !important;
+            box-shadow: 0 0 12px rgba(0, 122, 255, 0.4);
+            animation: focusPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes focusPulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(0, 122, 255, 0.4); }
+            50% { box-shadow: 0 0 16px rgba(0, 122, 255, 0.6); }
+        }
+        
+        /* Reading rhythm indicators */
+        .rhythm-marker {
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: rhythmPulse 1s ease-in-out infinite;
+        }
+        
+        .rhythm-marker.fast {
+            animation-duration: 0.8s;
+            background: rgba(255, 165, 0, 0.6);
+        }
+        
+        .rhythm-marker.slow {
+            animation-duration: 1.5s;
+            background: rgba(0, 255, 127, 0.6);
+        }
+        
+        @keyframes rhythmPulse {
+            0%, 100% { opacity: 0.2; transform: translateY(-50%) scale(1); }
+            50% { opacity: 0.8; transform: translateY(-50%) scale(1.3); }
+        }
+        
+        /* Completion signaling */
+        .completion-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(52, 211, 153, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(52, 211, 153, 0.5);
+            animation: completionPop 0.5s ease-out;
+        }
+        
+        @keyframes completionPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Visual breathing guides */
+        .paragraph-breathing {
+            position: relative;
+        }
+        
+        .paragraph-breathing::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 20%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                rgba(255, 255, 255, 0.1) 80%, 
+                transparent 100%);
+            border-radius: 2px;
+        }
 
         .speaker-button {
             background: transparent;
@@ -798,6 +961,160 @@ export class AssistantView extends LitElement {
             .response-container p {
                 line-height: 1.5;
             }
+        }
+
+        /* Teleprompter Typography System */
+        .teleprompter-container {
+            line-height: var(--reading-line-height, 1.8);
+            letter-spacing: var(--reading-letter-spacing, 0.02em);
+            word-spacing: var(--reading-word-spacing, 0.1em);
+            font-feature-settings: "liga" 1, "kern" 1;
+            text-rendering: optimizeLegibility;
+        }
+        
+        .priority-primary {
+            font-size: 18px;
+            line-height: 1.8;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            word-spacing: 0.1em;
+            color: var(--primary-text-color, #ffffff);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            padding: 0.5em;
+            border-radius: 6px;
+            margin: 0.8em 0;
+            border-left: 3px solid var(--accent-color, #007aff);
+        }
+        
+        .priority-secondary {
+            font-size: 16px;
+            line-height: 1.6;
+            font-weight: 500;
+            opacity: 0.9;
+            color: var(--secondary-text-color, #e0e0e0);
+            margin: 0.6em 0;
+        }
+        
+        .priority-tertiary {
+            font-size: 14px;
+            line-height: 1.5;
+            font-weight: 400;
+            opacity: 0.75;
+            color: var(--tertiary-text-color, #c0c0c0);
+            margin: 0.4em 0;
+        }
+        
+        .content-type-code {
+            font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
+            font-size: 16px;
+            line-height: 1.7;
+            letter-spacing: 0.03em;
+            background: var(--code-background, rgba(0, 0, 0, 0.3));
+            padding: 1em;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color, #007aff);
+            margin: 1em 0;
+        }
+        
+        .content-type-steps {
+            counter-reset: step-counter;
+        }
+        
+        .content-type-steps .step-item {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 2.5em;
+            margin: 1em 0;
+            border-left: 2px solid rgba(0, 122, 255, 0.3);
+            padding-left: 1.5em;
+        }
+        
+        .content-type-steps .step-item::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -1.8em;
+            top: 0;
+            background: var(--accent-color, #007aff);
+            color: white;
+            width: 1.5em;
+            height: 1.5em;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .key-term {
+            font-weight: 600;
+            color: var(--key-term-color, #ffd700);
+            background: var(--key-term-background, rgba(255, 215, 0, 0.1));
+            padding: 0.1em 0.3em;
+            border-radius: 3px;
+            border-bottom: 1px solid var(--key-term-color, #ffd700);
+        }
+        
+        /* Reading flow indicators */
+        .segment-boundary {
+            border-bottom: 1px solid var(--segment-border, rgba(255, 255, 255, 0.1));
+            margin-bottom: 1em;
+            padding-bottom: 0.5em;
+        }
+        
+        .natural-pause {
+            margin-right: 0.3em;
+            position: relative;
+        }
+        
+        .natural-pause::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 2px;
+            background: var(--pause-indicator, rgba(255, 255, 255, 0.3));
+            border-radius: 50%;
+            margin-left: 0.2em;
+            vertical-align: middle;
+        }
+        
+        /* Progress indication */
+        .reading-progress {
+            position: fixed;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #007aff, #00bcd4);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Layout mode specific enhancements */
+        :host(.ultra-discrete-mode) .response-container {
+            font-size: var(--teleprompter-font-size, 14px);
+            line-height: var(--teleprompter-line-height, 1.4);
+            padding: 6px;
+        }
+        
+        :host(.balanced-mode) .response-container {
+            font-size: var(--teleprompter-font-size, 16px);
+            line-height: var(--teleprompter-line-height, 1.6);
+            padding: 8px;
+        }
+        
+        :host(.presentation-mode) .response-container {
+            font-size: var(--teleprompter-font-size, 18px);
+            line-height: var(--teleprompter-line-height, 1.8);
+            padding: 12px;
+        }
             
             .response-container code {
                 font-size: 1em;
@@ -819,7 +1136,9 @@ export class AssistantView extends LitElement {
         scrollSpeed: { type: Number },
         _autoScrollPaused: { type: Boolean },
         lastResponseTime: { type: Number },
-
+        teleprompterMode: { type: String }, // 'balanced', 'ultra-discrete', 'presentation'
+        readingProgress: { type: Number },
+        contentAnalysis: { type: Object },
     };
 
     constructor() {
@@ -834,6 +1153,18 @@ export class AssistantView extends LitElement {
         this.speakerDetectionEnabled = true; // Default to enabled
         this.lastResponseTime = null;
         
+        // Teleprompter enhancements
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
+        this.readingProgress = 0;
+        this.contentAnalysis = null;
+        
+        // Initialize teleprompter formatter
+        teleprompterFormatter.setLayoutMode(this.teleprompterMode);
+        teleprompterFormatter.onProgress((data) => {
+            this.readingProgress = data.progress;
+            this.requestUpdate();
+        });
+        
         // Initialize with layout-specific defaults
         this.loadLayoutSpecificSettings();
         
@@ -844,6 +1175,9 @@ export class AssistantView extends LitElement {
         // Bind event handlers
         this._handleKeydown = this._handleKeydown.bind(this);
         this._handleMousedown = this._handleMousedown.bind(this);
+        
+        // Initialize enhanced keyboard shortcuts
+        this._initializeEnhancedShortcuts();
     }
 
     getProfileNames() {
@@ -853,6 +1187,26 @@ export class AssistantView extends LitElement {
             meeting: 'Business Meeting',
             presentation: 'Presentation',
             negotiation: 'Negotiation',
+        };
+    }
+
+    /**
+     * Initialize enhanced keyboard shortcuts for teleprompter functionality
+     */
+    _initializeEnhancedShortcuts() {
+        this._enhancedShortcuts = {
+            'shift+alt+p': () => this.pauseResumeReading(),
+            'shift+alt+r': () => this.restartCurrentSection(),
+            'shift+alt+s': () => this.skipToNextKeyBlock(),
+            'shift+alt+e': () => this.jumpToResponseEnd(),
+            'shift+alt+c': () => this.cycleCodeBlocks(),
+            'shift+alt+d': () => this.jumpBetweenDiagrams(),
+            'shift+alt+h': () => this.highlightNextKeyConcept(),
+            'shift+alt+q': () => this.showQuickSummary(),
+            'shift+alt+l': () => this.adjustLineSpacing(),
+            'shift+alt+k': () => this.toggleKeyInformationEmphasis(),
+            'shift+alt+t': () => this.adjustReadingTempo(),
+            'shift+alt+f': () => this.toggleFocusMode()
         };
     }
 
@@ -872,16 +1226,28 @@ export class AssistantView extends LitElement {
                 // Fix incomplete code blocks during streaming
                 let processedContent = this.fixIncompleteCodeBlocks(content);
                 
+                // Analyze content for teleprompter optimization
+                this.contentAnalysis = teleprompterFormatter.analyzeContentType(processedContent);
+                
                 // Configure marked for better security and formatting
                 window.marked.setOptions({
                     breaks: true,
                     gfm: true,
                     sanitize: false, // We trust the AI responses
                 });
+                
                 let rendered = window.marked.parse(processedContent);
                 rendered = this.renderMermaidDiagrams(rendered);
                 rendered = this.highlightJavaCode(rendered);
+                
+                // Apply teleprompter visual hierarchy
+                rendered = teleprompterFormatter.applyVisualHierarchy(rendered, this.contentAnalysis);
+                
                 rendered = this.wrapWordsInSpans(rendered);
+                
+                // Segment content for progressive disclosure
+                this._contentSegments = teleprompterFormatter.segmentContent(processedContent);
+                
                 return rendered;
             } catch (error) {
                 console.warn('Error parsing markdown:', error);
@@ -1753,11 +2119,13 @@ export class AssistantView extends LitElement {
             cancelAnimationFrame(this._autoScrollAnimationId);
         }
         
-        // Calculate pixels per frame based on scroll speed (1-10 scale)
-        // Higher speed = more pixels per frame for faster scrolling
-        // Reduced by 80% + additional 30% + further 50% + additional 70% + further 20% for even slower overall speed
-        const pixelsPerFrame = (0.5 + (this.scrollSpeed - 1) * 1.5) * 0.2 * 0.7 * 0.5 * 0.3 * 0.8; // 0.0084 to 0.2352 pixels per frame
+        // Smart scrolling with content-aware speed adjustment
+        const basePixelsPerFrame = (0.5 + (this.scrollSpeed - 1) * 1.5) * 0.2 * 0.7 * 0.5 * 0.3 * 0.8;
+        
         let currentPosition = start;
+        let pauseDetected = false;
+        let pauseStartTime = null;
+        const pauseDuration = 2000; // 2 seconds pause at natural breakpoints
 
         const animateScroll = () => {
             // Check if auto-scroll is disabled or paused
@@ -1766,13 +2134,47 @@ export class AssistantView extends LitElement {
                 return;
             }
             
-            // Move by fixed pixels per frame for consistent speed
-            currentPosition += pixelsPerFrame;
+            // Smart pause detection at content boundaries
+            const currentElement = this._getElementAtScrollPosition(container, currentPosition);
+            const shouldPause = this._shouldPauseAtElement(currentElement, currentPosition, container);
+            
+            if (shouldPause && !pauseDetected) {
+                pauseDetected = true;
+                pauseStartTime = Date.now();
+                
+                // Visual indicator for pause
+                this._showPauseIndicator(currentElement);
+            }
+            
+            // Handle pause duration
+            if (pauseDetected) {
+                const elapsedPause = Date.now() - pauseStartTime;
+                if (elapsedPause < pauseDuration) {
+                    // Still pausing, continue animation without moving
+                    this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
+                    return;
+                } else {
+                    // Pause complete, continue scrolling
+                    pauseDetected = false;
+                    pauseStartTime = null;
+                    this._hidePauseIndicator();
+                }
+            }
+            
+            // Adaptive scrolling speed based on content type
+            let adaptiveSpeed = basePixelsPerFrame;
+            if (currentElement) {
+                adaptiveSpeed = this._getAdaptiveScrollSpeed(currentElement, basePixelsPerFrame);
+            }
+            
+            // Move by calculated pixels per frame
+            currentPosition += adaptiveSpeed;
             
             // Don't overshoot the target
             if (currentPosition >= target) {
                 container.scrollTop = target;
                 this._autoScrollAnimationId = null;
+                this._hidePauseIndicator();
             } else {
                 container.scrollTop = currentPosition;
                 this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
@@ -1780,6 +2182,542 @@ export class AssistantView extends LitElement {
         };
 
         this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
+    }
+    
+    /**
+     * Get the DOM element at a specific scroll position
+     */
+    _getElementAtScrollPosition(container, scrollPosition) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, pre, .priority-primary, .segment-boundary');
+        let targetElement = null;
+        
+        for (const element of elements) {
+            const elementTop = element.offsetTop;
+            const elementBottom = elementTop + element.offsetHeight;
+            
+            if (scrollPosition >= elementTop - 50 && scrollPosition <= elementBottom + 50) {
+                targetElement = element;
+                break;
+            }
+        }
+        
+        return targetElement;
+    }
+    
+    /**
+     * Determine if scrolling should pause at a specific element
+     */
+    _shouldPauseAtElement(element, scrollPosition, container) {
+        if (!element) return false;
+        
+        // Pause at segment boundaries
+        if (element.classList.contains('segment-boundary')) {
+            return true;
+        }
+        
+        // Pause at headers
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
+            return true;
+        }
+        
+        // Pause at priority content
+        if (element.classList.contains('priority-primary')) {
+            return true;
+        }
+        
+        // Pause at code blocks
+        if (element.tagName === 'PRE' || element.querySelector('code')) {
+            return true;
+        }
+        
+        // Pause at long paragraphs (>200 characters)
+        if (element.tagName === 'P' && element.textContent.length > 200) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get adaptive scroll speed based on content type
+     */
+    _getAdaptiveScrollSpeed(element, baseSpeed) {
+        if (!element) return baseSpeed;
+        
+        // Slower speed for complex content
+        if (element.classList.contains('content-type-code') || element.tagName === 'PRE') {
+            return baseSpeed * 0.5; // 50% slower for code
+        }
+        
+        // Slower speed for primary content
+        if (element.classList.contains('priority-primary')) {
+            return baseSpeed * 0.7; // 30% slower for important content
+        }
+        
+        // Faster speed for tertiary content
+        if (element.classList.contains('priority-tertiary')) {
+            return baseSpeed * 1.3; // 30% faster for less important content
+        }
+        
+        // Slower speed for headings
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
+            return baseSpeed * 0.6; // 40% slower for headings
+        }
+        
+        return baseSpeed;
+    }
+    
+    /**
+     * Show visual pause indicator
+     */
+    _showPauseIndicator(element) {
+        if (element && !element.querySelector('.pause-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'pause-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                right: -30px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                background: rgba(0, 122, 255, 0.8);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: white;
+                font-weight: bold;
+                animation: pulse 1s infinite;
+                z-index: 100;
+            `;
+            indicator.textContent = '⏸';
+            
+            // Position relative to element
+            element.style.position = 'relative';
+            element.appendChild(indicator);
+        }
+    }
+    
+    /**
+     * Hide visual pause indicator
+     */
+    _hidePauseIndicator() {
+        const indicators = document.querySelectorAll('.pause-indicator');
+        indicators.forEach(indicator => {
+            indicator.remove();
+        });
+    }
+
+    // Teleprompter Control Methods
+    
+    /**
+     * Pause or resume reading at natural breakpoints
+     */
+    pauseResumeReading() {
+        this._autoScrollPaused = !this._autoScrollPaused;
+        const container = this.shadowRoot.querySelector('.response-container');
+        
+        if (this._autoScrollPaused) {
+            // Pause scrolling
+            if (this._autoScrollAnimationId) {
+                cancelAnimationFrame(this._autoScrollAnimationId);
+                this._autoScrollAnimationId = null;
+            }
+            console.log('Reading paused at natural breakpoint');
+        } else {
+            // Resume scrolling
+            if (container && this.autoScrollEnabled) {
+                this.smoothScrollToBottom(container);
+            }
+            console.log('Reading resumed');
+        }
+        this.requestUpdate();
+    }
+    
+    /**
+     * Restart reading from the current section
+     */
+    restartCurrentSection() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            // Find current segment based on scroll position
+            const scrollTop = container.scrollTop;
+            const segments = container.querySelectorAll('.segment-boundary');
+            
+            let targetSegment = null;
+            for (const segment of segments) {
+                if (segment.offsetTop <= scrollTop + 100) {
+                    targetSegment = segment;
+                } else {
+                    break;
+                }
+            }
+            
+            if (targetSegment) {
+                container.scrollTop = targetSegment.offsetTop;
+            } else {
+                container.scrollTop = 0;
+            }
+            
+            console.log('Restarted current section');
+        }
+    }
+    
+    /**
+     * Skip to next key information block
+     */
+    skipToNextKeyBlock() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const keyElements = container.querySelectorAll('.priority-primary, .key-term');
+            const scrollTop = container.scrollTop;
+            
+            for (const element of keyElements) {
+                if (element.offsetTop > scrollTop + 50) {
+                    container.scrollTop = element.offsetTop - 20;
+                    element.style.background = 'rgba(0, 122, 255, 0.2)';
+                    setTimeout(() => {
+                        element.style.background = '';
+                    }, 1500);
+                    break;
+                }
+            }
+            
+            console.log('Skipped to next key block');
+        }
+    }
+    
+    /**
+     * Jump to response end/summary
+     */
+    jumpToResponseEnd() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+            console.log('Jumped to response end');
+        }
+    }
+    
+    /**
+     * Cycle through code blocks
+     */
+    cycleCodeBlocks() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const codeBlocks = container.querySelectorAll('pre code, .content-type-code');
+            if (codeBlocks.length === 0) return;
+            
+            if (!this._currentCodeBlockIndex) {
+                this._currentCodeBlockIndex = 0;
+            } else {
+                this._currentCodeBlockIndex = (this._currentCodeBlockIndex + 1) % codeBlocks.length;
+            }
+            
+            const targetBlock = codeBlocks[this._currentCodeBlockIndex];
+            container.scrollTop = targetBlock.offsetTop - 20;
+            
+            // Highlight the code block
+            targetBlock.style.boxShadow = '0 0 0 2px #007aff';
+            setTimeout(() => {
+                targetBlock.style.boxShadow = '';
+            }, 2000);
+            
+            console.log(`Cycled to code block ${this._currentCodeBlockIndex + 1}/${codeBlocks.length}`);
+        }
+    }
+    
+    /**
+     * Jump between diagrams and visual content
+     */
+    jumpBetweenDiagrams() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const diagrams = container.querySelectorAll('.mermaid-diagram, .content-type-diagram');
+            if (diagrams.length === 0) return;
+            
+            if (!this._currentDiagramIndex) {
+                this._currentDiagramIndex = 0;
+            } else {
+                this._currentDiagramIndex = (this._currentDiagramIndex + 1) % diagrams.length;
+            }
+            
+            const targetDiagram = diagrams[this._currentDiagramIndex];
+            container.scrollTop = targetDiagram.offsetTop - 20;
+            
+            console.log(`Jumped to diagram ${this._currentDiagramIndex + 1}/${diagrams.length}`);
+        }
+    }
+    
+    /**
+     * Highlight next key concept
+     */
+    highlightNextKeyConcept() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const keyTerms = container.querySelectorAll('.key-term');
+            if (keyTerms.length === 0) return;
+            
+            // Remove previous highlights
+            keyTerms.forEach(term => term.classList.remove('highlighted'));
+            
+            if (!this._currentKeyTermIndex) {
+                this._currentKeyTermIndex = 0;
+            } else {
+                this._currentKeyTermIndex = (this._currentKeyTermIndex + 1) % keyTerms.length;
+            }
+            
+            const targetTerm = keyTerms[this._currentKeyTermIndex];
+            targetTerm.classList.add('highlighted');
+            container.scrollTop = targetTerm.offsetTop - 50;
+            
+            console.log(`Highlighted key concept: ${targetTerm.textContent}`);
+        }
+    }
+    
+    /**
+     * Show quick summary of current response
+     */
+    showQuickSummary() {
+        if (this.contentAnalysis && this.contentAnalysis.keyTerms.length > 0) {
+            const summary = `Key concepts: ${this.contentAnalysis.keyTerms.slice(0, 5).join(', ')}`;
+            
+            // Create temporary summary overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 12px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 1000;
+                border: 1px solid #007aff;
+            `;
+            overlay.textContent = summary;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+            }, 3000);
+            
+            console.log('Showed quick summary:', summary);
+        }
+    }
+    
+    /**
+     * Adjust line spacing for easier reading
+     */
+    adjustLineSpacing() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const currentLineHeight = parseFloat(getComputedStyle(container).lineHeight) || 1.5;
+            const newLineHeight = currentLineHeight >= 2.0 ? 1.5 : currentLineHeight + 0.1;
+            
+            container.style.lineHeight = newLineHeight;
+            console.log(`Adjusted line spacing to ${newLineHeight}`);
+        }
+    }
+    
+    /**
+     * Toggle key information emphasis
+     */
+    toggleKeyInformationEmphasis() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            container.classList.toggle('emphasis-mode');
+            const isEmphasized = container.classList.contains('emphasis-mode');
+            
+            // Add dynamic CSS for emphasis mode
+            if (isEmphasized) {
+                const style = document.createElement('style');
+                style.id = 'emphasis-mode-styles';
+                style.textContent = `
+                    .emphasis-mode .priority-primary {
+                        background: rgba(0, 122, 255, 0.2) !important;
+                        border-left-width: 5px !important;
+                    }
+                    .emphasis-mode .key-term {
+                        background: rgba(255, 215, 0, 0.3) !important;
+                        font-size: 1.1em !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            } else {
+                const existingStyle = document.getElementById('emphasis-mode-styles');
+                if (existingStyle) {
+                    document.head.removeChild(existingStyle);
+                }
+            }
+            
+            console.log(`Key information emphasis ${isEmphasized ? 'enabled' : 'disabled'}`);
+        }
+    }
+    
+    /**
+     * Adjust reading tempo indicators
+     */
+    adjustReadingTempo() {
+        const currentTempo = localStorage.getItem('readingTempo') || 'normal';
+        const tempos = ['slow', 'normal', 'fast'];
+        const currentIndex = tempos.indexOf(currentTempo);
+        const newTempo = tempos[(currentIndex + 1) % tempos.length];
+        
+        localStorage.setItem('readingTempo', newTempo);
+        
+        // Apply tempo-specific styling
+        const root = document.documentElement;
+        root.className = root.className.replace(/tempo-\w+/g, '');
+        root.classList.add(`tempo-${newTempo}`);
+        
+        console.log(`Reading tempo adjusted to: ${newTempo}`);
+    }
+    
+    /**
+     * Toggle focus mode with minimal distractions
+     */
+    toggleFocusMode() {
+        document.documentElement.classList.toggle('teleprompter-focus-mode');
+        const isFocusMode = document.documentElement.classList.contains('teleprompter-focus-mode');
+        
+        if (isFocusMode) {
+            // Add focus mode styles
+            const style = document.createElement('style');
+            style.id = 'focus-mode-styles';
+            style.textContent = `
+                .teleprompter-focus-mode .text-input-container {
+                    opacity: 0.3;
+                    transition: opacity 0.3s ease;
+                }
+                .teleprompter-focus-mode .text-input-container:hover {
+                    opacity: 1;
+                }
+                .teleprompter-focus-mode .response-container {
+                    background: rgba(0, 0, 0, 0.95) !important;
+                }
+            `;
+            document.head.appendChild(style);
+        } else {
+            const existingStyle = document.getElementById('focus-mode-styles');
+            if (existingStyle) {
+                document.head.removeChild(existingStyle);
+            }
+        }
+        
+        console.log(`Focus mode ${isFocusMode ? 'enabled' : 'disabled'}`);
+    }
+    
+    /**
+     * Add breathing cues to content for natural pacing
+     */
+    _addBreathingCues(container) {
+        const sentences = container.querySelectorAll('p, li');
+        
+        sentences.forEach(element => {
+            const text = element.textContent;
+            const sentences = text.split(/[.!?]+/);
+            
+            if (sentences.length > 2) {
+                // Add breathing cues between sentences
+                element.classList.add('paragraph-breathing');
+                
+                // Add subtle breathing markers
+                const breathingCue = document.createElement('span');
+                breathingCue.className = 'breathing-cue';
+                
+                // Determine cue type based on content length
+                if (text.length > 150) {
+                    breathingCue.classList.add('long-pause');
+                } else if (text.length > 75) {
+                    breathingCue.classList.add('short-pause');
+                }
+                
+                element.appendChild(breathingCue);
+            }
+        });
+    }
+    
+    /**
+     * Add rhythm markers for reading pace guidance
+     */
+    _addRhythmMarkers(container) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6');
+        
+        elements.forEach((element, index) => {
+            const text = element.textContent;
+            const wordCount = text.split(/\s+/).length;
+            
+            // Add rhythm marker based on content complexity
+            const marker = document.createElement('div');
+            marker.className = 'rhythm-marker';
+            
+            if (wordCount > 30) {
+                marker.classList.add('slow'); // Slow reading for complex content
+            } else if (wordCount < 10) {
+                marker.classList.add('fast'); // Fast reading for simple content
+            }
+            
+            element.style.position = 'relative';
+            element.appendChild(marker);
+        });
+    }
+    
+    /**
+     * Show completion indicator when response is fully read
+     */
+    _showCompletionIndicator() {
+        // Remove existing indicator
+        const existing = document.querySelector('.completion-indicator');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create completion indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'completion-indicator';
+        indicator.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Response Complete
+        `;
+        
+        document.body.appendChild(indicator);
+        
+        // Auto-remove after 2 seconds
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }, 2000);
+    }
+    
+    /**
+     * Enhance visual feedback during reading
+     */
+    _enhanceReadingExperience() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            // Add breathing cues
+            this._addBreathingCues(container);
+            
+            // Add rhythm markers
+            this._addRhythmMarkers(container);
+            
+            // Monitor reading progress for completion signaling
+            const progressMonitor = () => {
+                if (this.readingProgress >= 95) {
+                    this._showCompletionIndicator();
+                    container.removeEventListener('scroll', progressMonitor);
+                }
+            };
+            
+            container.addEventListener('scroll', progressMonitor);
+        }
     }
 
     firstUpdated() {
@@ -1812,7 +2750,15 @@ export class AssistantView extends LitElement {
     _handleKeydown(event) {
         //console.log('Keyboard event detected:', event.key, 'autoScrollEnabled:', this.autoScrollEnabled);
         
-        // Toggle off auto-scroll on any keyboard interaction
+        // Check for teleprompter shortcuts first
+        const shortcut = this._getShortcutString(event);
+        if (this._enhancedShortcuts && this._enhancedShortcuts[shortcut]) {
+            event.preventDefault();
+            this._enhancedShortcuts[shortcut]();
+            return;
+        }
+        
+        // Toggle off auto-scroll on any keyboard interaction (except for teleprompter shortcuts)
         if (this.autoScrollEnabled) {
             console.log('Disabling auto-scroll due to keyboard interaction');
             this.autoScrollEnabled = false;
@@ -1842,6 +2788,19 @@ export class AssistantView extends LitElement {
                 composed: true
             }));
         }
+    }
+    
+    /**
+     * Convert keyboard event to shortcut string
+     */
+    _getShortcutString(event) {
+        const parts = [];
+        if (event.ctrlKey) parts.push('ctrl');
+        if (event.altKey) parts.push('alt');
+        if (event.shiftKey) parts.push('shift');
+        if (event.metaKey) parts.push('meta');
+        parts.push(event.key.toLowerCase());
+        return parts.join('+');
     }
     
     _handleMousedown(event) {
@@ -1931,8 +2890,23 @@ export class AssistantView extends LitElement {
             }
             
             const currentResponse = this.getCurrentResponse();
-            const renderedResponse = this.renderMarkdown(currentResponse);
+            let renderedResponse = this.renderMarkdown(currentResponse);
+            
+            // Apply content segmentation for progressive disclosure
+            if (this._contentSegments && this._contentSegments.length > 0) {
+                renderedResponse = this._applyContentSegmentation(renderedResponse);
+            }
+            
             container.innerHTML = renderedResponse;
+            
+            // Apply teleprompter container class
+            container.classList.add('teleprompter-container');
+            
+            // Update reading progress
+            this._updateReadingProgress();
+            
+            // Enhance reading experience with visual cues
+            this._enhanceReadingExperience();
             
             // Render mermaid diagrams after DOM insertion
             this.renderMermaidDiagramsInDOM(container);
@@ -1987,14 +2961,236 @@ export class AssistantView extends LitElement {
             }
         }
     }
+    
+    /**
+     * Apply content segmentation with natural pause points
+     */
+    _applyContentSegmentation(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        
+        // Find paragraphs and other block elements to segment
+        const blocks = doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
+        
+        blocks.forEach((block, index) => {
+            // Add segment boundary class for natural pause points
+            if (index > 0 && this._isNaturalBreakPoint(block)) {
+                block.classList.add('segment-boundary');
+            }
+            
+            // Add natural pause indicators
+            this._addNaturalPauseIndicators(block);
+        });
+        
+        return doc.body.innerHTML;
+    }
+    
+    /**
+     * Determine if an element represents a natural break point
+     */
+    _isNaturalBreakPoint(element) {
+        const tagName = element.tagName.toLowerCase();
+        const text = element.textContent.trim();
+        
+        // Headers are always natural break points
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+            return true;
+        }
+        
+        // Long paragraphs (>100 chars) create break points
+        if (tagName === 'p' && text.length > 100) {
+            return true;
+        }
+        
+        // Code blocks create break points
+        if (element.querySelector('code, pre')) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Add natural pause indicators within text content
+     */
+    _addNaturalPauseIndicators(element) {
+        const naturalPauses = ['.', '!', '?', ':', ';'];
+        let content = element.innerHTML;
+        
+        naturalPauses.forEach(punctuation => {
+            const regex = new RegExp(`\\${punctuation}(?=\\s)`, 'g');
+            content = content.replace(regex, `${punctuation}<span class="natural-pause"></span>`);
+        });
+        
+        element.innerHTML = content;
+    }
+    
+    /**
+     * Update reading progress based on scroll position
+     */
+    _updateReadingProgress() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const updateProgress = () => {
+                const scrollTop = container.scrollTop;
+                const scrollHeight = container.scrollHeight - container.clientHeight;
+                const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                
+                this.readingProgress = Math.min(progress, 100);
+                
+                // Calculate estimated reading time remaining
+                const totalWords = this._getTotalWordCount(container);
+                const readWords = this._getReadWordCount(container, scrollTop);
+                const remainingWords = totalWords - readWords;
+                const estimatedTimeRemaining = Math.ceil(remainingWords / 200 * 60); // 200 WPM in seconds
+                
+                // Update reading statistics
+                this._updateReadingStats({
+                    progress: this.readingProgress,
+                    totalWords,
+                    readWords,
+                    remainingWords,
+                    estimatedTimeRemaining
+                });
+                
+                // Notify teleprompter formatter
+                teleprompterFormatter.updateProgress({ 
+                    progress: this.readingProgress,
+                    readWords,
+                    totalWords,
+                    estimatedTimeRemaining
+                });
+                
+                this.requestUpdate();
+            };
+            
+            // Update progress on scroll
+            container.addEventListener('scroll', updateProgress);
+            
+            // Initial progress update
+            updateProgress();
+        }
+    }
+    
+    /**
+     * Get total word count in the response
+     */
+    _getTotalWordCount(container) {
+        const textContent = container.textContent || '';
+        return textContent.split(/\s+/).filter(word => word.length > 0).length;
+    }
+    
+    /**
+     * Get approximate word count that has been read based on scroll position
+     */
+    _getReadWordCount(container, scrollTop) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
+        let readWords = 0;
+        
+        for (const element of elements) {
+            const elementTop = element.offsetTop;
+            const elementHeight = element.offsetHeight;
+            const elementBottom = elementTop + elementHeight;
+            
+            if (elementBottom <= scrollTop + container.clientHeight) {
+                // Element is fully visible or scrolled past
+                const elementText = element.textContent || '';
+                readWords += elementText.split(/\s+/).filter(word => word.length > 0).length;
+            } else if (elementTop <= scrollTop + container.clientHeight) {
+                // Element is partially visible
+                const visibleRatio = (scrollTop + container.clientHeight - elementTop) / elementHeight;
+                const elementText = element.textContent || '';
+                const elementWords = elementText.split(/\s+/).filter(word => word.length > 0).length;
+                readWords += Math.floor(elementWords * Math.max(0, Math.min(1, visibleRatio)));
+            }
+        }
+        
+        return readWords;
+    }
+    
+    /**
+     * Update reading statistics and display
+     */
+    _updateReadingStats(stats) {
+        this._readingStats = stats;
+        
+        // Update progress bar style based on reading speed
+        const progressBar = this.shadowRoot.querySelector('.reading-progress-bar');
+        if (progressBar) {
+            // Color-code progress based on reading efficiency
+            let progressColor = '#007aff'; // Default blue
+            
+            if (stats.progress > 80) {
+                progressColor = '#34d399'; // Green for near completion
+            } else if (stats.progress > 50) {
+                progressColor = '#fbbf24'; // Yellow for mid-progress
+            }
+            
+            progressBar.style.background = `linear-gradient(90deg, ${progressColor}, ${progressColor}aa)`;
+        }
+        
+        // Show reading time estimation tooltip
+        if (stats.estimatedTimeRemaining > 0 && stats.progress < 95) {
+            this._showReadingTimeTooltip(stats.estimatedTimeRemaining);
+        }
+    }
+    
+    /**
+     * Show reading time estimation tooltip
+     */
+    _showReadingTimeTooltip(timeInSeconds) {
+        // Remove existing tooltip
+        const existingTooltip = document.querySelector('.reading-time-tooltip');
+        if (existingTooltip) {
+            existingTooltip.remove();
+        }
+        
+        // Create new tooltip
+        const tooltip = document.createElement('div');
+        tooltip.className = 'reading-time-tooltip';
+        tooltip.style.cssText = `
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 500;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.7;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        `;
+        
+        const minutes = Math.floor(timeInSeconds / 60);
+        const seconds = timeInSeconds % 60;
+        const timeText = minutes > 0 ? `${minutes}m ${seconds}s remaining` : `${seconds}s remaining`;
+        tooltip.textContent = timeText;
+        
+        document.body.appendChild(tooltip);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+        }, 3000);
+    }
 
     render() {
         const currentResponse = this.getCurrentResponse();
         const responseCounter = this.getResponseCounter();
 
         return html`
-            <div class="response-container"></div>
+            <div class="response-container teleprompter-container"></div>
             
+            <!-- Reading Progress Indicator -->
+            <div class="reading-progress">
+                <div class="reading-progress-bar" style="width: ${this.readingProgress}%"></div>
+            </div>
 
 
             <div class="text-input-container">
@@ -2031,6 +3227,36 @@ export class AssistantView extends LitElement {
                         <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
                     </svg>
                 </button>
+                
+                <!-- Reading Flow Controls -->
+                <div class="reading-flow-controls">
+                    <button class="flow-control-button" @click=${this.pauseResumeReading} title="Pause/Resume Reading (Shift+Alt+P)">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            ${this._autoScrollPaused ? 
+                                html`<path d="M8 5v14l11-7z"/>` : 
+                                html`<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>`
+                            }
+                        </svg>
+                    </button>
+                    
+                    <button class="flow-control-button" @click=${this.restartCurrentSection} title="Restart Section (Shift+Alt+R)">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="flow-control-button" @click=${this.skipToNextKeyBlock} title="Skip to Key Block (Shift+Alt+S)">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="flow-control-button" @click=${this.jumpToResponseEnd} title="Jump to End (Shift+Alt+E)">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                        </svg>
+                    </button>
+                </div>
 
                 <button class="microphone-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
                     <svg class="microphone-icon" viewBox="0 0 24 24">

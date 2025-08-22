@@ -24,6 +24,24 @@ function getDefaultKeybinds() {
         toggleLayoutMode: 'Shift+Alt+/',
         toggleAutoScroll: 'Shift+Alt+3',
         windowClose: 'Shift+Alt+;',
+        
+        // Teleprompter Reading Flow Controls
+        pauseResumeReading: 'Shift+Alt+P',
+        restartCurrentSection: 'Shift+Alt+R',
+        skipToNextKeyBlock: 'Shift+Alt+S',
+        jumpToResponseEnd: 'Shift+Alt+E',
+        
+        // Content Navigation
+        cycleCodeBlocks: 'Shift+Alt+C',
+        jumpBetweenDiagrams: 'Shift+Alt+D',
+        highlightNextKeyConcept: 'Shift+Alt+H',
+        showQuickSummary: 'Shift+Alt+Q',
+        
+        // Reading Assistance
+        adjustLineSpacing: 'Shift+Alt+L',
+        toggleKeyInformationEmphasis: 'Shift+Alt+K',
+        adjustReadingTempo: 'Shift+Alt+T',
+        toggleFocusMode: 'Shift+Alt+F'
     };
 }
 

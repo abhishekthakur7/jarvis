@@ -641,7 +641,29 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
             // Determine base size from layout mode using stored values or defaults
             let baseWidth, baseHeight;
-            if (layoutMode === 'compact') {
+            
+            // Check for teleprompter mode override
+            let teleprompterMode;
+            try {
+                teleprompterMode = await event.sender.executeJavaScript(
+                    'localStorage.getItem("teleprompterMode")'
+                );
+            } catch (error) {
+                console.warn('Failed to get teleprompter mode, using default');
+                teleprompterMode = 'balanced';
+            }
+            
+            // Apply teleprompter mode dimensions if set
+            if (teleprompterMode === 'ultra-discrete') {
+                baseWidth = 280;
+                baseHeight = 200;
+            } else if (teleprompterMode === 'presentation') {
+                baseWidth = 400;
+                baseHeight = 350;
+            } else if (teleprompterMode === 'balanced') {
+                baseWidth = 350;
+                baseHeight = 300;
+            } else if (layoutMode === 'compact') {
                 baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactWidth")')) || 350;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactHeight")')) || 300;
             } else if (layoutMode === 'system-design') {
