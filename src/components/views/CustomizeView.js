@@ -607,7 +607,6 @@ export class CustomizeView extends LitElement {
     getLayoutModeDisplayName() {
         switch (this.layoutMode) {
             case 'compact': return 'Compact';
-            case 'ultra-compact': return 'Ultra Compact';
             case 'system-design': return 'System Design';
             default: return 'Normal';
         }
@@ -617,8 +616,6 @@ export class CustomizeView extends LitElement {
         switch (this.layoutMode) {
             case 'compact':
                 return 'Smaller window size with reduced padding and font sizes for minimal screen footprint';
-            case 'ultra-compact':
-                return 'Extremely compact layout with minimal UI elements and very small fonts for maximum space efficiency';
             case 'system-design':
                 return 'Large window optimized for system design diagrams and architectural discussions';
             default:
@@ -1483,7 +1480,6 @@ export class CustomizeView extends LitElement {
                                 <select class="form-control" .value=${this.layoutMode} @change=${this.handleLayoutModeSelect}>
                                     <option value="normal" ?selected=${this.layoutMode === 'normal'}>Normal</option>
                                     <option value="compact" ?selected=${this.layoutMode === 'compact'}>Compact</option>
-                                    <option value="ultra-compact" ?selected=${this.layoutMode === 'ultra-compact'}>Ultra Compact</option>
                                     <option value="system-design" ?selected=${this.layoutMode === 'system-design'}>System Design</option>
                                 </select>
                                 <div class="form-description">

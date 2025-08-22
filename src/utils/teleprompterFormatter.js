@@ -267,6 +267,7 @@ export class TeleprompterFormatter {
         return `
             /* Teleprompter Typography System */
             .teleprompter-container {
+                margin-top: -15px;
                 line-height: var(--reading-line-height, 1.8);
                 letter-spacing: var(--reading-letter-spacing, 0.02em);
                 word-spacing: var(--reading-word-spacing, 0.1em);

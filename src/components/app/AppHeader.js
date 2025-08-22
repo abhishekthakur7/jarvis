@@ -9,12 +9,15 @@ export class AppHeader extends LitElement {
         }
 
         .header {
+            height: 13px;
+            padding: 5px;
             -webkit-app-region: drag;
             display: flex;
             align-items: center;
             border: 1px solid var(--border-color);
-            background: var(--header-background);
+            background: rgb(110 110 110 / 62%);
             border-radius: var(--border-radius);
+            justify-content: space-between;
         }
 
         .header-title {
@@ -108,7 +111,7 @@ export class AppHeader extends LitElement {
             border: 2px solid white;
             border-radius: 2px;
             background: white;
-            cursor: pointer;
+            cursor: default;
             display: flex;
             align-items: center;
             justify-content: center;

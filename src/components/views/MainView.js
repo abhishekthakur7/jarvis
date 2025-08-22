@@ -198,7 +198,7 @@ export class MainView extends LitElement {
             align-items: center;
             justify-content: center;
             gap: 4px;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.3s ease;
             box-shadow: 
                 0 2px 8px rgba(0, 122, 255, 0.3),
@@ -271,7 +271,7 @@ export class MainView extends LitElement {
         .link {
             color: #007aff;
             text-decoration: none;
-            cursor: pointer;
+            cursor: default;
             font-weight: 500;
             transition: all 0.2s ease;
             border-bottom: 1px solid transparent;

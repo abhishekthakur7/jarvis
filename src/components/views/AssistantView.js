@@ -438,7 +438,6 @@ export class AssistantView extends LitElement {
             display: flex;
             gap: 8px;
             align-items: center;
-            transform: scale(0.78);
             transform-origin: left center;
         }
 
@@ -525,7 +524,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
         }
@@ -614,7 +613,7 @@ export class AssistantView extends LitElement {
             border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             min-width: 5px;
             height: 18px;
@@ -651,7 +650,7 @@ export class AssistantView extends LitElement {
             border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             min-width: 20px;
             height: 18px;
@@ -680,7 +679,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             margin-left: 8px;
         }
@@ -714,8 +713,10 @@ export class AssistantView extends LitElement {
         
         /* Reading Flow Controls */
         .reading-flow-controls {
+            width: 100%;
             display: flex;
             align-items: center;
+            justify-content: space-evenly;
             gap: 4px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 8px;
@@ -728,12 +729,12 @@ export class AssistantView extends LitElement {
             background: transparent;
             border: none;
             border-radius: 6px;
-            width: 28px;
-            height: 28px;
+            width: 40px;
+            height: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             color: rgba(255, 255, 255, 0.7);
         }
@@ -881,7 +882,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
         }
 
@@ -965,6 +966,7 @@ export class AssistantView extends LitElement {
 
         /* Teleprompter Typography System */
         .teleprompter-container {
+            margin-top: -15px;
             line-height: var(--reading-line-height, 1.8);
             letter-spacing: var(--reading-letter-spacing, 0.02em);
             word-spacing: var(--reading-word-spacing, 0.1em);
@@ -1167,6 +1169,14 @@ export class AssistantView extends LitElement {
         
         // Initialize with layout-specific defaults
         this.loadLayoutSpecificSettings();
+        
+        // Initialize default values if not loaded from layout-specific settings
+        if (this.scrollSpeed === undefined || isNaN(this.scrollSpeed)) {
+            this.scrollSpeed = 2;
+        }
+        if (this.autoScrollEnabled === undefined) {
+            this.autoScrollEnabled = false;
+        }
         
         this._autoScrollPaused = false;
         this._autoScrollAnimationId = null;
@@ -1725,24 +1735,24 @@ export class AssistantView extends LitElement {
             // Load normal layout settings
             const normalAutoScroll = localStorage.getItem('normalAutoScroll');
             this.autoScrollEnabled = normalAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10);
+            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
         } else if (layoutMode === 'compact') {
             // Load compact layout settings
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
             this.autoScrollEnabled = compactAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10);
+            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
         } else if (layoutMode === 'system-design') {
             // Load system design layout settings
             const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
             this.autoScrollEnabled = systemDesignAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10);
+            this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10) || 2;
         }
     }
 
     increaseFontSize() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.min(currentFontSize + 1, 16); // Max font size 32px
+        const newFontSize = Math.min(currentFontSize + 1, 24); // Max font size 24px
         
         if (layoutMode === 'normal') {
             localStorage.setItem('normalFontSize', newFontSize.toString());
@@ -1760,7 +1770,7 @@ export class AssistantView extends LitElement {
     decreaseFontSize() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.max(currentFontSize - 1, 10); // Min font size 12px
+        const newFontSize = Math.max(currentFontSize - 1, 8); // Min font size 8px
         
         if (layoutMode === 'normal') {
             localStorage.setItem('normalFontSize', newFontSize.toString());
@@ -1779,11 +1789,11 @@ export class AssistantView extends LitElement {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
         if (layoutMode === 'normal') {
-            return parseInt(localStorage.getItem('normalFontSize'), 10);
+            return parseInt(localStorage.getItem('normalFontSize'), 10) || 12;
         } else if (layoutMode === 'compact') {
-            return parseInt(localStorage.getItem('compactFontSize'), 10);
+            return parseInt(localStorage.getItem('compactFontSize'), 10) || 11;
         } else {
-            return parseInt(localStorage.getItem('fontSize')) || 16;
+            return parseInt(localStorage.getItem('fontSize'), 10) || 16;
         }
     }
 
@@ -1985,6 +1995,8 @@ export class AssistantView extends LitElement {
                 localStorage.setItem('normalScrollSpeed', this.scrollSpeed.toString());
             } else if (layoutMode === 'compact') {
                 localStorage.setItem('compactScrollSpeed', this.scrollSpeed.toString());
+            } else if (layoutMode === 'system-design') {
+                localStorage.setItem('systemDesignScrollSpeed', this.scrollSpeed.toString());
             }
             
             this.requestUpdate(); // Trigger re-render to update scroll speed display
@@ -3149,39 +3161,6 @@ export class AssistantView extends LitElement {
 
 
             <div class="text-input-container">
-                <button class="nav-button" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0}>
-                    <?xml version="1.0" encoding="UTF-8"?><svg
-                        width="24px"
-                        height="24px"
-                        stroke-width="1.7"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        color="#ffffff"
-                    >
-                        <path d="M15 6L9 12L15 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                </button>
-
-                ${this.responses.length > 0 ? html` <span class="response-counter">${responseCounter}</span> ` : ''}
-
-                <div class="font-size-controls">
-                    <button class="font-size-button" @click=${this.increaseFontSize}>+</button>
-                    <span class="font-size-label">${this.getCurrentFontSize()}</span>
-                    <button class="font-size-button" @click=${this.decreaseFontSize}>-</button>
-                </div>
-
-                <div class="scroll-speed-controls">
-                    <button class="scroll-speed-button" @click=${this.decreaseScrollSpeed}>-</button>
-                    <span class="scroll-speed-display">${this.scrollSpeed}</span>
-                    <button class="scroll-speed-button" @click=${this.increaseScrollSpeed}>+</button>
-                </div>
-
-                <button class="auto-scroll-toggle ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll}>
-                    <svg class="auto-scroll-icon" viewBox="0 0 24 24">
-                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                    </svg>
-                </button>
                 
                 <!-- Reading Flow Controls -->
                 <div class="reading-flow-controls">
@@ -3205,6 +3184,40 @@ export class AssistantView extends LitElement {
                         </svg>
                     </button>
                     -->
+                    <button class="nav-button flow-control-button" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0}>
+                        <?xml version="1.0" encoding="UTF-8"?><svg
+                            width="24px"
+                            height="24px"
+                            stroke-width="1.7"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            color="#ffffff"
+                        >
+                            <path d="M15 6L9 12L15 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+
+                    ${this.responses.length > 0 ? html` <span class="response-counter flow-control-button">${responseCounter}</span> ` : ''}
+
+                    <div class="font-size-controls flow-control-button">
+                        <button class="font-size-button" @click=${this.increaseFontSize}>+</button>
+                        <span class="font-size-label">${this.getCurrentFontSize()}</span>
+                        <button class="font-size-button" @click=${this.decreaseFontSize}>-</button>
+                    </div>
+
+                    <div class="scroll-speed-controls flow-control-button">
+                        <button class="scroll-speed-button" @click=${this.decreaseScrollSpeed}>-</button>
+                        <span class="scroll-speed-display">${this.scrollSpeed}</span>
+                        <button class="scroll-speed-button" @click=${this.increaseScrollSpeed}>+</button>
+                    </div>
+
+                    <button class="auto-scroll-toggle flow-control-button ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll}>
+                        <svg class="auto-scroll-icon" viewBox="0 0 24 24">
+                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                        </svg>
+                    </button>
+
                     <button class="microphone-button flow-control-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
                         <svg class="microphone-icon" viewBox="0 0 24 24">
                             <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -3217,9 +3230,8 @@ export class AssistantView extends LitElement {
                             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                         </svg>
                     </button>
-                </div>
 
-                <button class="nav-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
+                    <button class="nav-button flow-control-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
                     <?xml version="1.0" encoding="UTF-8"?><svg
                         width="24px"
                         height="24px"
@@ -3232,6 +3244,7 @@ export class AssistantView extends LitElement {
                         <path d="M9 6L15 12L9 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
                 </button>
+                </div>
             </div>
         `;
     }
