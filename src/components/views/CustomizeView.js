@@ -510,8 +510,6 @@ export class CustomizeView extends LitElement {
                         source: 'customize-view-init'
                     }
                 }));
-                
-                console.log(`[CustomizeView] Initial sync - ${currentLayoutMode} settings:`, currentSettings);
             }
         });
         
@@ -540,7 +538,7 @@ export class CustomizeView extends LitElement {
                 // Trigger re-render to update the checkbox state
                 this.requestUpdate();
                 
-                console.log(`[CustomizeView] Auto scroll updated from AssistantView: ${layoutMode} mode = ${enabled}`);
+                // Auto scroll updated from AssistantView handled
             }
         }
     }
@@ -559,7 +557,7 @@ export class CustomizeView extends LitElement {
                 // Trigger re-render to update the slider values
                 this.requestUpdate();
                 
-                console.log(`[CustomizeView] Font size updated: ${layoutMode} mode = ${fontSize}px`);
+                // Font size updated from AssistantView handled
             }
         }
     }
@@ -595,7 +593,7 @@ export class CustomizeView extends LitElement {
      */
     handleLayoutModeForConfigSelect(e) {
         this.selectedLayoutModeForConfig = e.target.value;
-        console.log(`[CustomizeView] Switched to configuring ${this.selectedLayoutModeForConfig} layout settings`);
+        // Layout mode for configuration changed
         this.requestUpdate();
     }
 
@@ -675,7 +673,7 @@ export class CustomizeView extends LitElement {
         LayoutSettingsManager.handleLayoutModeChange(this.layoutMode);
         this.onLayoutModeChange(e.target.value);
         
-        console.log(`[CustomizeView] Layout mode changed to ${this.layoutMode}`);
+        // Layout mode changed
     }
 
     handleTeleprompterModeSelect(e) {
@@ -735,7 +733,7 @@ export class CustomizeView extends LitElement {
         // Trigger re-render
         this.requestUpdate();
         
-        console.log(`[CustomizeView] Updated ${layoutMode} ${settingKey}: ${value}`);
+        // Layout setting updated
     }
 
     handleCustomPromptInput(e) {

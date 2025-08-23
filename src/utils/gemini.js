@@ -12,6 +12,7 @@ const smartRequestManager = require('./smartRequestManager');
 const contextBoundaryOptimizer = require('./contextBoundaryOptimizer');
 const audioQualityAssurance = require('./audioQualityAssurance');
 const performanceMonitor = require('./performanceMonitor');
+const enhancedFollowUpClassifier = require('./enhancedFollowUpClassifier');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -270,6 +271,19 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     
     console.log('🚀 [AI_REQUEST] Preparing to send new AI request with Smart Request Management');
     
+    // ENHANCED: Use Enhanced Follow-Up Classifier for intelligent context detection
+    const followUpAnalysis = enhancedFollowUpClassifier.classifyFollowUp(
+        combinedText,
+        conversationHistory,
+        global.latestInterviewContext
+    );
+    
+    console.log(`🔗 [FOLLOW_UP_ANALYSIS] Is Follow-Up: ${followUpAnalysis.isFollowUp}, Confidence: ${followUpAnalysis.confidence.toFixed(2)}, Type: ${followUpAnalysis.followUpType}`);
+    if (followUpAnalysis.isFollowUp) {
+        console.log(`🔗 [FOLLOW_UP_PATTERNS] Matched: ${followUpAnalysis.patterns.join(', ')}`);
+        console.log(`🔗 [FOLLOW_UP_TOPICS] Technical Topics: ${followUpAnalysis.technicalTopics.map(t => t.category).join(', ')}`);
+    }
+    
     // ENHANCED: Use Smart Request Manager for intelligent processing
     try {
         // Gather context for smart analysis
@@ -278,7 +292,8 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             vadData: vadAdaptiveData || null,
             isAiCurrentlyResponding: isAiResponding,
             sessionPhase: getSessionPhase(),
-            conversationHistory: conversationHistory.slice(-3) // Recent context
+            conversationHistory: conversationHistory.slice(-3), // Recent context
+            followUpAnalysis: followUpAnalysis // Enhanced follow-up detection
         };
                 
         // ENHANCED: Use Context Boundary Optimizer for improved context management
@@ -344,18 +359,49 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                 smartManaged: true,
                 contextOptimized: true,
                 interviewPhase: requestContext.contextOptimization?.currentPhase,
-                activeTopics: requestContext.contextOptimization?.activeTopics?.length || 0
+                activeTopics: requestContext.contextOptimization?.activeTopics?.length || 0,
+                followUpDetected: followUpAnalysis.isFollowUp,
+                followUpType: followUpAnalysis.followUpType,
+                followUpConfidence: followUpAnalysis.confidence,
+                contextSources: contextSources.length
             });
             
-            // ENHANCED: Prepare request with optimized context
+            // ENHANCED: Prepare request with optimized context and follow-up intelligence
             let requestText = combinedText.trim();
+            let contextSources = [];
             
             // Include optimized context if available and beneficial
             if (requestContext.optimizedContext && 
                 requestContext.contextOptimization?.inputAnalysis?.requiresContext) {
                 requestText = `${requestContext.optimizedContext}\n\nCurrent question: ${combinedText.trim()}`;
+                contextSources.push('boundary_optimizer');
                 console.log(`🧠 [CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
             }
+            
+            // ENHANCED: Include follow-up specific context when detected
+            if (followUpAnalysis.isFollowUp && followUpAnalysis.contextRecommendation) {
+                const followUpContext = followUpAnalysis.contextRecommendation;
+                
+                if (followUpContext.shouldIncludeContext && followUpContext.suggestedContext) {
+                    const contextPrefix = contextSources.length > 0 ? '\n\nAdditional context for follow-up:\n' : '';
+                    const followUpContextText = `${contextPrefix}${followUpContext.suggestedContext.content}`;
+                    
+                    // Avoid duplicate context - only add if not already included
+                    if (!requestText.includes(followUpContext.suggestedContext.content.substring(0, 50))) {
+                        requestText = contextSources.length > 0 
+                            ? `${requestText}${followUpContextText}\n\nFollow-up question: ${combinedText.trim()}`
+                            : `${followUpContextText}\n\nCurrent question: ${combinedText.trim()}`;
+                        
+                        contextSources.push('follow_up_classifier');
+                        console.log(`🔗 [FOLLOW_UP_CONTEXT] Added ${followUpContext.contextType} context (${followUpContext.suggestedContext.content.length} chars, priority: ${followUpContext.priority})`);
+                        console.log(`🔗 [FOLLOW_UP_REASONING] ${followUpContext.reasoning.join(', ')}`);
+                    } else {
+                        console.log(`🔗 [FOLLOW_UP_CONTEXT] Skipped - similar context already included`);
+                    }
+                }
+            }
+            
+            console.log(`📝 [CONTEXT_SUMMARY] Total context sources: ${contextSources.join(', ') || 'none'}, Final request length: ${requestText.length} chars`);
             
             return await sendInputWithRetry(geminiSession, { 
                 text: requestText, 
@@ -2861,6 +2907,54 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
+    
+    // Enhanced Follow-Up Classifier IPC handlers
+    ipcMain.handle('get-follow-up-metrics', async (event) => {
+        try {
+            const metrics = getFollowUpClassifierMetrics();
+            return { success: true, metrics };
+        } catch (error) {
+            console.error('Error getting follow-up metrics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('classify-follow-up', async (event, input) => {
+        try {
+            const classification = classifyFollowUpQuestion(
+                input,
+                global.latestInterviewContext
+            );
+            
+            return {
+                success: true,
+                classification
+            };
+        } catch (error) {
+            console.error('Error classifying follow-up:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('provide-follow-up-feedback', async (event, feedback) => {
+        try {
+            provideFollowUpFeedback(feedback.wasAccurate, feedback.actualType);
+            return { success: true };
+        } catch (error) {
+            console.error('Error providing follow-up feedback:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('reset-follow-up-session', async (event) => {
+        try {
+            resetFollowUpClassifierSession();
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting follow-up session:', error);
+            return { success: false, error: error.message };
+        }
+    });
 }
 
 // Enhanced debounce management functions
@@ -3108,8 +3202,58 @@ function resetAllOptimizationSystems() {
     resetContextBoundarySession();
     resetAudioQualitySession();
     resetPerformanceMonitorSession();
+    resetFollowUpClassifierSession();
     
     console.log('🚀 [FULL_RESET] All optimization systems reset for new interview session');
+}
+
+// ENHANCED: Enhanced Follow-Up Classifier integration functions
+function getFollowUpClassifierMetrics() {
+    if (enhancedFollowUpClassifier) {
+        return enhancedFollowUpClassifier.getMetrics();
+    }
+    return {
+        totalClassifications: 0,
+        followUpDetections: 0,
+        followUpDetectionRate: 0,
+        contextInjections: 0,
+        contextInjectionRate: 0,
+        activeTopics: [],
+        lastQuestionContext: null
+    };
+}
+
+function classifyFollowUpQuestion(input, context) {
+    if (enhancedFollowUpClassifier) {
+        return enhancedFollowUpClassifier.classifyFollowUp(
+            input,
+            conversationHistory.slice(-5), // Last 5 entries for context
+            context || global.latestInterviewContext
+        );
+    }
+    return {
+        isFollowUp: false,
+        confidence: 0,
+        followUpType: 'independent',
+        patterns: [],
+        contextRecommendation: null,
+        technicalTopics: [],
+        threadRelationship: null
+    };
+}
+
+function provideFollowUpFeedback(wasAccurate, actualType = null) {
+    if (enhancedFollowUpClassifier) {
+        enhancedFollowUpClassifier.provideFeedback(wasAccurate, actualType);
+    }
+    console.log(`🔗 [FOLLOW_UP_FEEDBACK] Provided feedback: accurate=${wasAccurate}, type=${actualType}`);
+}
+
+function resetFollowUpClassifierSession() {
+    if (enhancedFollowUpClassifier) {
+        enhancedFollowUpClassifier.resetSession();
+    }
+    console.log('🔗 [FOLLOW_UP_RESET] Reset Enhanced Follow-Up Classifier for new interview session');
 }
 
 module.exports = {
@@ -3158,5 +3302,9 @@ module.exports = {
     getPerformanceHistoricalData,
     resetPerformanceMonitorSession,
     resetAllOptimizationSystems,
+    getFollowUpClassifierMetrics,
+    classifyFollowUpQuestion,
+    provideFollowUpFeedback,
+    resetFollowUpClassifierSession,
 };
 
