@@ -1181,12 +1181,12 @@ export class AssistantApp extends LitElement {
             const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            // Use default value of 0.45 if not set
-            const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : 0.45;
+            // Use LayoutSettingsManager default value if not set
+            const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : LayoutSettingsManager.DEFAULT_SETTINGS.normal.transparency;
             LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
-            const fontSize = normalFontSize !== null ? parseInt(normalFontSize, 10) : 12;
+            const fontSize = normalFontSize !== null ? parseInt(normalFontSize, 10) : LayoutSettingsManager.DEFAULT_SETTINGS.normal.fontSize;
             root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
@@ -1194,7 +1194,7 @@ export class AssistantApp extends LitElement {
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(normalScrollSpeed, 10) || 2;
+            this.scrollSpeed = parseInt(normalScrollSpeed, 10) || LayoutSettingsManager.DEFAULT_SETTINGS.normal.scrollSpeed;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
             
         } else if (layoutMode === 'compact') {
@@ -1205,12 +1205,12 @@ export class AssistantApp extends LitElement {
             const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            // Use default value of 0.60 if not set
-            const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : 0.60;
+            // Use LayoutSettingsManager default value if not set
+            const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : LayoutSettingsManager.DEFAULT_SETTINGS.compact.transparency;
             LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
-            const fontSize = compactFontSize !== null ? parseInt(compactFontSize, 10) : 11;
+            const fontSize = compactFontSize !== null ? parseInt(compactFontSize, 10) : LayoutSettingsManager.DEFAULT_SETTINGS.compact.fontSize;
             root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
@@ -1218,7 +1218,7 @@ export class AssistantApp extends LitElement {
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(compactScrollSpeed, 10) || 2;
+            this.scrollSpeed = parseInt(compactScrollSpeed, 10) || LayoutSettingsManager.DEFAULT_SETTINGS.compact.scrollSpeed;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
             
         } else if (layoutMode === 'system-design') {
@@ -1229,12 +1229,12 @@ export class AssistantApp extends LitElement {
             const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
             
             // Apply transparency using the correct CSS variables
-            // Use default value of 0.40 if not set
-            const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : 0.40;
+            // Use LayoutSettingsManager default value if not set
+            const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : LayoutSettingsManager.DEFAULT_SETTINGS['system-design'].transparency;
             LayoutSettingsManager.updateTransparency(transparency);
             
             // Apply layout-specific font size
-            const fontSize = systemDesignFontSize !== null ? parseInt(systemDesignFontSize, 10) : 14;
+            const fontSize = systemDesignFontSize !== null ? parseInt(systemDesignFontSize, 10) : LayoutSettingsManager.DEFAULT_SETTINGS['system-design'].fontSize;
             root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
@@ -1242,7 +1242,7 @@ export class AssistantApp extends LitElement {
             localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
             
             // Update scroll speed
-            this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10) || 2;
+            this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10) || LayoutSettingsManager.DEFAULT_SETTINGS['system-design'].scrollSpeed;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
     }

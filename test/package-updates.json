@@ -1,0 +1,46 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:layout": "jest test/layoutSettingsValidation.test.js",
+    "test:integration": "jest test/assistantAppLayoutIntegration.test.js",
+    "test:manual": "node test/manualValidation.js",
+    "test:all": "npm run test:manual && npm run test"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "@babel/core": "^7.22.0",
+    "@babel/preset-env": "^7.22.0",
+    "babel-jest": "^29.5.0"
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "16"
+          }
+        }
+      ]
+    ]
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": ["<rootDir>/test/setupTests.js"],
+    "testMatch": [
+      "<rootDir>/test/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/utils/layoutSettingsManager.js",
+      "src/components/app/AssistantApp.js",
+      "src/components/views/CustomizeView.js"
+    ],
+    "moduleNameMapping": {
+      "^@/(.*)$": "<rootDir>/src/$1"
+    },
+    "verbose": true
+  }
+}

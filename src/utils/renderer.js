@@ -733,9 +733,9 @@ initConversationStorage().catch(console.error);
 
 // Handle shortcuts based on current view
 function handleShortcut(shortcutKey) {
-    console.log('🎯 [SHORTCUT_HANDLER] Received shortcut:', shortcutKey);
+    //console.log('🎯 [SHORTCUT_HANDLER] Received shortcut:', shortcutKey);
     const currentView = cheddar.getCurrentView();
-    console.log('🎯 [SHORTCUT_HANDLER] Current view:', currentView);
+    //console.log('🎯 [SHORTCUT_HANDLER] Current view:', currentView);
 
     if (shortcutKey === 'shift+alt+4' || shortcutKey === 'shift+Alt+4') {
         if (currentView === 'main') {
@@ -758,19 +758,19 @@ function handleShortcut(shortcutKey) {
             }
         }
     } else if (shortcutKey === 'shift+alt+0' || shortcutKey === 'shift+Alt+0') {
-        console.log('🎯 [SHORTCUT_HANDLER] Processing speaker detection toggle');
+        //console.log('🎯 [SHORTCUT_HANDLER] Processing speaker detection toggle');
         if (currentView === 'jarvis') {
             // Trigger speaker detection toggle in jarvis view
             const jarvisView = cheddar.element().shadowRoot.querySelector('jarvis-view');
-            console.log('🎯 [SHORTCUT_HANDLER] Found jarvis view:', !!jarvisView);
+            //console.log('🎯 [SHORTCUT_HANDLER] Found jarvis view:', !!jarvisView);
             if (jarvisView && jarvisView.toggleSpeakerDetection) {
-                console.log('🎯 [SHORTCUT_HANDLER] Calling toggleSpeakerDetection');
+                //console.log('🎯 [SHORTCUT_HANDLER] Calling toggleSpeakerDetection');
                 jarvisView.toggleSpeakerDetection();
             } else {
-                console.log('🎯 [SHORTCUT_HANDLER] toggleSpeakerDetection method not found');
+                //console.log('🎯 [SHORTCUT_HANDLER] toggleSpeakerDetection method not found');
             }
         } else {
-            console.log('🎯 [SHORTCUT_HANDLER] Not in jarvis view, ignoring speaker detection toggle');
+            //console.log('🎯 [SHORTCUT_HANDLER] Not in jarvis view, ignoring speaker detection toggle');
         }
     } else if (shortcutKey === 'ctrl+g' || shortcutKey === 'cmd+g') {
         if (currentView === 'jarvis') {

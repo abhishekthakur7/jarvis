@@ -95,7 +95,16 @@ class EnhancedMicrophoneManager {
             }
             
             // Load AudioWorklet processor with multiple fallback paths for Electron
-            const possiblePaths = [
+            // ENHANCED: Try enhanced processor first, fallback to original
+            const enhancedPaths = [
+                '/src/utils/enhancedAudioWorkletProcessor.js',
+                './src/utils/enhancedAudioWorkletProcessor.js',
+                '../utils/enhancedAudioWorkletProcessor.js',
+                'src/utils/enhancedAudioWorkletProcessor.js',
+                window.location.origin + '/src/utils/enhancedAudioWorkletProcessor.js'
+            ];
+            
+            const originalPaths = [
                 '/src/utils/audioWorkletProcessor.js',
                 './src/utils/audioWorkletProcessor.js',
                 '../utils/audioWorkletProcessor.js',
@@ -105,11 +114,15 @@ class EnhancedMicrophoneManager {
             
             let workletLoaded = false;
             let lastError = null;
+            let processorName = 'jarvis-audio-processor'; // Default processor
             
-            for (const workletPath of possiblePaths) {
+            // Try enhanced processor first
+            for (const workletPath of enhancedPaths) {
                 try {
                     await this.audioContext.audioWorklet.addModule(workletPath);
                     workletLoaded = true;
+                    processorName = 'enhanced-jarvis-audio-processor';
+                    console.log('✨ [ENHANCED_WORKLET] Successfully loaded enhanced AudioWorklet processor');
                     break;
                 } catch (error) {
                     lastError = error;
@@ -117,13 +130,39 @@ class EnhancedMicrophoneManager {
                 }
             }
             
+            // Fallback to original processor if enhanced fails
+            if (!workletLoaded) {
+                for (const workletPath of originalPaths) {
+                    try {
+                        await this.audioContext.audioWorklet.addModule(workletPath);
+                        workletLoaded = true;
+                        processorName = 'jarvis-audio-processor';
+                        console.log('⚠️ [FALLBACK_WORKLET] Using original AudioWorklet processor as fallback');
+                        break;
+                    } catch (error) {
+                        lastError = error;
+                        continue;
+                    }
+                }
+            }
+            
             if (!workletLoaded) {
                 throw new Error(`Failed to load AudioWorklet processor from any path. Last error: ${lastError?.message || 'Unknown error'}`);
             }
             
-            // Create worklet node
-            this.workletNode = new AudioWorkletNode(this.audioContext, 'jarvis-audio-processor', {
-                processorOptions: this.config
+            // ENHANCED: Store processor type for feature detection
+            this.isEnhancedProcessor = processorName === 'enhanced-jarvis-audio-processor';
+            
+            // ENHANCED: Add interview mode configuration
+            const enhancedConfig = {
+                ...this.config,
+                interviewMode: true, // Enable interview optimizations by default
+                qualityThreshold: 0.7 // Quality gating threshold
+            };
+            
+            // Create worklet node with enhanced configuration
+            this.workletNode = new AudioWorkletNode(this.audioContext, processorName, {
+                processorOptions: enhancedConfig
             });
             
             // Setup message handling
@@ -171,21 +210,69 @@ class EnhancedMicrophoneManager {
             case 'reset':
                 console.log('🔄 AudioWorklet reset completed');
                 break;
+                
+            // ENHANCED: New message types for interview optimization
+            case 'vadDataUpdate':
+                this.handleVADDataUpdate(data);
+                break;
+                
+            case 'interviewMetrics':
+                this.handleInterviewMetrics(data);
+                break;
+                
+            case 'interviewModeUpdated':
+                console.log('🎯 Interview mode updated:', data.interviewMode);
+                break;
+                
+            case 'silenceFramesUpdated':
+                console.log('🔊 Adaptive silence threshold updated:', data.silenceFrames);
+                if (data.pausePatterns) {
+                    console.log('📈 Pause patterns:', data.pausePatterns);
+                }
+                break;
+                
+            // ENHANCED: Quality assurance integration
+            case 'qualityAssessment':
+                this.handleQualityAssessment(data);
+                break;
         }
     }
     
     handleAudioChunk(data) {
         if (this.onAudioChunk) {
-            this.onAudioChunk({
-                audio: data.audio,
-                timestamp: data.timestamp,
-                isSpeaking: data.isSpeaking,
-                energy: data.energy
-            });
+            // ENHANCED: Process through Quality Assurance if needed
+            let processedData = data;
+            
+            if (data.needsQualityAssurance) {
+                processedData = this.processWithQualityAssurance(data);
+            }
+            
+            // ENHANCED: Include comprehensive quality information
+            const enhancedData = {
+                audio: processedData.audio,
+                timestamp: processedData.timestamp,
+                isSpeaking: processedData.isSpeaking,
+                energy: processedData.energy,
+                qualityScore: processedData.qualityScore || 1.0,
+                isHighQuality: processedData.isHighQuality !== false,
+                isRecovered: processedData.isRecovered || false,
+                isLowQuality: processedData.isLowQuality || false,
+                qualityAssured: processedData.qualityAssured || false
+            };
+            
+            this.onAudioChunk(enhancedData);
         }
     }
     
     handleVADEvent(data) {
+        // ENHANCED: Handle interview context from VAD events
+        if (data.interviewContext) {
+            console.log(`🎯 [INTERVIEW_CONTEXT] Detected ${data.interviewContext.type} with ${data.interviewContext.confidence} confidence`);
+            
+            // Store latest interview context
+            this.latestInterviewContext = data.interviewContext;
+        }
+        
         if (data.speechStart) {
             this.startTranscriptSegment();
         } else if (data.speechEnd) {
@@ -228,6 +315,153 @@ class EnhancedMicrophoneManager {
         if (this.onError) {
             this.onError(error);
         }
+    }
+    
+    // ENHANCED: New handler methods for interview optimization
+    handleVADDataUpdate(data) {
+        console.log('📈 [VAD_DATA_UPDATE] Received VAD adaptive data:', data);
+        
+        // Forward VAD data to enhanced debounce manager via IPC
+        if (typeof window !== 'undefined' && window.ipcRenderer) {
+            window.ipcRenderer.invoke('update-vad-data', data)
+                .catch(error => console.error('Error forwarding VAD data:', error));
+        }
+        
+        // Store locally for analysis
+        this.vadAdaptiveData = data;
+        
+        // Emit custom event for VAD data updates
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('vad-data-update', {
+                detail: data
+            }));
+        }
+    }
+    
+    handleInterviewMetrics(data) {
+        console.log('📈 [INTERVIEW_METRICS] Updated interview metrics:', data);
+        
+        // Store interview metrics
+        this.interviewMetrics = data;
+        
+        // Emit custom event for interview metrics
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('interview-metrics-update', {
+                detail: data
+            }));
+        }
+    }
+    
+    // ENHANCED: Interview mode control methods
+    setInterviewMode(enabled) {
+        if (this.isEnhancedProcessor && this.workletNode) {
+            this.workletNode.port.postMessage({
+                type: 'setInterviewMode',
+                data: { enabled }
+            });
+            console.log(`🎯 [INTERVIEW_MODE] ${enabled ? 'Enabled' : 'Disabled'} interview optimizations`);
+        } else {
+            console.warn('⚠️ [INTERVIEW_MODE] Enhanced processor not available, interview mode not supported');
+        }
+    }
+    
+    setInterviewPhase(phase) {
+        if (this.isEnhancedProcessor && this.workletNode) {
+            this.workletNode.port.postMessage({
+                type: 'setInterviewPhase',
+                data: { phase }
+            });
+            console.log(`🎯 [INTERVIEW_PHASE] Set to ${phase}`);
+        } else {
+            console.warn('⚠️ [INTERVIEW_PHASE] Enhanced processor not available, phase control not supported');
+        }
+    }
+    
+    getInterviewMetrics() {
+        if (this.isEnhancedProcessor && this.workletNode) {
+            this.workletNode.port.postMessage({
+                type: 'getInterviewMetrics'
+            });
+        }
+        return this.interviewMetrics || {
+            questionsDetected: 0,
+            clarificationsDetected: 0,
+            technicalSegmentsDetected: 0,
+            qualityDropouts: 0,
+            recoveredChunks: 0
+        };
+    }
+    
+    // ENHANCED: Quality assurance processing methods
+    handleQualityAssessment(data) {
+        // Forward quality assessment data to Audio Quality Assurance layer via IPC
+        if (typeof window !== 'undefined' && window.ipcRenderer) {
+            window.ipcRenderer.invoke('process-audio-quality', data)
+                .then(result => {
+                    if (result.success) {
+                        console.log(`🔊 [QUALITY_ASSESSMENT] Score: ${result.qualityScore?.toFixed(3)}, Action: ${result.action}`);
+                        
+                        // Update local quality metrics
+                        this.updateQualityMetrics(result);
+                        
+                        // Emit quality update event
+                        if (typeof window !== 'undefined') {
+                            window.dispatchEvent(new CustomEvent('audio-quality-update', {
+                                detail: result
+                            }));
+                        }
+                    }
+                })
+                .catch(error => console.error('Error processing audio quality:', error));
+        }
+    }
+    
+    processWithQualityAssurance(audioData) {
+        // This will be enhanced when we get the response from the main thread
+        // For now, pass through with quality assurance flag
+        return {
+            ...audioData,
+            qualityAssured: true
+        };
+    }
+    
+    updateQualityMetrics(qualityResult) {
+        if (!this.qualityMetrics) {
+            this.qualityMetrics = {
+                totalChunks: 0,
+                highQualityChunks: 0,
+                lowQualityChunks: 0,
+                recoveredChunks: 0,
+                avgQualityScore: 0
+            };
+        }
+        
+        this.qualityMetrics.totalChunks++;
+        
+        if (qualityResult.action === 'process' || qualityResult.action === 'process_recovered') {
+            this.qualityMetrics.highQualityChunks++;
+        } else {
+            this.qualityMetrics.lowQualityChunks++;
+        }
+        
+        if (qualityResult.action === 'process_recovered') {
+            this.qualityMetrics.recoveredChunks++;
+        }
+        
+        // Update average quality score
+        this.qualityMetrics.avgQualityScore = 
+            (this.qualityMetrics.avgQualityScore * (this.qualityMetrics.totalChunks - 1) + 
+             (qualityResult.qualityScore || 0)) / this.qualityMetrics.totalChunks;
+    }
+    
+    getQualityMetrics() {
+        return this.qualityMetrics || {
+            totalChunks: 0,
+            highQualityChunks: 0,
+            lowQualityChunks: 0,
+            recoveredChunks: 0,
+            avgQualityScore: 0
+        };
     }
     
     async startRecording() {

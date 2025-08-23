@@ -15,7 +15,7 @@ export class AppHeader extends LitElement {
             display: flex;
             align-items: center;
             border: 1px solid var(--border-color);
-            background: rgba(255, 255, 255, 0.05);
+            background: rgb(26 33 37 / 83%);
             border-radius: var(--border-radius);
             justify-content: space-between;
         }
