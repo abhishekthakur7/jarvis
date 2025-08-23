@@ -7,6 +7,11 @@ const { saveDebugAudio } = require('../audioUtils');
 const { getSystemPrompt } = require('./prompts');
 const { getMultipleNotionContents } = require('./notion');
 const apiKeyManagerInstance = require('./apiKeyManager');
+const enhancedDebounceManager = require('./enhancedDebounceManager');
+const smartRequestManager = require('./smartRequestManager');
+const contextBoundaryOptimizer = require('./contextBoundaryOptimizer');
+const audioQualityAssurance = require('./audioQualityAssurance');
+const performanceMonitor = require('./performanceMonitor');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -37,7 +42,11 @@ const MAX_MICROPHONE_WORDS = 200;
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input
+const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input (FALLBACK)
+
+// Enhanced debounce system for technical interview optimization
+let vadAdaptiveData = null; // VAD data from AudioWorklet
+let enhancedDebounceEnabled = true; // Feature flag for easy rollback
 
 // Context and question queue management variables
 let contextAccumulator = '';
@@ -259,70 +268,173 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
         return;
     }
     
-    console.log('🚀 [AI_REQUEST] Preparing to send new AI request with complete isolation');
-
-    // Abort any previous request in flight
-    if (currentAbortController) {
-        console.log('🛑 [ABORT] Cancelling previous Gemini request');
-        currentAbortController.abort();
-    }
-    // Create a fresh AbortController and conversationId for this request
-    currentAbortController = new AbortController();
-    currentConversationId = `${Date.now()}-${Math.random().toString(36).substring(2,8)}`;
+    console.log('🚀 [AI_REQUEST] Preparing to send new AI request with Smart Request Management');
     
-    // CRITICAL FIX: Clear any pending debounce timer when starting new AI request
-    if (inputDebounceTimer) {
-        clearTimeout(inputDebounceTimer);
-        inputDebounceTimer = null;
-        pendingInput = '';
-        //console.log('🧹 [DEBOUNCE_CLEARED] Cleared pending debounce timer before new AI request');
-    }
-    
-    // Ensure complete buffer cleanup and context isolation
-    cleanupResponseBuffer();
-    
-    // Force messageBuffer to be completely empty to ensure new response counter
-    messageBuffer = '';
-    
-    // Force new response counter by sending new-response-starting event
-    if (!isSuppressingRender) {
-        sendToRenderer('new-response-starting');
-    }
-    
-    isAiResponding = true;
-    isProcessingTextMessage = true; // CRITICAL FIX: Enable response processing for speaker audio requests
-    lastQuestionTime = Date.now();
-    
-    // Record request start time and log full transcript
-    requestStartTime = Date.now();
-    const timestamp = new Date(requestStartTime).toISOString();
-    console.log('🔄 [INTERRUPTION] Starting new AI request with complete context isolation');
-    console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
-    console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
-    console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
-    console.log('🔧 [RESPONSE_PROCESSING] Enabled response processing for this request');
-    
-    // CRITICAL FIX: Save to conversation history immediately to prevent duplicate processing
-    conversationHistory.push({
-        timestamp: requestStartTime,
-        transcription: combinedText.trim(),
-        type: 'user_request',
-        processed: true
-    });
-    console.log('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
-    
+    // ENHANCED: Use Smart Request Manager for intelligent processing
     try {
-        // Send the combined text to Gemini using the correct method
-        lastAiRequestStart = Date.now();
-          recordMetric('ai_request_start', { conversationId: currentConversationId, textLength: combinedText.length });
-          await sendInputWithRetry(geminiSession, { text: combinedText.trim(), conversationId: currentConversationId, signal: currentAbortController.signal });
-        console.log('✅ [AI_REQUEST] Successfully sent validated questions to AI');
+        // Gather context for smart analysis
+        const requestContext = {
+            interviewContext: global.latestInterviewContext || null,
+            vadData: vadAdaptiveData || null,
+            isAiCurrentlyResponding: isAiResponding,
+            sessionPhase: getSessionPhase(),
+            conversationHistory: conversationHistory.slice(-3) // Recent context
+        };
+                
+        // ENHANCED: Use Context Boundary Optimizer for improved context management
+        const contextOptimization = contextBoundaryOptimizer.processInput(
+            combinedText,
+            requestContext.interviewContext,
+            conversationHistory
+        );
+                
+        console.log(`🧠 [CONTEXT_OPTIMIZATION] Phase: ${contextOptimization.currentPhase}, Boundary: ${contextOptimization.boundaryDecision.createBoundary}, Topics: ${contextOptimization.activeTopics.length}`);
+                
+        // Include optimized context in request context
+        requestContext.contextOptimization = contextOptimization;
+        requestContext.optimizedContext = contextOptimization.optimizedContext;
+        
+        // Create the request function that Smart Request Manager will execute
+        const executeGeminiRequest = async (abortSignal) => {
+            // Preserve existing request setup logic
+            currentAbortController = new AbortController();
+            currentConversationId = `${Date.now()}-${Math.random().toString(36).substring(2,8)}`;
+            
+            // Clear any pending debounce timer
+            if (inputDebounceTimer) {
+                clearTimeout(inputDebounceTimer);
+                inputDebounceTimer = null;
+                pendingInput = '';
+            }
+            
+            // Ensure complete buffer cleanup and context isolation
+            cleanupResponseBuffer();
+            messageBuffer = '';
+            
+            // Force new response counter
+            if (!isSuppressingRender) {
+                sendToRenderer('new-response-starting');
+            }
+            
+            isAiResponding = true;
+            isProcessingTextMessage = true;
+            lastQuestionTime = Date.now();
+            
+            // Record request details
+            requestStartTime = Date.now();
+            const timestamp = new Date(requestStartTime).toISOString();
+            console.log('🔄 [SMART_REQUEST] Starting AI request with intelligent management');
+            console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
+            console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
+            
+            // Save to conversation history immediately
+            conversationHistory.push({
+                timestamp: requestStartTime,
+                transcription: combinedText.trim(),
+                type: 'user_request',
+                processed: true
+            });
+            
+            // Execute the actual Gemini request with metrics
+            lastAiRequestStart = Date.now();
+            recordMetric('ai_request_start', { 
+                conversationId: currentConversationId, 
+                textLength: combinedText.length,
+                smartManaged: true,
+                contextOptimized: true,
+                interviewPhase: requestContext.contextOptimization?.currentPhase,
+                activeTopics: requestContext.contextOptimization?.activeTopics?.length || 0
+            });
+            
+            // ENHANCED: Prepare request with optimized context
+            let requestText = combinedText.trim();
+            
+            // Include optimized context if available and beneficial
+            if (requestContext.optimizedContext && 
+                requestContext.contextOptimization?.inputAnalysis?.requiresContext) {
+                requestText = `${requestContext.optimizedContext}\n\nCurrent question: ${combinedText.trim()}`;
+                console.log(`🧠 [CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
+            }
+            
+            return await sendInputWithRetry(geminiSession, { 
+                text: requestText, 
+                conversationId: currentConversationId, 
+                signal: abortSignal || currentAbortController.signal 
+            });
+        };
+        
+        // Use Smart Request Manager for intelligent processing
+        await smartRequestManager.processWithPriority(
+            combinedText,
+            requestContext,
+            executeGeminiRequest
+        );
+        
+        console.log('✅ [SMART_REQUEST] Successfully processed request with intelligent management');
+        
     } catch (error) {
-        console.error('❌ [AI_REQUEST_ERROR] Error sending combined questions to AI:', error);
-        isAiResponding = false;
-        requestStartTime = null; // Reset timing on error
-        // Reset state on error
-        enforceContextBoundary();
+        console.error('❌ [SMART_REQUEST_ERROR] Error in smart request processing:', error);
+        
+        // Fallback to original logic if Smart Request Manager fails
+        console.log('🔄 [FALLBACK] Falling back to original request processing');
+        
+        // Original fallback logic (preserving existing behavior)
+        if (currentAbortController) {
+            console.log('🛑 [ABORT] Cancelling previous Gemini request');
+            currentAbortController.abort();
+        }
+        
+        currentAbortController = new AbortController();
+        currentConversationId = `${Date.now()}-${Math.random().toString(36).substring(2,8)}`;
+        
+        if (inputDebounceTimer) {
+            clearTimeout(inputDebounceTimer);
+            inputDebounceTimer = null;
+            pendingInput = '';
+        }
+        
+        cleanupResponseBuffer();
+        messageBuffer = '';
+        
+        if (!isSuppressingRender) {
+            sendToRenderer('new-response-starting');
+        }
+        
+        isAiResponding = true;
+        isProcessingTextMessage = true;
+        lastQuestionTime = Date.now();
+        requestStartTime = Date.now();
+        
+        conversationHistory.push({
+            timestamp: requestStartTime,
+            transcription: combinedText.trim(),
+            type: 'user_request',
+            processed: true
+        });
+        
+        try {
+            lastAiRequestStart = Date.now();
+            recordMetric('ai_request_start', { 
+                conversationId: currentConversationId, 
+                textLength: combinedText.length,
+                fallbackMode: true
+            });
+            
+            await sendInputWithRetry(geminiSession, { 
+                text: combinedText.trim(), 
+                conversationId: currentConversationId, 
+                signal: currentAbortController.signal 
+            });
+            
+            console.log('✅ [FALLBACK] Successfully sent request using fallback logic');
+        } catch (fallbackError) {
+            console.error('❌ [FALLBACK_ERROR] Fallback request also failed:', fallbackError);
+            isAiResponding = false;
+            requestStartTime = null;
+            enforceContextBoundary();
+            throw fallbackError;
+        }
     }
 }
 
@@ -1210,6 +1322,28 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             }
                             
                             // Set new timer to process after delay (wait for complete input)
+                            // ENHANCED: Calculate adaptive debounce delay based on context and VAD data
+                            let adaptiveDelay = INPUT_DEBOUNCE_DELAY; // Fallback to original 8 seconds
+                            
+                            if (enhancedDebounceEnabled) {
+                                try {
+                                    // Use enhanced debounce manager for interview optimization
+                                    adaptiveDelay = enhancedDebounceManager.calculateDynamicDebounce(
+                                        pendingInput,
+                                        vadAdaptiveData,
+                                        {
+                                            isComplete: isSemanticallyComplete(pendingInput.trim()),
+                                            hasQuestionWords: isCompleteQuestion(pendingInput.trim())
+                                        }
+                                    );
+                                    
+                                    console.log(`⚡ [ENHANCED_DEBOUNCE] Adaptive delay: ${adaptiveDelay}ms (vs fixed ${INPUT_DEBOUNCE_DELAY}ms)`);
+                                } catch (error) {
+                                    console.warn('⚠️ [ENHANCED_DEBOUNCE] Error calculating adaptive delay, using fallback:', error.message);
+                                    adaptiveDelay = INPUT_DEBOUNCE_DELAY;
+                                }
+                            }
+                            
                             inputDebounceTimer = setTimeout(() => {
                                 if (pendingInput.trim()) {
                                     console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
@@ -1318,7 +1452,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     // Reset pending input
                                     pendingInput = '';
                                 }
-                            }, INPUT_DEBOUNCE_DELAY);
+                            }, adaptiveDelay); // Use adaptive delay instead of fixed INPUT_DEBOUNCE_DELAY
 
                             // Don't process immediately - wait for debounce timer
                             return;
@@ -2455,6 +2589,527 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             return { success: false, error: error.message };
         }
     });
+    
+    // Enhanced debounce management IPC handlers
+    ipcMain.handle('update-vad-data', async (event, vadData) => {
+        try {
+            updateVADAdaptiveData(vadData);
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating VAD data:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('set-enhanced-debounce-enabled', async (event, enabled) => {
+        try {
+            setEnhancedDebounceEnabled(enabled);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting enhanced debounce state:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-debounce-performance-metrics', async (event) => {
+        try {
+            const metrics = getDebouncePerformanceMetrics();
+            return { success: true, metrics };
+        } catch (error) {
+            console.error('Error getting debounce performance metrics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Smart Request Manager IPC handlers
+    ipcMain.handle('get-smart-request-metrics', async (event) => {
+        try {
+            const metrics = getSmartRequestMetrics();
+            return { success: true, metrics };
+        } catch (error) {
+            console.error('Error getting smart request metrics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('set-smart-interruption-enabled', async (event, enabled) => {
+        try {
+            setSmartInterruptionEnabled(enabled);
+            return { success: true };
+        } catch (error) {
+            console.error('Error setting smart interruption state:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('update-interview-phase', async (event, phase) => {
+        try {
+            updateSmartRequestManagerPhase();
+            return { success: true, phase };
+        } catch (error) {
+            console.error('Error updating interview phase:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('reset-smart-request-session', async (event) => {
+        try {
+            resetSmartRequestSession();
+            resetDebounceSession();
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting smart request session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Context Boundary Optimizer IPC handlers
+    ipcMain.handle('get-context-boundary-metrics', async (event) => {
+        try {
+            const metrics = getContextBoundaryMetrics();
+            return { success: true, metrics };
+        } catch (error) {
+            console.error('Error getting context boundary metrics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('set-interview-phase', async (event, phase) => {
+        try {
+            setInterviewPhase(phase);
+            return { success: true, phase };
+        } catch (error) {
+            console.error('Error setting interview phase:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-current-interview-phase', async (event) => {
+        try {
+            const phase = getCurrentInterviewPhase();
+            return { success: true, phase };
+        } catch (error) {
+            console.error('Error getting current interview phase:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-active-technical-topics', async (event) => {
+        try {
+            const topics = getActiveTechnicalTopics();
+            return { success: true, topics };
+        } catch (error) {
+            console.error('Error getting active technical topics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('reset-context-boundary-session', async (event) => {
+        try {
+            resetContextBoundarySession();
+            resetSmartRequestSession();
+            resetDebounceSession();
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting context boundary session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Audio Quality Assurance IPC handlers
+    ipcMain.handle('process-audio-quality', async (event, audioData) => {
+        try {
+            const qualityResult = processAudioQuality(audioData);
+            return { 
+                success: true, 
+                qualityScore: qualityResult.qualityScore,
+                action: qualityResult.processingDecision?.action || 'process',
+                reason: qualityResult.processingDecision?.reason || 'processed',
+                ...qualityResult
+            };
+        } catch (error) {
+            console.error('Error processing audio quality:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-audio-quality-metrics', async (event) => {
+        try {
+            const metrics = getAudioQualityMetrics();
+            return { success: true, metrics };
+        } catch (error) {
+            console.error('Error getting audio quality metrics:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('set-audio-quality-interview-context', async (event, context) => {
+        try {
+            setAudioQualityInterviewContext(context);
+            return { success: true, context };
+        } catch (error) {
+            console.error('Error setting audio quality interview context:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('set-audio-quality-strict-mode', async (event, enabled) => {
+        try {
+            setAudioQualityStrictMode(enabled);
+            return { success: true, enabled };
+        } catch (error) {
+            console.error('Error setting audio quality strict mode:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('reset-audio-quality-session', async (event) => {
+        try {
+            resetAudioQualitySession();
+            resetContextBoundarySession();
+            resetSmartRequestSession();
+            resetDebounceSession();
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting audio quality session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Performance Monitor IPC handlers
+    ipcMain.handle('start-performance-monitoring', async (event) => {
+        try {
+            startPerformanceMonitoring();
+            return { success: true };
+        } catch (error) {
+            console.error('Error starting performance monitoring:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('stop-performance-monitoring', async (event) => {
+        try {
+            stopPerformanceMonitoring();
+            return { success: true };
+        } catch (error) {
+            console.error('Error stopping performance monitoring:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-performance-dashboard-data', async (event) => {
+        try {
+            const dashboardData = getPerformanceDashboardData();
+            return { success: true, data: dashboardData };
+        } catch (error) {
+            console.error('Error getting performance dashboard data:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('get-performance-historical-data', async (event, timeRange) => {
+        try {
+            const historicalData = getPerformanceHistoricalData(timeRange);
+            return { success: true, data: historicalData };
+        } catch (error) {
+            console.error('Error getting performance historical data:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    ipcMain.handle('reset-all-optimization-systems', async (event) => {
+        try {
+            resetAllOptimizationSystems();
+            return { success: true };
+        } catch (error) {
+            console.error('Error resetting all optimization systems:', error);
+            return { success: false, error: error.message };
+        }
+    });
+    
+    // Unified session management for all optimization systems
+    ipcMain.handle('initialize-interview-session', async (event, config = {}) => {
+        try {
+            // Reset all systems
+            resetAllOptimizationSystems();
+            
+            // Configure based on interview type
+            if (config.interviewPhase) {
+                setInterviewPhase(config.interviewPhase);
+            }
+            
+            if (config.strictAudioMode) {
+                setAudioQualityStrictMode(true);
+            }
+            
+            if (config.enableSmartInterruption !== undefined) {
+                setSmartInterruptionEnabled(config.enableSmartInterruption);
+            }
+            
+            if (config.enableEnhancedDebounce !== undefined) {
+                setEnhancedDebounceEnabled(config.enableEnhancedDebounce);
+            }
+            
+            // Start performance monitoring
+            startPerformanceMonitoring();
+            
+            console.log('🎯 [INTERVIEW_SESSION] Initialized with config:', config);
+            
+            return { success: true, config };
+        } catch (error) {
+            console.error('Error initializing interview session:', error);
+            return { success: false, error: error.message };
+        }
+    });
+}
+
+// Enhanced debounce management functions
+function updateVADAdaptiveData(vadData) {
+    vadAdaptiveData = vadData;
+    if (enhancedDebounceManager) {
+        enhancedDebounceManager.updateVADData(vadData);
+    }
+    console.log('📊 [VAD_DATA_UPDATE] Updated VAD adaptive data for enhanced debounce');
+}
+
+function setEnhancedDebounceEnabled(enabled) {
+    enhancedDebounceEnabled = enabled;
+    if (enhancedDebounceManager) {
+        enhancedDebounceManager.setInterviewMode(enabled);
+    }
+    console.log(`⚡ [ENHANCED_DEBOUNCE] ${enabled ? 'Enabled' : 'Disabled'} adaptive debounce system`);
+}
+
+function getDebouncePerformanceMetrics() {
+    if (enhancedDebounceManager) {
+        return enhancedDebounceManager.getPerformanceMetrics();
+    }
+    return {
+        currentDelay: INPUT_DEBOUNCE_DELAY,
+        averageDelay: INPUT_DEBOUNCE_DELAY,
+        minDelay: INPUT_DEBOUNCE_DELAY,
+        maxDelay: INPUT_DEBOUNCE_DELAY,
+        totalDecisions: 0,
+        sessionPhase: 'unknown',
+        enhancedDebounceEnabled: false
+    };
+}
+
+function resetDebounceSession() {
+    if (enhancedDebounceManager) {
+        enhancedDebounceManager.resetSession();
+    }
+    console.log('🔄 [DEBOUNCE_RESET] Reset debounce session for new interview');
+}
+
+// ENHANCED: Smart Request Manager integration functions
+function getSessionPhase() {
+    if (!currentSessionId) return 'unknown';
+    
+    const sessionDuration = Date.now() - (requestStartTime || Date.now());
+    const minutesElapsed = sessionDuration / (1000 * 60);
+    
+    if (minutesElapsed < 5) {
+        return 'warmup';
+    } else if (minutesElapsed < 25) {
+        return 'technical';
+    } else {
+        return 'closing';
+    }
+}
+
+function updateSmartRequestManagerPhase() {
+    const currentPhase = getSessionPhase();
+    if (smartRequestManager) {
+        smartRequestManager.updateInterviewPhase(currentPhase);
+    }
+}
+
+function getSmartRequestMetrics() {
+    if (smartRequestManager) {
+        return smartRequestManager.getPerformanceMetrics();
+    }
+    return {
+        avgResponseTime: 0,
+        totalRequests: 0,
+        interruptionSuccessRate: 0,
+        sessionDuration: 0
+    };
+}
+
+function resetSmartRequestSession() {
+    if (smartRequestManager) {
+        smartRequestManager.resetSession();
+    }
+    console.log('🚀 [SMART_REQUEST_RESET] Reset Smart Request Manager for new interview');
+}
+
+function setSmartInterruptionEnabled(enabled) {
+    if (smartRequestManager) {
+        smartRequestManager.setInterruptionEnabled(enabled);
+    }
+    console.log(`🎯 [SMART_INTERRUPTION] ${enabled ? 'Enabled' : 'Disabled'} intelligent interruption`);
+}
+
+// ENHANCED: Context Boundary Optimizer integration functions
+function getContextBoundaryMetrics() {
+    if (contextBoundaryOptimizer) {
+        return contextBoundaryOptimizer.getMetrics();
+    }
+    return {
+        contextBoundariesCreated: 0,
+        topicsTracked: 0,
+        threadsPreserved: 0,
+        relevanceScore: 0,
+        avgContextLength: 0,
+        currentPhase: 'unknown'
+    };
+}
+
+function setInterviewPhase(phase) {
+    if (contextBoundaryOptimizer) {
+        contextBoundaryOptimizer.setPhase(phase);
+    }
+    
+    // Also update Smart Request Manager
+    if (smartRequestManager) {
+        smartRequestManager.updateInterviewPhase(phase);
+    }
+    
+    console.log(`🎯 [INTERVIEW_PHASE] Set to ${phase} across all optimization systems`);
+}
+
+function resetContextBoundarySession() {
+    if (contextBoundaryOptimizer) {
+        contextBoundaryOptimizer.resetSession();
+    }
+    console.log('🧠 [CONTEXT_RESET] Reset Context Boundary Optimizer for new interview');
+}
+
+function getCurrentInterviewPhase() {
+    if (contextBoundaryOptimizer) {
+        return contextBoundaryOptimizer.currentPhase;
+    }
+    return getSessionPhase(); // Fallback to time-based detection
+}
+
+function getActiveTechnicalTopics() {
+    if (contextBoundaryOptimizer) {
+        return contextBoundaryOptimizer.getActiveTopics();
+    }
+    return [];
+}
+
+// ENHANCED: Audio Quality Assurance integration functions
+function processAudioQuality(audioData) {
+    if (audioQualityAssurance) {
+        return audioQualityAssurance.processAudioChunk(
+            new Float32Array(audioData.audioData),
+            {
+                timestamp: audioData.timestamp,
+                chunkSize: audioData.chunkSize
+            }
+        );
+    }
+    return {
+        qualityScore: 0.5,
+        action: 'process',
+        reason: 'quality_assurance_unavailable'
+    };
+}
+
+function getAudioQualityMetrics() {
+    if (audioQualityAssurance) {
+        return audioQualityAssurance.getMetrics();
+    }
+    return {
+        totalChunks: 0,
+        highQualityChunks: 0,
+        lowQualityChunks: 0,
+        recoveredChunks: 0,
+        droppedChunks: 0,
+        recoverySuccessRate: 0,
+        avgQualityScore: 0
+    };
+}
+
+function setAudioQualityInterviewContext(context) {
+    if (audioQualityAssurance) {
+        audioQualityAssurance.setInterviewContext(context);
+    }
+    console.log(`🔊 [AUDIO_QUALITY] Updated interview context: ${JSON.stringify(context)}`);
+}
+
+function resetAudioQualitySession() {
+    if (audioQualityAssurance) {
+        audioQualityAssurance.resetSession();
+    }
+    console.log('🔊 [AUDIO_QUALITY_RESET] Reset Audio Quality Assurance for new interview');
+}
+
+function setAudioQualityStrictMode(enabled) {
+    if (audioQualityAssurance) {
+        audioQualityAssurance.setStrictMode(enabled);
+    }
+    console.log(`🔊 [STRICT_MODE] ${enabled ? 'Enabled' : 'Disabled'} strict audio quality mode`);
+}
+
+// ENHANCED: Performance Monitor integration functions
+function startPerformanceMonitoring() {
+    if (performanceMonitor) {
+        performanceMonitor.startMonitoring();
+    }
+    console.log('📈 [PERFORMANCE_MONITOR] Started performance monitoring for interview session');
+}
+
+function stopPerformanceMonitoring() {
+    if (performanceMonitor) {
+        performanceMonitor.stopMonitoring();
+    }
+    console.log('📈 [PERFORMANCE_MONITOR] Stopped performance monitoring');
+}
+
+function getPerformanceDashboardData() {
+    if (performanceMonitor) {
+        return performanceMonitor.getDashboardData();
+    }
+    return {
+        metrics: {},
+        trends: {},
+        alerts: { active: [], count: 0 },
+        recommendations: { current: [], count: 0 },
+        session: { duration: 0, phase: 'unknown', overallScore: 0 },
+        isMonitoring: false
+    };
+}
+
+function getPerformanceHistoricalData(timeRange = '1h') {
+    if (performanceMonitor) {
+        return performanceMonitor.getHistoricalData(timeRange);
+    }
+    return {
+        snapshots: [],
+        timeRange,
+        count: 0
+    };
+}
+
+function resetPerformanceMonitorSession() {
+    if (performanceMonitor) {
+        performanceMonitor.resetSession();
+    }
+    console.log('📈 [PERFORMANCE_RESET] Reset Performance Monitor for new interview session');
+}
+
+// Enhanced session reset that coordinates all optimization systems
+function resetAllOptimizationSystems() {
+    resetDebounceSession();
+    resetSmartRequestSession();
+    resetContextBoundarySession();
+    resetAudioQualitySession();
+    resetPerformanceMonitorSession();
+    
+    console.log('🚀 [FULL_RESET] All optimization systems reset for new interview session');
 }
 
 module.exports = {
@@ -2479,5 +3134,29 @@ module.exports = {
     sendMicrophoneAudioToGemini,
     setSpeakerDetectionEnabled,
     isSpeakerDetectionCurrentlyEnabled,
+    updateVADAdaptiveData,
+    setEnhancedDebounceEnabled,
+    getDebouncePerformanceMetrics,
+    resetDebounceSession,
+    getSmartRequestMetrics,
+    updateSmartRequestManagerPhase,
+    resetSmartRequestSession,
+    setSmartInterruptionEnabled,
+    getContextBoundaryMetrics,
+    setInterviewPhase,
+    resetContextBoundarySession,
+    getCurrentInterviewPhase,
+    getActiveTechnicalTopics,
+    processAudioQuality,
+    getAudioQualityMetrics,
+    setAudioQualityInterviewContext,
+    resetAudioQualitySession,
+    setAudioQualityStrictMode,
+    startPerformanceMonitoring,
+    stopPerformanceMonitoring,
+    getPerformanceDashboardData,
+    getPerformanceHistoricalData,
+    resetPerformanceMonitorSession,
+    resetAllOptimizationSystems,
 };
 
