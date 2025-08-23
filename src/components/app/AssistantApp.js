@@ -620,65 +620,128 @@ export class AssistantApp extends LitElement {
                 throw new Error('Failed to initialize microphone session: ' + sessionResult.error);
             }
 
-            // Import enhanced microphone manager
-            const { EnhancedMicrophoneManager } = await import('../../utils/enhancedMicrophoneManager.js');
-            
-            // Initialize enhanced microphone manager
-            this.microphoneManager = new EnhancedMicrophoneManager();
-            
-            // Set up callbacks for the manager
-            this.microphoneManager.setCallbacks({
-                onAudioChunk: async (audioData) => {
-                    try {                    
-                        // audioData is already Int16Array from EnhancedMicrophoneManager
-                        // Convert directly to base64 without double conversion
-                        const uint8Array = new Uint8Array(audioData.buffer);
-                        const base64Data = btoa(String.fromCharCode.apply(null, uint8Array));
+            // Try enhanced microphone manager first
+            try {
+                const { EnhancedMicrophoneManager } = await import('../../utils/enhancedMicrophoneManager.js');
+                
+                // Initialize enhanced microphone manager
+                this.microphoneManager = new EnhancedMicrophoneManager();
+                
+                // Set up callbacks for the manager
+                this.microphoneManager.setCallbacks({
+                    onAudioChunk: async (audioData) => {
+                        try {                    
+                            // audioData.audio is already base64 string from AudioWorklet processor
+                            const base64Data = audioData.audio;
+                            
+                            // Send audio to Gemini microphone session
+                            await window.cheddar.sendMicrophoneAudio({
+                                data: base64Data,
+                                mimeType: 'audio/pcm;rate=24000'
+                            });
+                        } catch (error) {
+                            console.error('Failed to send audio to Gemini:', error);
+                        }
+                    },
+                    onVADEvent: (vadEvent) => {
+                        // Update microphone state based on VAD
+                        let newState = 'recording';
+                        if (vadEvent.type === 'speechStart' || vadEvent.isSpeaking) {
+                            newState = 'speaking';
+                        }
                         
-                        // Send audio to Gemini microphone session
-                        await window.cheddar.sendMicrophoneAudio({
-                            data: base64Data,
-                            mimeType: 'audio/pcm;rate=24000'
-                        });
-                    } catch (error) {
-                        console.error('Failed to send audio to Gemini:', error);
+                        if (this.microphoneState !== newState) {
+                            this.microphoneState = newState;
+                            this.updateAssistantViewMicrophoneState();
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Enhanced microphone manager error:', error);
+                        this.setStatus('Microphone error: ' + error.message);
                     }
-                },
-                onVADEvent: (vadEvent) => {
-                    // Update microphone state based on VAD
-                    let newState = 'recording';
-                    if (vadEvent.type === 'speechStart' || vadEvent.isSpeaking) {
-                        newState = 'speaking';
+                });
+                
+                // Initialize and start recording
+                await this.microphoneManager.initialize();
+                await this.microphoneManager.startRecording();
+                
+            } catch (enhancedError) {
+                // Fallback to simple microphone manager
+                const { SimpleMicrophoneManager } = await import('../../utils/simpleMicrophoneManager.js');
+                
+                this.microphoneManager = new SimpleMicrophoneManager();
+                
+                // Set up callbacks for the simple manager
+                this.microphoneManager.setCallbacks({
+                    onAudioChunk: async (audioData) => {
+                        try {                    
+                            const base64Data = audioData.audio;
+                            
+                            await window.cheddar.sendMicrophoneAudio({
+                                data: base64Data,
+                                mimeType: 'audio/pcm;rate=24000'
+                            });
+                        } catch (error) {
+                            console.error('Failed to send audio to Gemini (simple):', error);
+                        }
+                    },
+                    onVADEvent: (vadEvent) => {
+                        let newState = 'recording';
+                        if (vadEvent.speechStart || vadEvent.isSpeaking) {
+                            newState = 'speaking';
+                        }
+                        
+                        if (this.microphoneState !== newState) {
+                            this.microphoneState = newState;
+                            this.updateAssistantViewMicrophoneState();
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Simple microphone manager error:', error);
+                        this.setStatus('Microphone error: ' + error.message);
                     }
-                    
-                    if (this.microphoneState !== newState) {
-                        this.microphoneState = newState;
-                        this.updateAssistantViewMicrophoneState();
-                        console.log('Microphone state updated to:', newState);
-                    }
-                },
-                onError: (error) => {
-                    console.error('Enhanced microphone manager error:', error);
-                    this.setStatus('Microphone error: ' + error.message);
-                }
-            });
-            
-            // Initialize and start recording
-            await this.microphoneManager.initialize();
-            await this.microphoneManager.startRecording();
+                });
+                
+                // Initialize and start recording with simple manager
+                await this.microphoneManager.initialize();
+                await this.microphoneManager.startRecording();
+                
+                this.setStatus('Microphone started (simplified mode)');
+            }
             
             this.microphoneEnabled = true;
             this.microphoneState = 'recording';
             this.updateAssistantViewMicrophoneState();
             
-            console.log('Enhanced microphone capture started successfully');
-            
         } catch (error) {
             console.error('Failed to start microphone capture:', error);
-            this.setStatus('Microphone access denied - continuing with speaker audio');
+            
+            let errorMessage = 'Microphone access failed';
+            
+            // Provide specific error messages based on the error type
+            if (error.message.includes('denied by user') || error.message.includes('aborted')) {
+                errorMessage = 'Microphone access denied. Please allow microphone access in your browser and try again.';
+            } else if (error.message.includes('permanently denied')) {
+                errorMessage = 'Microphone access is blocked. Please enable microphone permissions in your browser settings and refresh the page.';
+            } else if (error.message.includes('No microphone found')) {
+                errorMessage = 'No microphone detected. Please connect a microphone and try again.';
+            } else if (error.message.includes('being used by another application')) {
+                errorMessage = 'Microphone is busy. Please close other applications using the microphone and try again.';
+            } else {
+                errorMessage = `Microphone error: ${error.message}`;
+            }
+            
+            this.setStatus(errorMessage);
             this.microphoneEnabled = false;
-            this.microphoneState = 'off';
+            this.microphoneState = 'error';
             this.updateAssistantViewMicrophoneState();
+            
+            // Show instructions for enabling microphone permissions
+            console.log('\n📝 To enable microphone access:');
+            console.log('1. Look for the microphone icon in your browser\'s address bar');
+            console.log('2. Click on it and select "Always allow"');
+            console.log('3. Refresh the page and try again');
+            console.log('4. Or go to browser Settings > Privacy > Microphone and allow this site\n');
         }
     }
 
@@ -707,6 +770,14 @@ export class AssistantApp extends LitElement {
         if (jarvisView && jarvisView.updateMicrophoneState) {
             jarvisView.microphoneEnabled = this.microphoneEnabled;
             jarvisView.microphoneState = this.microphoneState;
+            
+            // Provide additional state information for error handling
+            if (this.microphoneState === 'error') {
+                jarvisView.microphoneError = true;
+            } else {
+                jarvisView.microphoneError = false;
+            }
+            
             jarvisView.requestUpdate();
         }
     }

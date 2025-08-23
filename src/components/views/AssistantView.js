@@ -519,6 +519,22 @@ export class AssistantView extends LitElement {
             text-align: center;
         }
 
+        .microphone-button.error {
+            border-color: #ff8800;
+            background: rgba(255, 136, 0, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        .microphone-button.error .microphone-icon {
+            color: #ff8800;
+        }
+
         .microphone-button {
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid #666;
