@@ -142,14 +142,13 @@ export class AssistantView extends LitElement {
 
         .response-container code {
             background: var(--inline-code-background, rgba(255, 255, 255, 0.08));
-            padding: 0.1em 0.2em;
             border-radius: 4px;
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
             font-size: 0.9em;
             color: #ffd700;
             white-space: pre-wrap;
             word-break: break-word;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.1);
             font-weight: 500;
         }
 
@@ -1032,7 +1031,6 @@ export class AssistantView extends LitElement {
             color: var(--key-term-color, #ffd700);
             background: var(--key-term-background, rgba(255, 215, 0, 0.1));
             border-radius: 3px;
-            border-bottom: 1px solid var(--key-term-color, #ffd700);
         }
         
         /* Reading flow indicators */

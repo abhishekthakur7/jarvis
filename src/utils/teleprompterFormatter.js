@@ -322,7 +322,6 @@ export class TeleprompterFormatter {
                 color: var(--key-term-color, #ffd700);
                 background: var(--key-term-background, rgba(255, 215, 0, 0.1));
                 border-radius: 3px;
-                border-bottom: 1px solid var(--key-term-color, #ffd700);
             }
             
             /* Reading flow indicators */
