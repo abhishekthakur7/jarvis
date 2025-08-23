@@ -1,4 +1,5 @@
 import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
+import { teleprompterFormatter } from '../../utils/teleprompterFormatter.js';
 
 export class AssistantView extends LitElement {
     static styles = css`
@@ -42,6 +43,13 @@ export class AssistantView extends LitElement {
             opacity: 1;
             filter: blur(0px);
         }
+        
+        /* Disable transitions when animations are disabled */
+        .response-container.no-animation [data-word] {
+            transition: none !important;
+            opacity: 1 !important;
+            filter: blur(0px) !important;
+        }
 
         /* Markdown styling */
         .response-container h1,
@@ -50,7 +58,6 @@ export class AssistantView extends LitElement {
         .response-container h4,
         .response-container h5,
         .response-container h6 {
-            margin: 1.5em 0 0.75em 0;
             color: var(--text-color);
             font-weight: 600;
             letter-spacing: -0.02em;
@@ -58,7 +65,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container h1 {
-            font-size: 1.8em;
+            font-size: 1.2em;
             font-weight: 700;
             background: linear-gradient(135deg, #ffffff, #e0e0e0);
             -webkit-background-clip: text;
@@ -66,17 +73,16 @@ export class AssistantView extends LitElement {
             background-clip: text;
         }
         .response-container h2 {
-            font-size: 1.5em;
+            font-size: 1.1em;
             font-weight: 650;
             color: #f0f0f0;
         }
         .response-container h3 {
-            font-size: 1.3em;
             font-weight: 600;
             color: #e8e8e8;
+            margin: -5px;
         }
         .response-container h4 {
-            font-size: 1.1em;
             font-weight: 600;
             color: #e0e0e0;
         }
@@ -92,7 +98,7 @@ export class AssistantView extends LitElement {
         }
 
         .response-container p {
-            margin: 1em 0;
+            margin: 0.05em 0;
             color: var(--text-color);
             line-height: 1.6;
             letter-spacing: 0.005em;
@@ -100,14 +106,14 @@ export class AssistantView extends LitElement {
 
         .response-container ul,
         .response-container ol {
-            margin: 1.2em 0;
-            padding-left: 1.8em;
+            margin: 0.2em 0;
+            padding-left: 1.2em;
             color: var(--text-color);
             line-height: 1.6;
         }
 
         .response-container li {
-            margin: 0.6em 0;
+            margin: 0.05em 0;
             line-height: 1.6;
             letter-spacing: 0.005em;
         }
@@ -136,7 +142,7 @@ export class AssistantView extends LitElement {
 
         .response-container code {
             background: var(--inline-code-background, rgba(255, 255, 255, 0.08));
-            padding: 0.2em 0.4em;
+            padding: 0.1em 0.2em;
             border-radius: 4px;
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace) !important;
             font-size: 0.9em;
@@ -145,17 +151,16 @@ export class AssistantView extends LitElement {
             word-break: break-word;
             border: 1px solid rgba(255, 255, 255, 0.1);
             font-weight: 500;
-            letter-spacing: 0.02em;
         }
 
         .response-container pre {
+            margin-top: -0.4em;
             background: var(--pre-code-background, rgba(0, 0, 0, 0.4));
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 8px;
-            padding: 1.2em;
+            padding: 0.3em;
             white-space: pre-wrap;
             word-break: break-word;
-            margin: 1.5em 0;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
         }
@@ -437,7 +442,6 @@ export class AssistantView extends LitElement {
             display: flex;
             gap: 8px;
             align-items: center;
-            transform: scale(0.78);
             transform-origin: left center;
         }
 
@@ -515,6 +519,22 @@ export class AssistantView extends LitElement {
             text-align: center;
         }
 
+        .microphone-button.error {
+            border-color: #ff8800;
+            background: rgba(255, 136, 0, 0.1);
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
+
+        .microphone-button.error .microphone-icon {
+            color: #ff8800;
+        }
+
         .microphone-button {
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid #666;
@@ -524,7 +544,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
         }
@@ -613,7 +633,7 @@ export class AssistantView extends LitElement {
             border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             min-width: 5px;
             height: 18px;
@@ -650,7 +670,7 @@ export class AssistantView extends LitElement {
             border-radius: 6px;
             font-size: 10px;
             font-weight: 600;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             min-width: 20px;
             height: 18px;
@@ -679,7 +699,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
             margin-left: 8px;
         }
@@ -710,6 +730,170 @@ export class AssistantView extends LitElement {
         .auto-scroll-toggle.disabled .auto-scroll-icon {
             color: #666;
         }
+        
+        /* Reading Flow Controls */
+        .reading-flow-controls {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 2px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .flow-control-button {
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            width: 40px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+            transition: all 0.2s ease;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .flow-control-button:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .flow-control-button:active {
+            transform: scale(0.95);
+        }
+        
+        .flow-control-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+        }
+        
+        /* Breathing and pacing visual cues */
+        .breathing-cue {
+            display: none;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: breathe 3s ease-in-out infinite;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.3; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+        
+        .breathing-cue.long-pause {
+            animation-duration: 4s;
+            background: rgba(0, 122, 255, 0.5);
+        }
+        
+        .breathing-cue.short-pause {
+            animation-duration: 2s;
+            background: rgba(255, 215, 0, 0.5);
+        }
+        
+        /* Enhanced highlighting system */
+        .key-term.highlighted {
+            background: rgba(255, 215, 0, 0.4) !important;
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+            transform: scale(1.02);
+            transition: all 0.3s ease;
+        }
+        
+        .priority-primary.current-focus {
+            background: rgba(0, 122, 255, 0.3) !important;
+            border-left-color: #007aff !important;
+            border-left-width: 5px !important;
+            box-shadow: 0 0 12px rgba(0, 122, 255, 0.4);
+            animation: focusPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes focusPulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(0, 122, 255, 0.4); }
+            50% { box-shadow: 0 0 16px rgba(0, 122, 255, 0.6); }
+        }
+        
+        /* Reading rhythm indicators */
+        .rhythm-marker {
+            position: absolute;
+            left: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            animation: rhythmPulse 1s ease-in-out infinite;
+        }
+        
+        .rhythm-marker.fast {
+            animation-duration: 0.8s;
+            background: rgba(255, 165, 0, 0.6);
+        }
+        
+        .rhythm-marker.slow {
+            animation-duration: 1.5s;
+            background: rgba(0, 255, 127, 0.6);
+        }
+        
+        @keyframes rhythmPulse {
+            0%, 100% { opacity: 0.2; transform: translateY(-50%) scale(1); }
+            50% { opacity: 0.8; transform: translateY(-50%) scale(1.3); }
+        }
+        
+        /* Completion signaling */
+        .completion-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(52, 211, 153, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 2000;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(52, 211, 153, 0.5);
+            animation: completionPop 0.5s ease-out;
+        }
+        
+        @keyframes completionPop {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* Visual breathing guides */
+        .paragraph-breathing {
+            position: relative;
+        }
+        
+        .paragraph-breathing::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 20%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                rgba(255, 255, 255, 0.1) 80%, 
+                transparent 100%);
+            border-radius: 2px;
+        }
 
         .speaker-button {
             background: transparent;
@@ -718,7 +902,7 @@ export class AssistantView extends LitElement {
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.2s ease;
         }
 
@@ -773,8 +957,7 @@ export class AssistantView extends LitElement {
 
         :host(.compact-mode) .response-container code {
             font-size: 0.95em;
-            padding: 0.25em 0.5em;
-            letter-spacing: 0.03em;
+            padding: 0.1em 0.2em;
         }
 
         :host(.compact-mode) .response-container ul,
@@ -784,7 +967,7 @@ export class AssistantView extends LitElement {
         }
 
         :host(.compact-mode) .response-container li {
-            margin: 0.5em 0;
+            margin: 0.05em 0;
             line-height: 1.8;
         }
 
@@ -798,11 +981,160 @@ export class AssistantView extends LitElement {
             .response-container p {
                 line-height: 1.5;
             }
+        }
+
+        /* Teleprompter Typography System */
+        .teleprompter-container {
+            margin-top: -15px;
+            line-height: var(--reading-line-height, 1.8);
+            letter-spacing: var(--reading-letter-spacing, 0.02em);
+            font-feature-settings: "liga" 1, "kern" 1;
+            text-rendering: optimizeLegibility;
+        }
+        
+        .priority-primary {
+            font-size: 1.125em; /* 18px relative to 16px base */
+            line-height: 1.8;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: var(--primary-text-color, #ffffff);
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+            padding-left: 0.3em;
+            padding-top: 0.2em;
+            border-radius: 6px;
+            border-left: 1px solid var(--accent-color, #007aff);
+            border-right: 1px solid var(--accent-color, #007aff);
+            border-top: 1px solid var(--accent-color, #007aff);
+        }
+        
+        .priority-secondary {
+            font-size: 1em; /* Use base font size */
+            line-height: 1.6;
+            font-weight: 500;
+            opacity: 0.9;
+            color: var(--secondary-text-color, #e0e0e0);
+            margin: 0.6em 0;
+        }
+        
+        .priority-tertiary {
+            font-size: 0.875em; /* 14px relative to 16px base */
+            line-height: 1.5;
+            font-weight: 400;
+            opacity: 0.75;
+            color: var(--tertiary-text-color, #c0c0c0);
+            margin: 0.4em 0;
+        }
+        
+        .content-type-code {
+            font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
+            font-size: 1em; /* Use base font size */
+            line-height: 1.7;
+            letter-spacing: 0.03em;
+            background: var(--code-background, rgba(0, 0, 0, 0.3));
+            border-radius: 6px;
+            border-left: 1px solid var(--accent-color, #007aff);
+            border-right: 1px solid var(--accent-color, #007aff);
+            border-top: 1px solid var(--accent-color, #007aff);
+        }
+        
+        .content-type-steps {
+            counter-reset: step-counter;
+        }
+        
+        .content-type-steps .step-item {
+            counter-increment: step-counter;
+            position: relative;
+            padding-left: 2.5em;
+            margin: 1em 0;
+            border-left: 2px solid rgba(0, 122, 255, 0.3);
+            padding-left: 1.5em;
+        }
+        
+        .content-type-steps .step-item::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: -1.8em;
+            top: 0;
+            background: var(--accent-color, #007aff);
+            color: white;
+            width: 1.5em;
+            height: 1.5em;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        
+        .key-term {
+            font-weight: 600;
+            color: var(--key-term-color, #ffd700);
+            background: var(--key-term-background, rgba(255, 215, 0, 0.1));
+            border-radius: 3px;
+            border-bottom: 1px solid var(--key-term-color, #ffd700);
+        }
+        
+        /* Reading flow indicators */
+        .segment-boundary {
+            border-bottom: 1px solid var(--segment-border, rgba(255, 255, 255, 0.1));
+            margin-bottom: 1em;
+        }
+        
+        .natural-pause {
+            margin-right: 0.3em;
+            position: relative;
+        }
+        
+        .natural-pause::after {
+            content: '';
+            display: inline-block;
+            width: 2px;
+            height: 2px;
+            background: var(--pause-indicator, rgba(255, 255, 255, 0.3));
+            border-radius: 50%;
+            margin-left: 0.2em;
+            vertical-align: middle;
+        }
+        
+        /* Progress indication */
+        .reading-progress {
+            position: fixed;
+            bottom: 0px;
+            left: 4px;
+            right: 4px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        
+        .reading-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #007aff, #00bcd4);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        /* Layout mode specific enhancements */
+        :host(.ultra-discrete-mode) .response-container {
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 14px));
+            line-height: var(--teleprompter-line-height, 1.4);
+            padding: 6px;
+        }
+        
+        :host(.balanced-mode) .response-container {
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 16px));
+            line-height: var(--teleprompter-line-height, 1.6);
+            padding: 8px;
+        }
+        
+        :host(.presentation-mode) .response-container {
+            font-size: var(--teleprompter-font-size, var(--response-font-size, 18px));
+            line-height: var(--teleprompter-line-height, 1.8);
+            padding: 12px;
+        }
             
-            .response-container code {
-                font-size: 1em;
-                letter-spacing: 0.04em;
-            }
         }
     `;
 
@@ -819,7 +1151,9 @@ export class AssistantView extends LitElement {
         scrollSpeed: { type: Number },
         _autoScrollPaused: { type: Boolean },
         lastResponseTime: { type: Number },
-
+        teleprompterMode: { type: String }, // 'balanced', 'ultra-discrete', 'presentation'
+        readingProgress: { type: Number },
+        contentAnalysis: { type: Object },
     };
 
     constructor() {
@@ -834,8 +1168,44 @@ export class AssistantView extends LitElement {
         this.speakerDetectionEnabled = true; // Default to enabled
         this.lastResponseTime = null;
         
+        // Initialize shouldAnimateResponse to false by default (will be overridden by loadLayoutSpecificSettings)
+        this.shouldAnimateResponse = false;
+        console.log(`[AssistantView] Constructor - shouldAnimateResponse initialized to: ${this.shouldAnimateResponse}`);
+        
+        // Debug: Check current localStorage values
+        console.log(`[AssistantView] Constructor - Current localStorage values:`);
+        console.log(`  normalAnimateResponse: ${localStorage.getItem('normalAnimateResponse')}`);
+        console.log(`  compactAnimateResponse: ${localStorage.getItem('compactAnimateResponse')}`);
+        console.log(`  systemDesignAnimateResponse: ${localStorage.getItem('systemDesignAnimateResponse')}`);
+        console.log(`  layoutMode: ${localStorage.getItem('layoutMode')}`);
+        
+        
+        // Teleprompter enhancements
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
+        this.readingProgress = 0;
+        this.contentAnalysis = null;
+        
+        // Track response state for animation optimization
+        this._lastResponseContent = '';
+        this._isStreamingResponse = false;
+        
+        // Initialize teleprompter formatter
+        teleprompterFormatter.setLayoutMode(this.teleprompterMode);
+        teleprompterFormatter.onProgress((data) => {
+            this.readingProgress = data.progress;
+            this.requestUpdate();
+        });
+        
         // Initialize with layout-specific defaults
         this.loadLayoutSpecificSettings();
+        
+        // Initialize default values if not loaded from layout-specific settings
+        if (this.scrollSpeed === undefined || isNaN(this.scrollSpeed)) {
+            this.scrollSpeed = 2;
+        }
+        if (this.autoScrollEnabled === undefined) {
+            this.autoScrollEnabled = false;
+        }
         
         this._autoScrollPaused = false;
         this._autoScrollAnimationId = null;
@@ -844,6 +1214,15 @@ export class AssistantView extends LitElement {
         // Bind event handlers
         this._handleKeydown = this._handleKeydown.bind(this);
         this._handleMousedown = this._handleMousedown.bind(this);
+        
+        // Bind auto scroll change handler for synchronization with CustomizeView
+        this.handleAutoScrollChange = this.handleAutoScrollChange.bind(this);
+        
+        // Bind animate response change handler for synchronization with CustomizeView
+        this.handleAnimateResponseChange = this.handleAnimateResponseChange.bind(this);
+        
+        // Initialize enhanced keyboard shortcuts
+        this._initializeEnhancedShortcuts();
     }
 
     getProfileNames() {
@@ -853,6 +1232,102 @@ export class AssistantView extends LitElement {
             meeting: 'Business Meeting',
             presentation: 'Presentation',
             negotiation: 'Negotiation',
+        };
+    }
+
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        
+        // Clean up event listeners
+        document.removeEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        document.removeEventListener('animate-response-change', this.handleAnimateResponseChange);
+        
+        // Clean up IPC listeners if available
+        if (window.require) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                ipcRenderer.removeListener('navigate-previous-response', this.handlePreviousResponse);
+                ipcRenderer.removeListener('navigate-next-response', this.handleNextResponse);
+                ipcRenderer.removeListener('scroll-response-up', this.handleScrollUp);
+                ipcRenderer.removeListener('scroll-response-down', this.handleScrollDown);
+                ipcRenderer.removeListener('layout-mode-changed', this.handleLayoutModeChange);
+            } catch (error) {
+                console.warn('Failed to remove IPC listeners:', error);
+            }
+        }
+    }
+    
+    /**
+     * Handle auto scroll changes from CustomizeView
+     */
+    handleAutoScrollChange(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        // Handle changes from CustomizeView (including initialization and layout changes)
+        if (source === 'customize-view' || source === 'customize-view-init' || source === 'customize-view-layout-change') {
+            // Get current layout mode
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            
+            // Only update if the change is for the current layout mode
+            if (layoutMode === currentLayoutMode) {
+                this.autoScrollEnabled = enabled;
+                
+                // Trigger re-render to update the button state
+                this.requestUpdate();
+                
+                console.log(`[AssistantView] Auto scroll updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+            }
+        }
+    }
+
+    /**
+     * Handle animate response changes from CustomizeView
+     */
+    handleAnimateResponseChange(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        console.log(`[AssistantView] handleAnimateResponseChange called - layoutMode: ${layoutMode}, enabled: ${enabled}, source: ${source}`);
+        
+        // Handle changes from CustomizeView (including initialization and layout changes)
+        if (source === 'customize-view' || source === 'customize-view-init' || source === 'customize-view-layout-change') {
+            // Get current layout mode
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            
+            console.log(`[AssistantView] Current layout mode: ${currentLayoutMode}, event layout mode: ${layoutMode}`);
+            
+            // Only update if the change is for the current layout mode
+            if (layoutMode === currentLayoutMode) {
+                console.log(`[AssistantView] Updating shouldAnimateResponse from ${this.shouldAnimateResponse} to ${enabled}`);
+                this.shouldAnimateResponse = enabled;
+                
+                // Trigger re-render to update any relevant UI
+                this.requestUpdate();
+                
+                console.log(`[AssistantView] Animate response updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+            } else {
+                console.log(`[AssistantView] Ignoring animate response change for different layout mode`);
+            }
+        }
+    }
+    _initializeEnhancedShortcuts() {
+        this._enhancedShortcuts = {
+            'shift+alt+p': () => this.pauseResumeReading(),
+            'shift+alt+r': () => this.restartCurrentSection(),
+            'shift+alt+s': () => this.skipToNextKeyBlock(),
+            'shift+alt+e': () => this.jumpToResponseEnd(),
+            'shift+alt+c': () => this.cycleCodeBlocks(),
+            'shift+alt+d': () => this.jumpBetweenDiagrams(),
+            'shift+alt+h': () => this.highlightNextKeyConcept(),
+            'shift+alt+q': () => this.showQuickSummary(),
+            'shift+alt+l': () => this.adjustLineSpacing(),
+            'shift+alt+k': () => this.toggleKeyInformationEmphasis(),
+            'shift+alt+t': () => this.adjustReadingTempo(),
+            'shift+alt+f': () => this.toggleFocusMode(),
+            // Font size shortcuts
+            'ctrl+shift+=': () => this.increaseFontSize(),
+            'ctrl+shift+plus': () => this.increaseFontSize(),
+            'ctrl+shift+-': () => this.decreaseFontSize(),
+            'ctrl+shift+minus': () => this.decreaseFontSize()
         };
     }
 
@@ -872,16 +1347,28 @@ export class AssistantView extends LitElement {
                 // Fix incomplete code blocks during streaming
                 let processedContent = this.fixIncompleteCodeBlocks(content);
                 
+                // Analyze content for teleprompter optimization
+                this.contentAnalysis = teleprompterFormatter.analyzeContentType(processedContent);
+                
                 // Configure marked for better security and formatting
                 window.marked.setOptions({
                     breaks: true,
                     gfm: true,
                     sanitize: false, // We trust the AI responses
                 });
+                
                 let rendered = window.marked.parse(processedContent);
                 rendered = this.renderMermaidDiagrams(rendered);
                 rendered = this.highlightJavaCode(rendered);
+                
+                // Apply teleprompter visual hierarchy
+                rendered = teleprompterFormatter.applyVisualHierarchy(rendered, this.contentAnalysis);
+                
                 rendered = this.wrapWordsInSpans(rendered);
+                
+                // Segment content for progressive disclosure
+                this._contentSegments = teleprompterFormatter.segmentContent(processedContent);
+                
                 return rendered;
             } catch (error) {
                 console.warn('Error parsing markdown:', error);
@@ -1284,15 +1771,6 @@ export class AssistantView extends LitElement {
            console.log('Pronouns replaced in response');
        }
 
-    loadFontSize() {
-        const fontSize = localStorage.getItem('fontSize');
-        if (fontSize !== null) {
-            const fontSizeValue = parseInt(fontSize, 10) || 20;
-            const root = document.documentElement;
-            root.style.setProperty('--response-font-size', `${fontSizeValue}px`);
-        }
-    }
-
     loadFontFamily() {
         const savedFontFamily = localStorage.getItem('selectedFontFamily');
         if (savedFontFamily) {
@@ -1355,83 +1833,52 @@ export class AssistantView extends LitElement {
     loadLayoutSpecificSettings() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
+        console.log(`[AssistantView] loadLayoutSpecificSettings called for mode: ${layoutMode}`);
+        
         if (layoutMode === 'normal') {
-            // Load normal layout settings
+            // Load normal layout settings with fallback to defaults
             const normalAutoScroll = localStorage.getItem('normalAutoScroll');
-            this.autoScrollEnabled = normalAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10);
+            this.autoScrollEnabled = normalAutoScroll !== null ? normalAutoScroll === 'true' : false; // Default: false
+            this.scrollSpeed = parseInt(localStorage.getItem('normalScrollSpeed'), 10) || 2;
+            
+            const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
+            this.shouldAnimateResponse = normalAnimateResponse !== null ? normalAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] Normal mode - normalAnimateResponse localStorage: '${normalAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'compact') {
-            // Load compact layout settings
+            // Load compact layout settings with fallback to defaults
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
-            this.autoScrollEnabled = compactAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10);
+            this.autoScrollEnabled = compactAutoScroll !== null ? compactAutoScroll === 'true' : true; // Default: true
+            this.scrollSpeed = parseInt(localStorage.getItem('compactScrollSpeed'), 10) || 2;
+            
+            const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
+            this.shouldAnimateResponse = compactAnimateResponse !== null ? compactAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] Compact mode - compactAnimateResponse localStorage: '${compactAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'system-design') {
-            // Load system design layout settings
+            // Load system design layout settings with fallback to defaults
             const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
-            this.autoScrollEnabled = systemDesignAutoScroll === 'true';
-            this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10);
-        }
-    }
-
-    increaseFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.min(currentFontSize + 1, 16); // Max font size 32px
-        
-        if (layoutMode === 'normal') {
-            localStorage.setItem('normalFontSize', newFontSize.toString());
-        } else if (layoutMode === 'compact') {
-            localStorage.setItem('compactFontSize', newFontSize.toString());
-        } else {
-            localStorage.setItem('fontSize', newFontSize.toString());
+            this.autoScrollEnabled = systemDesignAutoScroll !== null ? systemDesignAutoScroll === 'true' : false; // Default: false
+            this.scrollSpeed = parseInt(localStorage.getItem('systemDesignScrollSpeed'), 10) || 2;
+            
+            const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+            this.shouldAnimateResponse = systemDesignAnimateResponse !== null ? systemDesignAnimateResponse === 'true' : false; // Default: false
+            
+            console.log(`[AssistantView] System design mode - systemDesignAnimateResponse localStorage: '${systemDesignAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         }
         
-        const root = document.documentElement;
-        root.style.setProperty('--response-font-size', `${newFontSize}px`);
-        this.requestUpdate(); // Trigger re-render to update font size display
-    }
-
-    decreaseFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        const currentFontSize = this.getCurrentFontSize();
-        const newFontSize = Math.max(currentFontSize - 1, 10); // Min font size 12px
-        
-        if (layoutMode === 'normal') {
-            localStorage.setItem('normalFontSize', newFontSize.toString());
-        } else if (layoutMode === 'compact') {
-            localStorage.setItem('compactFontSize', newFontSize.toString());
-        } else {
-            localStorage.setItem('fontSize', newFontSize.toString());
-        }
-        
-        const root = document.documentElement;
-        root.style.setProperty('--response-font-size', `${newFontSize}px`);
-        this.requestUpdate(); // Trigger re-render to update font size display
-    }
-
-    getCurrentFontSize() {
-        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
-        
-        if (layoutMode === 'normal') {
-            return parseInt(localStorage.getItem('normalFontSize'), 10);
-        } else if (layoutMode === 'compact') {
-            return parseInt(localStorage.getItem('compactFontSize'), 10);
-        } else {
-            return parseInt(localStorage.getItem('fontSize')) || 16;
-        }
+        console.log(`[AssistantView] Loaded settings for ${layoutMode} - autoScroll: ${this.autoScrollEnabled}, animateResponse: ${this.shouldAnimateResponse}`);
     }
 
     updateLayoutModeClass() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
         // Remove all layout mode classes
-        this.classList.remove('compact-mode', 'ultra-compact-mode', 'system-design-mode', 'focus-mode');
+        this.classList.remove('compact-mode', 'system-design-mode', 'focus-mode');
         
         // Add the current layout mode class
         if (layoutMode === 'compact') {
             this.classList.add('compact-mode');
-        } else if (layoutMode === 'ultra-compact') {
-            this.classList.add('ultra-compact-mode');
         } else if (layoutMode === 'system-design') {
             this.classList.add('system-design-mode');
         } else if (layoutMode === 'focus-mode') {
@@ -1442,9 +1889,6 @@ export class AssistantView extends LitElement {
     connectedCallback() {
         super.connectedCallback();
 
-        // Load and apply font size
-        this.loadFontSize();
-        
         // Load and apply font family
         this.loadFontFamily();
         
@@ -1478,20 +1922,27 @@ export class AssistantView extends LitElement {
             ipcRenderer.on('scroll-response-up', this.handleScrollUp);
             ipcRenderer.on('scroll-response-down', this.handleScrollDown);
             
-
-            
             // Listen for layout mode changes to reload settings
             this.handleLayoutModeChange = () => {
                 console.log('[AssistantView] Layout mode changed, reloading settings');
                 this.loadLayoutSpecificSettings();
                 this.updateLayoutModeClass();
                 this.requestUpdate();
+                console.log(`[AssistantView] After layout change - auto scroll: ${this.autoScrollEnabled}`);
             };
             
             ipcRenderer.on('layout-mode-changed', this.handleLayoutModeChange);
         }
         
-
+        // Listen for auto scroll changes from CustomizeView (outside IPC block)
+        document.addEventListener('auto-scroll-change', this.handleAutoScrollChange);
+        
+        // Listen for animate response changes from CustomizeView
+        document.addEventListener('animate-response-change', this.handleAnimateResponseChange);
+        
+        // Ensure auto scroll state is properly loaded and synchronized
+        this.loadLayoutSpecificSettings();
+        this.requestUpdate();
     }
 
     disconnectedCallback() {
@@ -1621,6 +2072,8 @@ export class AssistantView extends LitElement {
                 localStorage.setItem('normalScrollSpeed', this.scrollSpeed.toString());
             } else if (layoutMode === 'compact') {
                 localStorage.setItem('compactScrollSpeed', this.scrollSpeed.toString());
+            } else if (layoutMode === 'system-design') {
+                localStorage.setItem('systemDesignScrollSpeed', this.scrollSpeed.toString());
             }
             
             this.requestUpdate(); // Trigger re-render to update scroll speed display
@@ -1676,6 +2129,90 @@ export class AssistantView extends LitElement {
         // Dispatch event to parent to keep it in sync
         this.dispatchEvent(new CustomEvent('auto-scroll-toggle', {
             detail: { enabled: this.autoScrollEnabled },
+            bubbles: true,
+            composed: true
+        }));
+        
+        // Dispatch event to notify CustomizeView about the change
+        document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+            detail: {
+                layoutMode,
+                enabled: this.autoScrollEnabled,
+                source: 'assistant-view'
+            }
+        }));
+    }
+
+    /**
+     * Get current font size for the active layout mode
+     */
+    getCurrentFontSize() {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        let fontSize;
+        
+        if (layoutMode === 'normal') {
+            fontSize = localStorage.getItem('normalFontSize');
+        } else if (layoutMode === 'compact') {
+            fontSize = localStorage.getItem('compactFontSize');
+        } else if (layoutMode === 'system-design') {
+            fontSize = localStorage.getItem('systemDesignFontSize');
+        }
+        
+        return parseInt(fontSize, 10) || 12;
+    }
+
+    /**
+     * Increase font size for the current layout mode
+     */
+    increaseFontSize() {
+        const currentSize = this.getCurrentFontSize();
+        if (currentSize < 32) {
+            const newSize = currentSize + 1;
+            this.updateFontSizeForCurrentLayout(newSize);
+            console.log(`Font size increased to ${newSize}px`);
+        }
+    }
+
+    /**
+     * Decrease font size for the current layout mode
+     */
+    decreaseFontSize() {
+        const currentSize = this.getCurrentFontSize();
+        if (currentSize > 10) {
+            const newSize = currentSize - 1;
+            this.updateFontSizeForCurrentLayout(newSize);
+            console.log(`Font size decreased to ${newSize}px`);
+        }
+    }
+
+    /**
+     * Update font size for the current layout mode
+     */
+    updateFontSizeForCurrentLayout(fontSize) {
+        const layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        
+        // Save to layout-specific localStorage
+        if (layoutMode === 'normal') {
+            localStorage.setItem('normalFontSize', fontSize.toString());
+        } else if (layoutMode === 'compact') {
+            localStorage.setItem('compactFontSize', fontSize.toString());
+        } else if (layoutMode === 'system-design') {
+            localStorage.setItem('systemDesignFontSize', fontSize.toString());
+        }
+        
+        // Apply the font size immediately to the centralized CSS variable
+        document.documentElement.style.setProperty('--response-font-size', `${fontSize}px`);
+        
+        // Trigger re-render to update font size display
+        this.requestUpdate();
+        
+        // Dispatch event to notify other components (like CustomizeView) about the change
+        this.dispatchEvent(new CustomEvent('font-size-change', {
+            detail: { 
+                layoutMode,
+                fontSize,
+                source: 'assistant-view'
+            },
             bubbles: true,
             composed: true
         }));
@@ -1753,11 +2290,13 @@ export class AssistantView extends LitElement {
             cancelAnimationFrame(this._autoScrollAnimationId);
         }
         
-        // Calculate pixels per frame based on scroll speed (1-10 scale)
-        // Higher speed = more pixels per frame for faster scrolling
-        // Reduced by 80% + additional 30% + further 50% + additional 70% + further 20% for even slower overall speed
-        const pixelsPerFrame = (0.5 + (this.scrollSpeed - 1) * 1.5) * 0.2 * 0.7 * 0.5 * 0.3 * 0.8; // 0.0084 to 0.2352 pixels per frame
+        // Smart scrolling with content-aware speed adjustment
+        const basePixelsPerFrame = (0.5 + (this.scrollSpeed - 1) * 1.5) * 0.2 * 0.7 * 0.5 * 0.3 * 0.8;
+        
         let currentPosition = start;
+        let pauseDetected = false;
+        let pauseStartTime = null;
+        const pauseDuration = 2000; // 2 seconds pause at natural breakpoints
 
         const animateScroll = () => {
             // Check if auto-scroll is disabled or paused
@@ -1766,13 +2305,47 @@ export class AssistantView extends LitElement {
                 return;
             }
             
-            // Move by fixed pixels per frame for consistent speed
-            currentPosition += pixelsPerFrame;
+            // Smart pause detection at content boundaries
+            const currentElement = this._getElementAtScrollPosition(container, currentPosition);
+            const shouldPause = this._shouldPauseAtElement(currentElement, currentPosition, container);
+            
+            if (shouldPause && !pauseDetected) {
+                pauseDetected = true;
+                pauseStartTime = Date.now();
+                
+                // Visual indicator for pause
+                this._showPauseIndicator(currentElement);
+            }
+            
+            // Handle pause duration
+            if (pauseDetected) {
+                const elapsedPause = Date.now() - pauseStartTime;
+                if (elapsedPause < pauseDuration) {
+                    // Still pausing, continue animation without moving
+                    this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
+                    return;
+                } else {
+                    // Pause complete, continue scrolling
+                    pauseDetected = false;
+                    pauseStartTime = null;
+                    this._hidePauseIndicator();
+                }
+            }
+            
+            // Adaptive scrolling speed based on content type
+            let adaptiveSpeed = basePixelsPerFrame;
+            if (currentElement) {
+                adaptiveSpeed = this._getAdaptiveScrollSpeed(currentElement, basePixelsPerFrame);
+            }
+            
+            // Move by calculated pixels per frame
+            currentPosition += adaptiveSpeed;
             
             // Don't overshoot the target
             if (currentPosition >= target) {
                 container.scrollTop = target;
                 this._autoScrollAnimationId = null;
+                this._hidePauseIndicator();
             } else {
                 container.scrollTop = currentPosition;
                 this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
@@ -1780,6 +2353,542 @@ export class AssistantView extends LitElement {
         };
 
         this._autoScrollAnimationId = requestAnimationFrame(animateScroll);
+    }
+    
+    /**
+     * Get the DOM element at a specific scroll position
+     */
+    _getElementAtScrollPosition(container, scrollPosition) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, pre, .priority-primary, .segment-boundary');
+        let targetElement = null;
+        
+        for (const element of elements) {
+            const elementTop = element.offsetTop;
+            const elementBottom = elementTop + element.offsetHeight;
+            
+            if (scrollPosition >= elementTop - 50 && scrollPosition <= elementBottom + 50) {
+                targetElement = element;
+                break;
+            }
+        }
+        
+        return targetElement;
+    }
+    
+    /**
+     * Determine if scrolling should pause at a specific element
+     */
+    _shouldPauseAtElement(element, scrollPosition, container) {
+        if (!element) return false;
+        
+        // Pause at segment boundaries
+        if (element.classList.contains('segment-boundary')) {
+            return true;
+        }
+        
+        // Pause at headers
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
+            return true;
+        }
+        
+        // Pause at priority content
+        if (element.classList.contains('priority-primary')) {
+            return true;
+        }
+        
+        // Pause at code blocks
+        if (element.tagName === 'PRE' || element.querySelector('code')) {
+            return true;
+        }
+        
+        // Pause at long paragraphs (>200 characters)
+        if (element.tagName === 'P' && element.textContent.length > 200) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get adaptive scroll speed based on content type
+     */
+    _getAdaptiveScrollSpeed(element, baseSpeed) {
+        if (!element) return baseSpeed;
+        
+        // Slower speed for complex content
+        if (element.classList.contains('content-type-code') || element.tagName === 'PRE') {
+            return baseSpeed * 0.5; // 50% slower for code
+        }
+        
+        // Slower speed for primary content
+        if (element.classList.contains('priority-primary')) {
+            return baseSpeed * 0.7; // 30% slower for important content
+        }
+        
+        // Faster speed for tertiary content
+        if (element.classList.contains('priority-tertiary')) {
+            return baseSpeed * 1.3; // 30% faster for less important content
+        }
+        
+        // Slower speed for headings
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(element.tagName)) {
+            return baseSpeed * 0.6; // 40% slower for headings
+        }
+        
+        return baseSpeed;
+    }
+    
+    /**
+     * Show visual pause indicator
+     */
+    _showPauseIndicator(element) {
+        if (element && !element.querySelector('.pause-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'pause-indicator';
+            indicator.style.cssText = `
+                position: absolute;
+                right: -30px;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 20px;
+                height: 20px;
+                background: rgba(0, 122, 255, 0.8);
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 10px;
+                color: white;
+                font-weight: bold;
+                animation: pulse 1s infinite;
+                z-index: 100;
+            `;
+            indicator.textContent = '⏸';
+            
+            // Position relative to element
+            element.style.position = 'relative';
+            element.appendChild(indicator);
+        }
+    }
+    
+    /**
+     * Hide visual pause indicator
+     */
+    _hidePauseIndicator() {
+        const indicators = document.querySelectorAll('.pause-indicator');
+        indicators.forEach(indicator => {
+            indicator.remove();
+        });
+    }
+
+    // Teleprompter Control Methods
+    
+    /**
+     * Pause or resume reading at natural breakpoints
+     */
+    pauseResumeReading() {
+        this._autoScrollPaused = !this._autoScrollPaused;
+        const container = this.shadowRoot.querySelector('.response-container');
+        
+        if (this._autoScrollPaused) {
+            // Pause scrolling
+            if (this._autoScrollAnimationId) {
+                cancelAnimationFrame(this._autoScrollAnimationId);
+                this._autoScrollAnimationId = null;
+            }
+            console.log('Reading paused at natural breakpoint');
+        } else {
+            // Resume scrolling
+            if (container && this.autoScrollEnabled) {
+                this.smoothScrollToBottom(container);
+            }
+            console.log('Reading resumed');
+        }
+        this.requestUpdate();
+    }
+    
+    /**
+     * Restart reading from the current section
+     */
+    restartCurrentSection() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            // Find current segment based on scroll position
+            const scrollTop = container.scrollTop;
+            const segments = container.querySelectorAll('.segment-boundary');
+            
+            let targetSegment = null;
+            for (const segment of segments) {
+                if (segment.offsetTop <= scrollTop + 100) {
+                    targetSegment = segment;
+                } else {
+                    break;
+                }
+            }
+            
+            if (targetSegment) {
+                container.scrollTop = targetSegment.offsetTop;
+            } else {
+                container.scrollTop = 0;
+            }
+            
+            console.log('Restarted current section');
+        }
+    }
+    
+    /**
+     * Skip to next key information block
+     */
+    skipToNextKeyBlock() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const keyElements = container.querySelectorAll('.priority-primary, .key-term');
+            const scrollTop = container.scrollTop;
+            
+            for (const element of keyElements) {
+                if (element.offsetTop > scrollTop + 50) {
+                    container.scrollTop = element.offsetTop - 20;
+                    element.style.background = 'rgba(0, 122, 255, 0.2)';
+                    setTimeout(() => {
+                        element.style.background = '';
+                    }, 1500);
+                    break;
+                }
+            }
+            
+            console.log('Skipped to next key block');
+        }
+    }
+    
+    /**
+     * Jump to response end/summary
+     */
+    jumpToResponseEnd() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+            console.log('Jumped to response end');
+        }
+    }
+    
+    /**
+     * Cycle through code blocks
+     */
+    cycleCodeBlocks() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const codeBlocks = container.querySelectorAll('pre code, .content-type-code');
+            if (codeBlocks.length === 0) return;
+            
+            if (!this._currentCodeBlockIndex) {
+                this._currentCodeBlockIndex = 0;
+            } else {
+                this._currentCodeBlockIndex = (this._currentCodeBlockIndex + 1) % codeBlocks.length;
+            }
+            
+            const targetBlock = codeBlocks[this._currentCodeBlockIndex];
+            container.scrollTop = targetBlock.offsetTop - 20;
+            
+            // Highlight the code block
+            targetBlock.style.boxShadow = '0 0 0 2px #007aff';
+            setTimeout(() => {
+                targetBlock.style.boxShadow = '';
+            }, 2000);
+            
+            console.log(`Cycled to code block ${this._currentCodeBlockIndex + 1}/${codeBlocks.length}`);
+        }
+    }
+    
+    /**
+     * Jump between diagrams and visual content
+     */
+    jumpBetweenDiagrams() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const diagrams = container.querySelectorAll('.mermaid-diagram, .content-type-diagram');
+            if (diagrams.length === 0) return;
+            
+            if (!this._currentDiagramIndex) {
+                this._currentDiagramIndex = 0;
+            } else {
+                this._currentDiagramIndex = (this._currentDiagramIndex + 1) % diagrams.length;
+            }
+            
+            const targetDiagram = diagrams[this._currentDiagramIndex];
+            container.scrollTop = targetDiagram.offsetTop - 20;
+            
+            console.log(`Jumped to diagram ${this._currentDiagramIndex + 1}/${diagrams.length}`);
+        }
+    }
+    
+    /**
+     * Highlight next key concept
+     */
+    highlightNextKeyConcept() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const keyTerms = container.querySelectorAll('.key-term');
+            if (keyTerms.length === 0) return;
+            
+            // Remove previous highlights
+            keyTerms.forEach(term => term.classList.remove('highlighted'));
+            
+            if (!this._currentKeyTermIndex) {
+                this._currentKeyTermIndex = 0;
+            } else {
+                this._currentKeyTermIndex = (this._currentKeyTermIndex + 1) % keyTerms.length;
+            }
+            
+            const targetTerm = keyTerms[this._currentKeyTermIndex];
+            targetTerm.classList.add('highlighted');
+            container.scrollTop = targetTerm.offsetTop - 50;
+            
+            console.log(`Highlighted key concept: ${targetTerm.textContent}`);
+        }
+    }
+    
+    /**
+     * Show quick summary of current response
+     */
+    showQuickSummary() {
+        if (this.contentAnalysis && this.contentAnalysis.keyTerms.length > 0) {
+            const summary = `Key concepts: ${this.contentAnalysis.keyTerms.slice(0, 5).join(', ')}`;
+            
+            // Create temporary summary overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.9);
+                color: white;
+                padding: 12px;
+                border-radius: 6px;
+                font-size: 14px;
+                z-index: 1000;
+                border: 1px solid #007aff;
+            `;
+            overlay.textContent = summary;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => {
+                document.body.removeChild(overlay);
+            }, 3000);
+            
+            console.log('Showed quick summary:', summary);
+        }
+    }
+    
+    /**
+     * Adjust line spacing for easier reading
+     */
+    adjustLineSpacing() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const currentLineHeight = parseFloat(getComputedStyle(container).lineHeight) || 1.5;
+            const newLineHeight = currentLineHeight >= 2.0 ? 1.5 : currentLineHeight + 0.1;
+            
+            container.style.lineHeight = newLineHeight;
+            console.log(`Adjusted line spacing to ${newLineHeight}`);
+        }
+    }
+    
+    /**
+     * Toggle key information emphasis
+     */
+    toggleKeyInformationEmphasis() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            container.classList.toggle('emphasis-mode');
+            const isEmphasized = container.classList.contains('emphasis-mode');
+            
+            // Add dynamic CSS for emphasis mode
+            if (isEmphasized) {
+                const style = document.createElement('style');
+                style.id = 'emphasis-mode-styles';
+                style.textContent = `
+                    .emphasis-mode .priority-primary {
+                        background: rgba(0, 122, 255, 0.2) !important;
+                        border-left-width: 5px !important;
+                    }
+                    .emphasis-mode .key-term {
+                        background: rgba(255, 215, 0, 0.3) !important;
+                        font-size: 1.1em !important;
+                    }
+                `;
+                document.head.appendChild(style);
+            } else {
+                const existingStyle = document.getElementById('emphasis-mode-styles');
+                if (existingStyle) {
+                    document.head.removeChild(existingStyle);
+                }
+            }
+            
+            console.log(`Key information emphasis ${isEmphasized ? 'enabled' : 'disabled'}`);
+        }
+    }
+    
+    /**
+     * Adjust reading tempo indicators
+     */
+    adjustReadingTempo() {
+        const currentTempo = localStorage.getItem('readingTempo') || 'normal';
+        const tempos = ['slow', 'normal', 'fast'];
+        const currentIndex = tempos.indexOf(currentTempo);
+        const newTempo = tempos[(currentIndex + 1) % tempos.length];
+        
+        localStorage.setItem('readingTempo', newTempo);
+        
+        // Apply tempo-specific styling
+        const root = document.documentElement;
+        root.className = root.className.replace(/tempo-\w+/g, '');
+        root.classList.add(`tempo-${newTempo}`);
+        
+        console.log(`Reading tempo adjusted to: ${newTempo}`);
+    }
+    
+    /**
+     * Toggle focus mode with minimal distractions
+     */
+    toggleFocusMode() {
+        document.documentElement.classList.toggle('teleprompter-focus-mode');
+        const isFocusMode = document.documentElement.classList.contains('teleprompter-focus-mode');
+        
+        if (isFocusMode) {
+            // Add focus mode styles
+            const style = document.createElement('style');
+            style.id = 'focus-mode-styles';
+            style.textContent = `
+                .teleprompter-focus-mode .text-input-container {
+                    opacity: 0.3;
+                    transition: opacity 0.3s ease;
+                }
+                .teleprompter-focus-mode .text-input-container:hover {
+                    opacity: 1;
+                }
+                .teleprompter-focus-mode .response-container {
+                    background: rgba(0, 0, 0, 0.95) !important;
+                }
+            `;
+            document.head.appendChild(style);
+        } else {
+            const existingStyle = document.getElementById('focus-mode-styles');
+            if (existingStyle) {
+                document.head.removeChild(existingStyle);
+            }
+        }
+        
+        console.log(`Focus mode ${isFocusMode ? 'enabled' : 'disabled'}`);
+    }
+    
+    /**
+     * Add breathing cues to content for natural pacing
+     */
+    _addBreathingCues(container) {
+        const sentences = container.querySelectorAll('p, li');
+        
+        sentences.forEach(element => {
+            const text = element.textContent;
+            const sentences = text.split(/[.!?]+/);
+            
+            if (sentences.length > 2) {
+                // Add breathing cues between sentences
+                element.classList.add('paragraph-breathing');
+                
+                // Add subtle breathing markers
+                const breathingCue = document.createElement('span');
+                breathingCue.className = 'breathing-cue';
+                
+                // Determine cue type based on content length
+                if (text.length > 150) {
+                    breathingCue.classList.add('long-pause');
+                } else if (text.length > 75) {
+                    breathingCue.classList.add('short-pause');
+                }
+                
+                element.appendChild(breathingCue);
+            }
+        });
+    }
+    
+    /**
+     * Add rhythm markers for reading pace guidance
+     */
+    _addRhythmMarkers(container) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6');
+        
+        elements.forEach((element, index) => {
+            const text = element.textContent;
+            const wordCount = text.split(/\s+/).length;
+            
+            // Add rhythm marker based on content complexity
+            const marker = document.createElement('div');
+            marker.className = 'rhythm-marker';
+            
+            if (wordCount > 30) {
+                marker.classList.add('slow'); // Slow reading for complex content
+            } else if (wordCount < 10) {
+                marker.classList.add('fast'); // Fast reading for simple content
+            }
+            
+            element.style.position = 'relative';
+            element.appendChild(marker);
+        });
+    }
+    
+    /**
+     * Show completion indicator when response is fully read
+     */
+    _showCompletionIndicator() {
+        // Remove existing indicator
+        const existing = document.querySelector('.completion-indicator');
+        if (existing) {
+            existing.remove();
+        }
+        
+        // Create completion indicator
+        const indicator = document.createElement('div');
+        indicator.className = 'completion-indicator';
+        indicator.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            Response Complete
+        `;
+        
+        document.body.appendChild(indicator);
+        
+        // Auto-remove after 2 seconds
+        setTimeout(() => {
+            if (indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }, 2000);
+    }
+    
+    /**
+     * Enhance visual feedback during reading
+     */
+    _enhanceReadingExperience() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            // Add breathing cues
+            this._addBreathingCues(container);
+            
+            // Add rhythm markers
+            this._addRhythmMarkers(container);
+            
+            // Monitor reading progress for completion signaling
+            const progressMonitor = () => {
+                if (this.readingProgress >= 95) {
+                    this._showCompletionIndicator();
+                    container.removeEventListener('scroll', progressMonitor);
+                }
+            };
+            
+            container.addEventListener('scroll', progressMonitor);
+        }
     }
 
     firstUpdated() {
@@ -1812,7 +2921,15 @@ export class AssistantView extends LitElement {
     _handleKeydown(event) {
         //console.log('Keyboard event detected:', event.key, 'autoScrollEnabled:', this.autoScrollEnabled);
         
-        // Toggle off auto-scroll on any keyboard interaction
+        // Check for teleprompter shortcuts first
+        const shortcut = this._getShortcutString(event);
+        if (this._enhancedShortcuts && this._enhancedShortcuts[shortcut]) {
+            event.preventDefault();
+            this._enhancedShortcuts[shortcut]();
+            return;
+        }
+        
+        // Toggle off auto-scroll on any keyboard interaction (except for teleprompter shortcuts)
         if (this.autoScrollEnabled) {
             console.log('Disabling auto-scroll due to keyboard interaction');
             this.autoScrollEnabled = false;
@@ -1842,6 +2959,19 @@ export class AssistantView extends LitElement {
                 composed: true
             }));
         }
+    }
+    
+    /**
+     * Convert keyboard event to shortcut string
+     */
+    _getShortcutString(event) {
+        const parts = [];
+        if (event.ctrlKey) parts.push('ctrl');
+        if (event.altKey) parts.push('alt');
+        if (event.shiftKey) parts.push('shift');
+        if (event.metaKey) parts.push('meta');
+        parts.push(event.key.toLowerCase());
+        return parts.join('+');
     }
     
     _handleMousedown(event) {
@@ -1885,9 +3015,13 @@ export class AssistantView extends LitElement {
         super.updated(changedProperties);
         if (changedProperties.has('responses') || changedProperties.has('currentResponseIndex')) {
             if (changedProperties.has('currentResponseIndex')) {
+                // Only reset animation count when actually navigating between responses
                 this._lastAnimatedWordCount = 0;
                 // Mark this as a navigation update to ensure scroll reset
                 this._isNavigationUpdate = true;
+                // Reset response content tracking for new response
+                this._lastResponseContent = '';
+                this._isStreamingResponse = false;
             }
             this.updateResponseContent();
         }
@@ -1931,14 +3065,61 @@ export class AssistantView extends LitElement {
             }
             
             const currentResponse = this.getCurrentResponse();
-            const renderedResponse = this.renderMarkdown(currentResponse);
-            container.innerHTML = renderedResponse;
+            let renderedResponse = this.renderMarkdown(currentResponse);
             
-            // Render mermaid diagrams after DOM insertion
-            this.renderMermaidDiagramsInDOM(container);
+            // Apply content segmentation for progressive disclosure
+            if (this._contentSegments && this._contentSegments.length > 0) {
+                renderedResponse = this._applyContentSegmentation(renderedResponse);
+            }
             
-            // Replace pronouns in the response content
-            this.replacePronounsInResponse();
+            // Detect if this is a truly new response or a streaming update
+            const isNewResponseStart = this._isNavigationUpdate || 
+                                      this._lastResponseContent === '' || 
+                                      currentResponse.length < this._lastResponseContent.length || 
+                                      container.innerHTML.trim() === '';
+            
+            // Check if this is an incremental update (streaming)
+            const isIncrementalUpdate = !isNewResponseStart && 
+                                       currentResponse.length > this._lastResponseContent.length &&
+                                       currentResponse.startsWith(this._lastResponseContent.substring(0, Math.min(this._lastResponseContent.length, 100)));
+            
+            if (isIncrementalUpdate) {
+                // Incremental update: preserve existing content and animations
+                this._updateContentIncrementally(container, renderedResponse);
+                this._isStreamingResponse = true;
+            } else {
+                // Full update: complete re-render for new responses or navigation
+                container.innerHTML = renderedResponse;
+                
+                // Apply teleprompter container class
+                container.classList.add('teleprompter-container');
+                
+                // Apply or remove no-animation class based on shouldAnimateResponse
+                if (this.shouldAnimateResponse) {
+                    container.classList.remove('no-animation');
+                } else {
+                    container.classList.add('no-animation');
+                }
+                
+                // Update reading progress
+                this._updateReadingProgress();
+                
+                // Enhance reading experience with visual cues
+                this._enhanceReadingExperience();
+                
+                // Render mermaid diagrams after DOM insertion
+                this.renderMermaidDiagramsInDOM(container);
+                
+                // Replace pronouns in the response content
+                this.replacePronounsInResponse();
+                
+                // Reset animation tracking for new response
+                this._lastAnimatedWordCount = 0;
+                this._isStreamingResponse = false;
+            }
+            
+            // Update the tracked response content
+            this._lastResponseContent = currentResponse;
             
             // Always reset scroll position to top only when navigating
             requestAnimationFrame(() => {
@@ -1958,14 +3139,96 @@ export class AssistantView extends LitElement {
             
             // Clear the navigation flag
             this._isNavigationUpdate = false;
-            const words = container.querySelectorAll('[data-word]');
+            
+            // Handle word animations
+            this._animateWords(container);
+        }
+    }
+    
+    /**
+     * Update content incrementally to avoid re-rendering existing animated words
+     */
+    _updateContentIncrementally(container, newRenderedResponse) {
+        // Create a temporary container to parse the new content
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = newRenderedResponse;
+        
+        // Get current and new word counts
+        const currentWords = container.querySelectorAll('[data-word]');
+        const newWords = tempContainer.querySelectorAll('[data-word]');
+        
+        // Only perform update if we have significantly more new words (avoid micro-updates)
+        if (newWords.length > currentWords.length + 5) {
+            // Use a more sophisticated approach: replace entire content but preserve animation states
+            const animationStates = new Map();
+            
+            // Save current animation states for existing words
+            currentWords.forEach((word, index) => {
+                animationStates.set(index, {
+                    isVisible: word.classList.contains('visible'),
+                    textContent: word.textContent.trim()
+                });
+            });
+            
+            // Update the content
+            container.innerHTML = newRenderedResponse;
+            
+            // Apply teleprompter container class
+            container.classList.add('teleprompter-container');
+            
+            // Apply or remove no-animation class based on shouldAnimateResponse
             if (this.shouldAnimateResponse) {
-                for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
+                container.classList.remove('no-animation');
+            } else {
+                container.classList.add('no-animation');
+            }
+            
+            // Restore animation states for existing words that match
+            const updatedWords = container.querySelectorAll('[data-word]');
+            animationStates.forEach((state, index) => {
+                if (updatedWords[index] && 
+                    updatedWords[index].textContent.trim() === state.textContent) {
+                    if (state.isVisible) {
+                        updatedWords[index].classList.add('visible');
+                    } else {
+                        updatedWords[index].classList.remove('visible');
+                    }
+                }
+            });
+            
+            // Update enhancements only when content significantly changes
+            this._updateReadingProgress();
+            this._enhanceReadingExperience();
+            this.renderMermaidDiagramsInDOM(container);
+            this.replacePronounsInResponse();
+        }
+    }
+    
+    /**
+     * Handle word-by-word animations separately to avoid re-triggering
+     */
+    _animateWords(container) {
+        const words = container.querySelectorAll('[data-word]');
+        
+        console.log(`[AssistantView] _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
+        
+        if (this.shouldAnimateResponse) {
+            // Remove no-animation class to enable transitions
+            container.classList.remove('no-animation');
+            console.log(`[AssistantView] Animation enabled - removed no-animation class`);
+            
+            // Ensure previously animated words remain visible
+            for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
+                if (!words[i].classList.contains('visible')) {
                     words[i].classList.add('visible');
                 }
-                for (let i = this._lastAnimatedWordCount; i < words.length; i++) {
-                    words[i].classList.remove('visible');
-                    setTimeout(() => {
+            }
+            
+            // Animate only new words
+            for (let i = this._lastAnimatedWordCount; i < words.length; i++) {
+                words[i].classList.remove('visible');
+                setTimeout(() => {
+                    if (words[i]) { // Check if element still exists
                         words[i].classList.add('visible');
                         if (i === words.length - 1) {
                             this.dispatchEvent(new CustomEvent('response-animation-complete', { bubbles: true, composed: true }));
@@ -1974,91 +3237,292 @@ export class AssistantView extends LitElement {
                                 this.scrollToBottom();
                             }
                         }
-                    }, (i - this._lastAnimatedWordCount) * 100);
-                }
-                this._lastAnimatedWordCount = words.length;
-            } else {
-                words.forEach(word => word.classList.add('visible'));
-                this._lastAnimatedWordCount = words.length;
-                // Auto-scroll after content update
-                if (this.autoScrollEnabled) {
-                    this.scrollToBottom();
-                }
+                    }
+                }, (i - this._lastAnimatedWordCount) * 100);
+            }
+            this._lastAnimatedWordCount = words.length;
+        } else {
+            // No animation: add no-animation class to disable CSS transitions
+            container.classList.add('no-animation');
+            console.log(`[AssistantView] Animation disabled - added no-animation class`);
+            
+            // Make all words visible immediately without any transition effects
+            words.forEach(word => {
+                word.classList.add('visible');
+            });
+            this._lastAnimatedWordCount = words.length;
+            
+            // Auto-scroll after content update
+            if (this.autoScrollEnabled) {
+                this.scrollToBottom();
             }
         }
     }
-
+    
+    /**
+     * Apply content segmentation with natural pause points
+     */
+    _applyContentSegmentation(htmlContent) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        
+        // Find paragraphs and other block elements to segment
+        const blocks = doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, blockquote');
+        
+        blocks.forEach((block, index) => {
+            // Add segment boundary class for natural pause points
+            if (index > 0 && this._isNaturalBreakPoint(block)) {
+                block.classList.add('segment-boundary');
+            }
+            
+            // Add natural pause indicators
+            this._addNaturalPauseIndicators(block);
+        });
+        
+        return doc.body.innerHTML;
+    }
+    
+    /**
+     * Determine if an element represents a natural break point
+     */
+    _isNaturalBreakPoint(element) {
+        const tagName = element.tagName.toLowerCase();
+        const text = element.textContent.trim();
+        
+        // Headers are always natural break points
+        if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tagName)) {
+            return true;
+        }
+        
+        // Long paragraphs (>100 chars) create break points
+        if (tagName === 'p' && text.length > 100) {
+            return true;
+        }
+        
+        // Code blocks create break points
+        if (element.querySelector('code, pre')) {
+            return true;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Add natural pause indicators within text content
+     */
+    _addNaturalPauseIndicators(element) {
+        const naturalPauses = ['.', '!', '?', ':', ';'];
+        let content = element.innerHTML;
+        
+        naturalPauses.forEach(punctuation => {
+            const regex = new RegExp(`\\${punctuation}(?=\\s)`, 'g');
+            content = content.replace(regex, `${punctuation}<span class="natural-pause"></span>`);
+        });
+        
+        element.innerHTML = content;
+    }
+    
+    /**
+     * Update reading progress based on scroll position
+     */
+    _updateReadingProgress() {
+        const container = this.shadowRoot.querySelector('.response-container');
+        if (container) {
+            const updateProgress = () => {
+                const scrollTop = container.scrollTop;
+                const scrollHeight = container.scrollHeight - container.clientHeight;
+                const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+                
+                this.readingProgress = Math.min(progress, 100);
+                
+                // Calculate estimated reading time remaining
+                const totalWords = this._getTotalWordCount(container);
+                const readWords = this._getReadWordCount(container, scrollTop);
+                const remainingWords = totalWords - readWords;
+                const estimatedTimeRemaining = Math.ceil(remainingWords / 200 * 60); // 200 WPM in seconds
+                
+                // Update reading statistics
+                this._updateReadingStats({
+                    progress: this.readingProgress,
+                    totalWords,
+                    readWords,
+                    remainingWords,
+                    estimatedTimeRemaining
+                });
+                
+                // Notify teleprompter formatter
+                teleprompterFormatter.updateProgress({ 
+                    progress: this.readingProgress,
+                    readWords,
+                    totalWords,
+                    estimatedTimeRemaining
+                });
+                
+                this.requestUpdate();
+            };
+            
+            // Update progress on scroll
+            container.addEventListener('scroll', updateProgress);
+            
+            // Initial progress update
+            updateProgress();
+        }
+    }
+    
+    /**
+     * Get total word count in the response
+     */
+    _getTotalWordCount(container) {
+        const textContent = container.textContent || '';
+        return textContent.split(/\s+/).filter(word => word.length > 0).length;
+    }
+    
+    /**
+     * Get approximate word count that has been read based on scroll position
+     */
+    _getReadWordCount(container, scrollTop) {
+        const elements = container.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li');
+        let readWords = 0;
+        
+        for (const element of elements) {
+            const elementTop = element.offsetTop;
+            const elementHeight = element.offsetHeight;
+            const elementBottom = elementTop + elementHeight;
+            
+            if (elementBottom <= scrollTop + container.clientHeight) {
+                // Element is fully visible or scrolled past
+                const elementText = element.textContent || '';
+                readWords += elementText.split(/\s+/).filter(word => word.length > 0).length;
+            } else if (elementTop <= scrollTop + container.clientHeight) {
+                // Element is partially visible
+                const visibleRatio = (scrollTop + container.clientHeight - elementTop) / elementHeight;
+                const elementText = element.textContent || '';
+                const elementWords = elementText.split(/\s+/).filter(word => word.length > 0).length;
+                readWords += Math.floor(elementWords * Math.max(0, Math.min(1, visibleRatio)));
+            }
+        }
+        
+        return readWords;
+    }
+    
+    /**
+     * Update reading statistics and display
+     */
+    _updateReadingStats(stats) {
+        this._readingStats = stats;
+        
+        // Dispatch reading stats event to parent for header display
+        this.dispatchEvent(new CustomEvent('reading-stats-update', {
+            detail: { stats },
+            bubbles: true,
+            composed: true
+        }));
+        
+        // Update progress bar style based on reading speed
+        const progressBar = this.shadowRoot.querySelector('.reading-progress-bar');
+        if (progressBar) {
+            // Color-code progress based on reading efficiency
+            let progressColor = '#007aff'; // Default blue
+            
+            if (stats.progress > 80) {
+                progressColor = '#34d399'; // Green for near completion
+            } else if (stats.progress > 50) {
+                progressColor = '#fbbf24'; // Yellow for mid-progress
+            }
+            
+            progressBar.style.background = `linear-gradient(90deg, ${progressColor}, ${progressColor}aa)`;
+        }
+    }
+    
     render() {
         const currentResponse = this.getCurrentResponse();
         const responseCounter = this.getResponseCounter();
 
         return html`
-            <div class="response-container"></div>
+            <div class="response-container teleprompter-container"></div>
             
+            <!-- Reading Progress Indicator -->
+            <div class="reading-progress">
+                <div class="reading-progress-bar" style="width: ${this.readingProgress}%"></div>
+            </div>
 
 
             <div class="text-input-container">
-                <button class="nav-button" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0}>
-                    <?xml version="1.0" encoding="UTF-8"?><svg
-                        width="24px"
-                        height="24px"
-                        stroke-width="1.7"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        color="#ffffff"
-                    >
-                        <path d="M15 6L9 12L15 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                </button>
-
-                ${this.responses.length > 0 ? html` <span class="response-counter">${responseCounter}</span> ` : ''}
-
-                <div class="font-size-controls">
-                    <button class="font-size-button" @click=${this.increaseFontSize}>+</button>
-                    <span class="font-size-label">${this.getCurrentFontSize()}</span>
-                    <button class="font-size-button" @click=${this.decreaseFontSize}>-</button>
-                </div>
-
-                <div class="scroll-speed-controls">
-                    <button class="scroll-speed-button" @click=${this.decreaseScrollSpeed}>-</button>
-                    <span class="scroll-speed-display">${this.scrollSpeed}</span>
-                    <button class="scroll-speed-button" @click=${this.increaseScrollSpeed}>+</button>
-                </div>
-
-                <button class="auto-scroll-toggle ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll}>
-                    <svg class="auto-scroll-icon" viewBox="0 0 24 24">
-                        <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
-                    </svg>
-                </button>
-
-                <button class="microphone-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
-                    <svg class="microphone-icon" viewBox="0 0 24 24">
-                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
-                        <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
-                    </svg>
-                </button>
-
-                <button class="speaker-button ${this.speakerDetectionEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleSpeakerDetection}>
-                    <svg class="speaker-icon" viewBox="0 0 24 24">
-                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-                    </svg>
-                </button>
                 
+                <!-- Reading Flow Controls -->
+                <div class="reading-flow-controls">
+                    
+                    <!-- comment control buttons
+                    <button class="flow-control-button" @click=${this.restartCurrentSection} title="">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="flow-control-button" @click=${this.skipToNextKeyBlock} title="">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/>
+                        </svg>
+                    </button>
+                    
+                    <button class="flow-control-button" @click=${this.jumpToResponseEnd} title="">
+                        <svg viewBox="0 0 24 24" class="flow-control-icon">
+                            <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/>
+                        </svg>
+                    </button>
+                    -->
+                    <button class="nav-button flow-control-button" @click=${this.navigateToPreviousResponse} ?disabled=${this.currentResponseIndex <= 0}>
+                        <?xml version="1.0" encoding="UTF-8"?><svg
+                            width="24px"
+                            height="24px"
+                            stroke-width="1.7"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            color="#ffffff"
+                        >
+                            <path d="M15 6L9 12L15 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
 
-                
+                    ${this.responses.length > 0 ? html` <span class="response-counter flow-control-button">${responseCounter}</span> ` : ''}
 
-                
-                ${(() => {
-                    const timeDisplay = this.getResponseTimeDisplay();
-                    return timeDisplay.text ? html`
-                        <div class="response-time-display ${timeDisplay.className}">
-                            ${timeDisplay.text}
-                        </div>
-                    ` : '';
-                })()}
+                    <div class="font-size-controls flow-control-button">
+                        <button class="font-size-button" @click=${this.decreaseFontSize} title="">
+                            -
+                        </button>
+                        <span class="font-size-label">${this.getCurrentFontSize()}px</span>
+                        <button class="font-size-button" @click=${this.increaseFontSize} title="">
+                            +
+                        </button>
+                    </div>
 
-                <button class="nav-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
+                    <div class="scroll-speed-controls flow-control-button">
+                        <button class="scroll-speed-button" @click=${this.decreaseScrollSpeed}>-</button>
+                        <span class="scroll-speed-display">${this.scrollSpeed}</span>
+                        <button class="scroll-speed-button" @click=${this.increaseScrollSpeed}>+</button>
+                    </div>
+
+                    <button class="auto-scroll-toggle flow-control-button ${this.autoScrollEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleAutoScroll}>
+                        <svg class="auto-scroll-icon" viewBox="0 0 24 24">
+                            <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+                        </svg>
+                    </button>
+
+                    <button class="microphone-button flow-control-button ${this.microphoneState}" @click=${this.toggleMicrophone}>
+                        <svg class="microphone-icon" viewBox="0 0 24 24">
+                            <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                            <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+                        </svg>
+                    </button>
+
+                    <button class="speaker-button flow-control-button ${this.speakerDetectionEnabled ? 'enabled' : 'disabled'}" @click=${this.toggleSpeakerDetection}>
+                        <svg class="speaker-icon" viewBox="0 0 24 24">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                        </svg>
+                    </button>
+
+                    <button class="nav-button flow-control-button" @click=${this.navigateToNextResponse} ?disabled=${this.currentResponseIndex >= this.responses.length - 1}>
                     <?xml version="1.0" encoding="UTF-8"?><svg
                         width="24px"
                         height="24px"
@@ -2071,6 +3535,7 @@ export class AssistantView extends LitElement {
                         <path d="M9 6L15 12L9 18" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
                 </button>
+                </div>
             </div>
         `;
     }

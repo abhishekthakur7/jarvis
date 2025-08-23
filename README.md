@@ -1,63 +1,92 @@
-# Jarvis - Your Personal AI Assistant
+# Jarvis - AI-Powered Desktop Assistant
 
-Jarvis is a desktop application built with Electron that acts as a personal AI assistant. It leverages Google's Gemini for its core AI capabilities and integrates with Notion for enhanced productivity.
+**Version:** 0.1.0  
+**Platform:** Cross-platform Desktop Application (Windows, macOS, Linux)  
+**License:** GPL-3.0
+
+Jarvis is a sophisticated desktop AI assistant built with Electron, designed to provide contextual assistance using Google's Gemini AI. Originally conceived as an interview assistant, it has evolved into a comprehensive productivity tool that combines multi-modal input processing, real-time AI assistance, and specialized workflow optimization for professionals, job seekers, and anyone needing intelligent desktop assistance.
+
+## 🎯 Primary Use Cases
+
+- **Job Interview Assistance** - Real-time coaching and guidance during interviews
+- **Business Meeting Support** - Contextual suggestions and note-taking assistance  
+- **Sales Call Enhancement** - AI-powered conversation insights and recommendations
+- **Presentation Assistance** - Live content analysis and speaking guidance
+- **General Productivity** - Multi-modal AI assistant for daily tasks
 
 ## Features
 
-### Core AI Capabilities
-*   **AI-Powered Assistance:** Jarvis uses Google's Gemini to understand and respond to your queries with contextual awareness
-*   **Screen Analysis:** Automatic screenshot capture and analysis for visual context
-*   **Audio Processing:** Real-time microphone and speaker audio detection and transcription
-*   **Multi-Modal Input:** Combines text, voice, and visual inputs for comprehensive assistance
+### 🤖 Core AI Capabilities
+*   **Advanced AI Integration:** Powered by Google Gemini 2.5-Flash-Preview with support for Gemini Pro models
+*   **Multi-Modal Processing:** Seamlessly combines text, voice, and visual inputs for comprehensive contextual understanding
+*   **Real-Time Screen Analysis:** Automatic screenshot capture with configurable intervals and AI-powered visual context analysis
+*   **Intelligent Audio Processing:** Advanced microphone and system audio detection with multi-language transcription
+*   **Context-Aware Responses:** Maintains conversation history with smart context management and duplicate prevention
+*   **Streaming Response Handling:** Real-time AI response processing with corruption detection and buffer management
 
-### Interface & Layout
-*   **Multiple Layout Modes:** Switch between Normal, Compact, and System Design layouts
-*   **Focus Mode:** Distraction-free interface for enhanced productivity
-*   **Interview Mode:** Specialized mode with content protection for job interviews
-*   **Advanced Mode:** Access to additional features and settings
-*   **Click-through Mode:** Make the window transparent to mouse clicks
-*   **Customizable Transparency:** Adjust window opacity for different layouts
+### 🎨 Interface & Layout
+*   **Adaptive Layout Modes:** Three distinct modes - Normal (feature-rich), Compact (minimal), and System Design (integrated)
+*   **Intelligent Focus Mode:** Distraction-free interface with content protection and stealth capabilities
+*   **Specialized Interview Mode:** Privacy-enhanced mode with content protection and discrete operation
+*   **Advanced Configuration:** Comprehensive settings panel with Notion integration and API management
+*   **Click-through Functionality:** Transform window into transparent overlay for unobtrusive assistance
+*   **Dynamic Transparency Control:** Per-layout opacity settings with window-level and element-level transparency
+*   **Responsive Design:** Adapts to different screen sizes and resolutions with platform-specific optimizations
 
-### Audio & Voice Features
-*   **Microphone Toggle:** Enable/disable microphone input with visual feedback
-*   **Speaker Detection:** Automatic detection and transcription of system audio
-*   **Multi-Language Support:** Support for various speech languages
-*   **Audio Quality Control:** Configurable audio processing settings
+### 🎵 Audio & Voice Features
+*   **Enhanced Microphone Management:** Advanced audio capture with voice activity detection and noise reduction
+*   **System Audio Monitoring:** Real-time speaker detection and transcription (Windows: WASAPI, macOS/Linux: Web Audio API)
+*   **Multi-Language Speech Recognition:** Support for multiple languages with automatic language detection
+*   **Audio Quality Optimization:** Configurable sample rates, bit depths, and processing quality settings
+*   **Platform-Specific Audio:** Optimized audio processing for each operating system with fallback mechanisms
+*   **Audio Worklet Processing:** Low-latency audio processing using Web Audio API worklets
+*   **Debounce and Duplicate Prevention:** Intelligent audio processing to prevent duplicate transcriptions
 
-### Screen Capture & Analysis
-*   **Automatic Screenshots:** Configurable intervals (1s, 2s, 5s, 10s) or manual mode
-*   **Image Quality Settings:** High, Medium, or Low quality options
-*   **Manual Capture:** On-demand screenshot capture with keyboard shortcuts
-*   **Visual Context Analysis:** AI analysis of screen content for relevant assistance
+### 📸 Screen Capture & Analysis
+*   **Intelligent Screenshot Automation:** Configurable capture intervals (1s, 2s, 5s, 10s) with smart timing algorithms
+*   **Adaptive Image Quality:** Dynamic quality settings (High, Medium, Low) optimized for performance and accuracy
+*   **Hotkey-Triggered Capture:** Instant screenshot analysis with "Ask Next Step" and "Ask Next Step Pro" shortcuts
+*   **Context-Aware Visual Analysis:** AI-powered screen content analysis with situation-specific insights
+*   **Privacy-Conscious Capture:** Content protection features for sensitive environments
+*   **Cross-Platform Screen Access:** Native screen capture APIs with permission management
 
-### Profiles & Customization
-*   **Specialized Profiles:** Job Interview, Sales Call, Business Meeting, Presentation, Negotiation
-*   **Custom Prompts:** Personalize AI behavior with specific instructions
-*   **Customizable Keybinds:** Set up your own keyboard shortcuts for all features
-*   **Google Search Integration:** Optional web search capabilities
-*   **Layout-Specific Settings:** Different configurations for each layout mode
+### ⚙️ Profiles & Customization
+*   **Professional Profiles:** Pre-configured modes for Job Interviews, Sales Calls, Business Meetings, Presentations, and Negotiations
+*   **Advanced Prompt Engineering:** Custom AI behavior configuration with specialized instruction templates
+*   **Comprehensive Keybind System:** Fully customizable keyboard shortcuts with platform-specific defaults and conflict detection
+*   **Integrated Search Capabilities:** Optional Google Search integration with result processing
+*   **Layout-Specific Configuration:** Independent settings for each layout mode with centralized management
+*   **UI Component Customization:** Font sizes, animation controls, and visual preferences with real-time preview
+*   **Teleprompter Features:** Reading assistance with rhythm markers, breathing cues, and auto-scroll functionality
 
-### Productivity Features
-*   **Response Navigation:** Browse through previous AI responses
-*   **Auto-Scroll:** Automatic scrolling with configurable speed
-*   **Session Management:** Reinitialize sessions and manage conversation history
-*   **Notion Integration:** Connect with your Notion workspace to streamline workflows
-*   **Content Protection:** Stealth mode for sensitive environments
+### 🚀 Productivity Features
+*   **Intelligent Response Navigation:** Browse conversation history with keyboard shortcuts and visual indicators
+*   **Advanced Auto-Scroll:** Content-aware scrolling with adaptive speed, pause detection, and reading time estimation
+*   **Robust Session Management:** Session reinitialization, conversation history persistence, and context cleanup
+*   **Deep Notion Integration:** Workspace synchronization, database queries, and content rendering with the Notion API
+*   **Privacy & Stealth Mode:** Process name randomization, window title disguising, and content protection for sensitive environments
+*   **Reading Enhancement:** Word-by-word reveal animations, completion indicators, and focus highlighting
+*   **Performance Optimization:** Incremental content updates, animation state management, and memory-efficient processing
 
-### Views & Navigation
-*   **Multiple Views:** Main, Customize, History, Assistant, and Advanced views
-*   **Onboarding:** Guided setup process for new users
-*   **Settings Management:** Comprehensive customization options
+### 🧭 Views & Navigation
+*   **Modular View System:** Six specialized views - Main (API setup), Assistant (AI interaction), Customize (preferences), History (conversations), Advanced (integrations), and Onboarding (first-time setup)
+*   **Guided Onboarding Experience:** Step-by-step setup with visual guides and interactive tutorials
+*   **Centralized Settings Management:** Unified configuration system with layout-specific settings and real-time synchronization
+*   **Component-Based Architecture:** Lit web components with reactive rendering and efficient state management
+*   **Seamless View Transitions:** Smooth navigation between views with maintained state and context
 
-### Cross-Platform Support
-*   **Windows, macOS, and Linux:** Full compatibility across operating systems
-*   **Platform-Specific Optimizations:** Tailored audio capture and shortcuts for each OS
+### 🌐 Cross-Platform Support
+*   **Universal Compatibility:** Full support for Windows 10/11, macOS 10.15+, and Linux (Ubuntu 18.04+)
+*   **Platform-Specific Optimizations:** Native audio capture (WASAPI on Windows, Core Audio on macOS, ALSA/PulseAudio on Linux)
+*   **Adaptive UI Elements:** Platform-appropriate keyboard shortcuts, window management, and visual styling
+*   **Security Model:** Platform-specific permission handling for microphone, screen recording, and system audio access
+*   **Build Targets:** Electron Forge configuration for Windows (Squirrel), macOS (DMG), and Linux (DEB/RPM) distributions
 
-## Keyboard Shortcuts
+## ⌨️ Keyboard Shortcuts
 
-Jarvis provides extensive keyboard shortcuts for efficient operation. All shortcuts are customizable through the Settings page.
+Jarvis features an extensive keyboard shortcut system designed for efficient operation. All shortcuts are fully customizable through the Customize view, with platform-specific defaults automatically applied.
 
-### Window Management
+### 💼 Window Management
 | Action | Windows/Linux | macOS | Description |
 |--------|---------------|-------|-------------|
 | **Move Window Up** | `Ctrl+Up` | `Alt+Up` | Move the application window up |
@@ -68,48 +97,120 @@ Jarvis provides extensive keyboard shortcuts for efficient operation. All shortc
 | **Toggle Click-through Mode** | `Ctrl+M` | `Cmd+M` | Enable/disable click-through functionality |
 | **Close Window/Session** | `Shift+Alt+;` | `Shift+Alt+;` | Close the current session or application window |
 
-### Audio Controls
+### 🎵 Audio Controls
 | Action | Shortcut | Description |
 |--------|----------|-------------|
-| **Toggle Microphone** | `Shift+Alt+8` | Enable/disable microphone input |
-| **Toggle Speaker Detection** | `Shift+Alt+0` | Enable/disable speaker audio detection |
+| **Toggle Microphone** | `Shift+Alt+8` | Enable/disable microphone input with visual feedback |
+| **Toggle Speaker Detection** | `Shift+Alt+0` | Enable/disable system audio detection and transcription |
 
-### AI Interaction
+### 🤖 AI Interaction
 | Action | Windows/Linux | macOS | Description |
 |--------|---------------|-------|-------------|
-| **Ask Next Step** | `Shift+Alt+4` | `Shift+Alt+4` | Take screenshot and ask AI for next step suggestion |
-| **Ask Next Step (Pro)** | `Shift+Alt+,` | `Shift+Alt+,` | Take screenshot and ask AI for next step with Gemini Pro |
-| **Reinitialize Session** | `Ctrl+G` | `Cmd+G` | Restart the AI session |
-| **Previous Response** | `Ctrl+Alt+[` | `Cmd+Alt+[` | Navigate to the previous AI response |
-| **Next Response** | `Ctrl+Alt+]` | `Cmd+Alt+]` | Navigate to the next AI response |
+| **Ask Next Step** | `Shift+Alt+4` | `Shift+Alt+4` | Take screenshot and request AI guidance for next action |
+| **Ask Next Step (Pro)** | `Shift+Alt+,` | `Shift+Alt+,` | Enhanced screenshot analysis using Gemini Pro model |
+| **Reinitialize Session** | `Ctrl+G` | `Cmd+G` | Restart the AI session with fresh context |
+| **Previous Response** | `Ctrl+Alt+[` | `Cmd+Alt+[` | Navigate to the previous AI response in history |
+| **Next Response** | `Ctrl+Alt+]` | `Cmd+Alt+]` | Navigate to the next AI response in history |
 
-### Layout & Display
+### 🎨 Layout & Display
 | Action | Shortcut | Description |
 |--------|----------|-------------|
-| **Toggle Layout Mode** | `Shift+Alt+/` | Switch between compact and normal layout modes |
-| **Toggle Focus Mode** | `Shift+Alt+F` | Enable/disable focus mode |
-| **Cycle Layout Mode** | `Shift+Alt+L` | Cycle through layout modes |
-| **Scroll Response Up** | `Shift+Alt+1` | Scroll the AI response content up |
-| **Scroll Response Down** | `Shift+Alt+2` | Scroll the AI response content down |
-| **Toggle Auto-Scroll** | `Shift+Alt+3` | Enable/disable automatic scrolling |
+| **Toggle Layout Mode** | `Shift+Alt+/` | Cycle between Normal, Compact, and System Design layouts |
+| **Toggle Focus Mode** | `Shift+Alt+F` | Enable/disable distraction-free focus mode |
+| **Scroll Response Up** | `Shift+Alt+1` | Manually scroll the AI response content up |
+| **Scroll Response Down** | `Shift+Alt+2` | Manually scroll the AI response content down |
+| **Toggle Auto-Scroll** | `Shift+Alt+3` | Enable/disable automatic content scrolling |
 
-### Text Input
+### 📚 Teleprompter & Reading
 | Action | Shortcut | Description |
 |--------|----------|-------------|
-| **Send Message** | `Enter` | Send text message to AI |
-| **New Line** | `Shift+Enter` | Add new line in text input |
-| **Start Session** | `Ctrl+Enter` (Windows) / `Cmd+Enter` (macOS) | Start AI session from main view |
+| **Pause/Resume Reading** | `Shift+Alt+P` | Toggle teleprompter reading flow |
+| **Restart Current Section** | `Shift+Alt+R` | Restart reading from current section beginning |
+| **Skip to Next Key Block** | `Shift+Alt+S` | Jump to next important content block |
+| **Jump to Response End** | `Shift+Alt+E` | Navigate to end of current response |
+| **Adjust Reading Tempo** | `Shift+Alt+T` | Modify auto-scroll reading speed |
 
-### Quick Access
-*All shortcuts are fully customizable through the Customize view*
+### 🗺️ Content Navigation
+| Action | Shortcut | Description |
+|--------|----------|-------------|
+| **Cycle Code Blocks** | `Shift+Alt+C` | Navigate between code blocks in responses |
+| **Jump Between Diagrams** | `Shift+Alt+D` | Move focus between diagrams and visual content |
+| **Highlight Key Concepts** | `Shift+Alt+H` | Emphasize next key concept in content |
+| **Show Quick Summary** | `Shift+Alt+Q` | Display summary of current response |
+| **Adjust Line Spacing** | `Shift+Alt+L` | Modify text line spacing for readability |
+| **Toggle Key Information** | `Shift+Alt+K` | Emphasize important information elements |
 
-## Supported Profiles
+### ✍️ Text Input
+| Action | Shortcut | Description |
+|--------|----------|-------------|
+| **Send Message** | `Enter` | Send text message to AI assistant |
+| **New Line** | `Shift+Enter` | Add new line in text input field |
+| **Start Session** | `Ctrl+Enter` (Windows) / `Cmd+Enter` (macOS) | Initiate AI session from main view |
 
-Jarvis comes with specialized AI profiles optimized for different scenarios:
+> 💡 **Tip:** All shortcuts are managed through a centralized configuration system in `shortcutConfig.js` and can be customized in the Customize view to match your workflow preferences.
 
-*   **Job Interview** - Get help with answering interview questions and responses
+## 🎯 Supported Profiles & Use Cases
 
-Each profile includes tailored prompts and behavior patterns optimized for the specific use case.
+Jarvis comes with professionally crafted AI profiles, each optimized for specific scenarios with tailored prompts, behavior patterns, and contextual understanding:
+
+### 💼 Professional Profiles
+*   **Job Interview Assistant** - Real-time coaching, answer suggestions, and confidence building during interviews
+*   **Sales Call Enhancement** - Conversation insights, objection handling, and persuasion techniques
+*   **Business Meeting Support** - Meeting facilitation, note-taking assistance, and action item tracking
+*   **Presentation Coach** - Speaking guidance, content suggestions, and audience engagement tips
+*   **Negotiation Advisor** - Strategic guidance, leverage identification, and outcome optimization
+
+### 🎯 Custom Profile Creation
+*   **Personalized Prompts** - Create custom AI behavior instructions tailored to your specific needs
+*   **Context-Aware Responses** - Profiles adapt based on screen content, audio input, and conversation history
+*   **Workflow Integration** - Seamlessly integrate with existing tools and processes
+*   **Learning Adaptation** - AI learns from your preferences and communication style over time
+
+Each profile includes specialized prompt engineering, contextual awareness settings, and optimized response patterns designed for maximum effectiveness in real-world professional scenarios.
+
+## 🚀 Key Features Overview
+
+### 🤖 AI-Powered Intelligence
+- **Dual Model Support**: Gemini 2.5-Flash-Preview for speed, Gemini Pro for complex reasoning
+- **Multi-Modal Processing**: Seamlessly processes text, voice, and visual inputs simultaneously
+- **Context Preservation**: Maintains up to 25 conversation turns with intelligent summarization
+- **Real-Time Streaming**: Live AI responses with buffer management and corruption detection
+- **Duplicate Prevention**: Smart filtering to avoid redundant processing and responses
+
+### 🎨 Adaptive User Interface
+- **Dynamic Layouts**: Three distinct modes optimized for different usage scenarios
+- **Transparency Control**: Window-level and element-level opacity with per-layout settings
+- **Click-Through Mode**: Transform window into transparent overlay for unobtrusive assistance
+- **Responsive Design**: Automatically adapts to screen sizes and resolutions
+- **Accessibility Features**: High contrast ratios, semantic HTML, and keyboard navigation
+
+### 🎵 Advanced Audio Engine
+- **Multi-Platform Capture**: Native audio APIs optimized for each operating system
+- **Voice Activity Detection**: Intelligent start/stop detection for natural conversation flow
+- **Real-Time Transcription**: Multi-language speech-to-text with automatic language detection
+- **System Audio Monitoring**: Capture and analyze speaker output for comprehensive context
+- **Audio Worklet Processing**: Low-latency processing with custom audio nodes
+
+### 📸 Intelligent Visual Analysis
+- **Automated Screenshot Capture**: Configurable intervals with smart timing algorithms
+- **Manual Screenshot Hotkeys**: Instant analysis with "Ask Next Step" shortcuts
+- **Context-Aware Analysis**: AI understands screen content and provides relevant guidance
+- **Privacy Protection**: Content filtering and stealth mode for sensitive environments
+- **Quality Optimization**: Adaptive image quality based on content type and bandwidth
+
+### 🔒 Security & Privacy
+- **Military-Grade Encryption**: AES-256-CBC encryption for all sensitive data
+- **Local Data Storage**: All personal information remains on your device
+- **Stealth Mode**: Process name randomization and window title disguising
+- **Content Protection**: Prevents data logging in sensitive environments
+- **Secure API Communication**: Encrypted channels with automatic key rotation
+
+### 🚀 Productivity Enhancements
+- **Teleprompter Features**: Reading assistance with rhythm markers and breathing cues
+- **Auto-Scroll Intelligence**: Content-aware scrolling with reading time estimation
+- **Response Navigation**: Browse conversation history with visual indicators
+- **Notion Integration**: Deep workspace synchronization and database querying
+- **Session Management**: Robust session handling with context cleanup and restoration
 
 ## How to Use
 
@@ -134,74 +235,128 @@ Each profile includes tailored prompts and behavior patterns optimized for the s
 *   Use auto-scroll for hands-free reading
 *   Access different views (Main, Customize, History, Advanced) via the header
 
-## Tech Stack
+## 🛠️ Tech Stack
 
-*   **Framework:** [Electron](https://www.electronjs.org/) - Cross-platform desktop application framework
-*   **AI:** [Google Gemini](https://ai.google.dev/) - Advanced AI model for natural language processing
-*   **Productivity:** [Notion API](https://developers.notion.com/) - Integration with Notion workspace
-*   **Frontend:** [Lit](https://lit.dev/) - Lightweight web components library
-*   **Audio Processing:** Native Web Audio API with platform-specific optimizations
-*   **Build System:** [Electron Forge](https://www.electronforge.io/) - Complete toolchain for building and distributing Electron apps
+### Core Framework & Runtime
+*   **[Electron 30.0.5](https://www.electronjs.org/)** - Cross-platform desktop application framework with Node.js backend and Chromium frontend
+*   **[Node.js](https://nodejs.org/)** - JavaScript runtime for main process operations and system-level functionality
+*   **[Lit](https://lit.dev/)** - Lightweight web components library for reactive UI with efficient rendering and minimal overhead
 
-## Project Structure
+### AI & External Services
+*   **[Google Generative AI 0.11.4](https://ai.google.dev/)** - Google Gemini API integration for advanced language processing
+    - Gemini 2.5-Flash-Preview (default)
+    - Gemini Pro support for enhanced reasoning
+    - Multi-modal input processing (text, audio, images)
+*   **[Notion API 4.0.1](https://developers.notion.com/)** - Productivity workspace integration for database synchronization and content management
+
+### Audio & Media Processing
+*   **Native Web Audio API** - Low-latency audio processing with platform-specific optimizations
+*   **Audio Worklet Processors** - Custom audio processing nodes for real-time microphone and system audio capture
+*   **Platform-Specific Audio Backends:**
+    - **Windows:** WASAPI (SystemAudioDump utility)
+    - **macOS:** Core Audio
+    - **Linux:** ALSA/PulseAudio
+
+### Development & Build Tools
+*   **[Electron Forge 7.8.1](https://www.electronforge.io/)** - Complete toolchain for building, packaging, and distributing Electron applications
+*   **Cross-Platform Builders:**
+    - Windows: Squirrel installer
+    - macOS: DMG packages  
+    - Linux: DEB and RPM packages
+
+### Security & Data Management
+*   **AES-256-CBC Encryption** - API key encryption with locally stored master keys
+*   **IndexedDB** - Client-side conversation history and session data storage
+*   **localStorage** - User preferences and configuration persistence
+*   **Context Isolation** - Electron security model with preload script sandboxing
+
+### Architecture Patterns
+*   **Component-Based Architecture** - Modular Lit web components with clear separation of concerns
+*   **Event-Driven Communication** - IPC channels for main/renderer process communication
+*   **Singleton Pattern** - Centralized utilities for Gemini, Notion, and layout management
+*   **Configuration-as-Code** - Centralized shortcut and settings management
+
+## 📱 Project Structure
 
 ```
 jarvis/
-├── src/
-│   ├── assets/                 # Static assets (icons, images, libraries)
-│   │   ├── onboarding/         # Onboarding flow SVG illustrations
-│   │   └── SystemAudioDump     # Windows audio capture utility
-│   ├── components/             # Lit-based UI components
-│   │   ├── app/               # Main application components
-│   │   │   ├── AppHeader.js   # Navigation header
-│   │   │   └── AssistantApp.js # Root application component
-│   │   └── views/             # Different application views
-│   │       ├── MainView.js    # Primary interface for AI interaction
-│   │       ├── CustomizeView.js # Settings and profile configuration
-│   │       ├── AdvancedView.js # Advanced settings and Notion integration
-│   │       ├── HistoryView.js # Conversation history browser
-│   │       ├── AssistantView.js # AI response display
-│   │       └── OnboardingView.js # First-time user setup
-│   ├── utils/                 # Core utility modules
-│   │   ├── gemini.js         # Gemini AI integration and session management
-│   │   ├── notion.js         # Notion API integration
-│   │   ├── renderer.js       # Main renderer process utilities
-│   │   ├── window.js         # Window management and IPC handlers
-│   │   ├── prompts.js        # AI prompt templates and profiles
-│   │   └── stealthFeatures.js # Privacy and stealth mode functionality
-│   ├── audioUtils.js         # Audio processing utilities
-│   ├── microphoneUtils.js    # Microphone capture and processing
-│   ├── index.js             # Main Electron process entry point
-│   ├── preload.js           # Electron preload script for secure IPC
-│   └── index.html           # Application HTML template
-├── forge.config.js          # Electron Forge build configuration
-├── package.json            # Dependencies and scripts
-└── README.md              # This file
+├── src/                           # Main source directory
+│   ├── assets/                     # Static assets and resources
+│   │   └── prism-tomorrow.min.css   # Syntax highlighting theme for code blocks
+│   ├── components/                 # Lit-based UI components
+│   │   ├── app/                   # Main application components
+│   │   │   ├── AppHeader.js        # Navigation header with view switching
+│   │   │   └── AssistantApp.js     # Root application component with layout management
+│   │   └── views/                 # Specialized application views
+│   │       ├── MainView.js        # API setup and session initialization
+│   │       ├── AssistantView.js   # AI interaction interface with response rendering
+│   │       ├── CustomizeView.js   # Settings, preferences, and layout configuration
+│   │       ├── AdvancedView.js    # Notion integration and advanced features
+│   │       ├── HistoryView.js     # Conversation history browser
+│   │       └── OnboardingView.js  # First-time user setup and tutorials
+│   ├── utils/                      # Core utility modules
+│   │   ├── gemini.js               # Gemini AI integration and session management
+│   │   ├── apiKeyManager.js        # Secure API key storage and encryption
+│   │   ├── notion.js               # Notion API integration and workspace sync
+│   │   ├── notionRenderer.js       # Notion content rendering utilities
+│   │   ├── enhancedMicrophoneManager.js # Advanced microphone capture and processing
+│   │   ├── audioWorkletProcessor.js # Web Audio API worklet for real-time processing
+│   │   ├── renderer.js             # Main renderer process utilities and IPC handlers
+│   │   ├── window.js               # Window management and system integration
+│   │   ├── windowResize.js         # Window resizing and positioning utilities
+│   │   ├── layoutSettingsManager.js # Centralized layout and UI settings management
+│   │   ├── shortcutConfig.js       # Keyboard shortcut configuration and defaults
+│   │   ├── prompts.js              # AI prompt templates and specialized profiles
+│   │   ├── stealthFeatures.js      # Privacy and stealth mode functionality
+│   │   ├── processNames.js         # Process name management for stealth mode
+│   │   ├── processRandomizer.js    # Process name randomization utilities
+│   │   ├── teleprompterFormatter.js # Reading assistance and content formatting
+│   │   ├── teleprompterTester.js   # Testing utilities for teleprompter features
+│   │   └── uiComponentTemplates.js # Reusable UI component templates
+│   ├── audioUtils.js              # Core audio processing utilities
+│   ├── microphoneUtils.js         # Microphone capture and voice activity detection
+│   ├── index.js                   # Main Electron process entry point
+│   ├── preload.js                 # Secure IPC communication bridge
+│   └── index.html                 # Application HTML template
+├── forge.config.js               # Electron Forge build and packaging configuration
+├── package.json                  # Project dependencies, scripts, and metadata
+├── package-lock.json             # Dependency lock file
+├── SystemPrompt.json             # AI system prompt configuration
+└── README.md                     # Project documentation (this file)
 ```
 
-### Key Architecture Components
+### 🏢 Key Architecture Components
 
 #### Main Process (`src/index.js`)
-- Manages the Electron application lifecycle
-- Sets up IPC handlers for communication with renderer
-- Handles system-level operations (window management, audio capture)
+- **Application Lifecycle Management** - Electron app initialization, window creation, and cleanup
+- **IPC Communication Hub** - Handles all inter-process communication between main and renderer
+- **System Integration** - Window management, audio capture, screenshot functionality
+- **Security Layer** - Implements secure API key storage and context isolation
 
 #### Renderer Process (`src/components/`)
-- Built with Lit web components for reactive UI
-- Modular view system for different application modes
-- Real-time communication with main process via IPC
+- **Component-Based UI** - Modular Lit web components with reactive rendering
+- **State Management** - Local state management with localStorage persistence
+- **View Router** - Navigation system between different application views
+- **Real-Time Updates** - Live AI response rendering and audio visualization
 
 #### AI Integration (`src/utils/gemini.js`)
-- Manages Gemini API sessions and conversations
-- Handles audio transcription and processing
-- Implements debounce logic and duplicate prevention
-- Manages conversation history and context
+- **Session Management** - Gemini API connection handling and conversation persistence
+- **Multi-Modal Processing** - Text, audio, and image input coordination
+- **Response Streaming** - Real-time AI response handling with buffer management
+- **Context Management** - Conversation history with intelligent summarization
+- **Error Handling** - Robust fallback mechanisms and API key rotation
 
-#### Audio Processing
-- **Windows**: Uses SystemAudioDump for speaker capture
-- **macOS/Linux**: Native Web Audio API integration
-- Real-time transcription with voice activity detection
-- Multi-language support for speech recognition
+#### Audio Processing Pipeline
+- **Enhanced Microphone Manager** - Voice activity detection and noise reduction
+- **Audio Worklet Processor** - Low-latency real-time audio processing
+- **Platform-Specific Capture** - Optimized system audio capture for each OS
+- **Multi-Language Transcription** - Speech-to-text with language detection
+
+#### Utility Layer (`src/utils/`)
+- **Centralized Configuration** - Layout settings, shortcuts, and user preferences
+- **Security & Privacy** - API key encryption, stealth mode, and content protection
+- **Productivity Tools** - Notion integration, teleprompter features, and workflow optimization
+- **UI Enhancement** - Animation systems, responsive design, and accessibility features
 
 ## Getting Started
 
@@ -364,27 +519,87 @@ The project exposes handy npm scripts:
 | `npm run make` | Build distributable packages via Electron Forge |
 | `npm run package` | Package without rebuilding installer |
 
-## Centralized Shortcut Configuration
+## 📋 Changelog
 
-All default keybindings now live in <mcfile name="shortcutConfig.js" path="src/utils/shortcutConfig.js"></mcfile>.  Both renderer and views import this single source of truth, making shortcut updates trivial—edit the object once and every view picks up the change automatically.
+### v0.1.0 (Current)
+**Core Features Implemented:**
+* ✅ Multi-modal AI assistance with Gemini 2.5-Flash-Preview
+* ✅ Advanced audio processing with enhanced microphone management
+* ✅ Cross-platform desktop application (Windows, macOS, Linux)
+* ✅ Comprehensive keyboard shortcut system with customization
+* ✅ Multiple layout modes (Normal, Compact, System Design)
+* ✅ Notion workspace integration for productivity enhancement
+* ✅ Privacy features including stealth mode and content protection
+* ✅ Real-time screen capture and AI-powered analysis
+* ✅ Teleprompter features with reading assistance
+* ✅ Secure API key management with AES-256-CBC encryption
 
-## Changelog
+**Technical Achievements:**
+* ✅ Component-based architecture with Lit web components
+* ✅ Centralized settings management with `LayoutSettingsManager`
+* ✅ Advanced audio worklet processing for low-latency capture
+* ✅ IPC communication system for secure main/renderer interaction
+* ✅ Cross-platform build system with Electron Forge
+* ✅ Unified shortcut configuration in `shortcutConfig.js`
 
-### v0.9.0 (Unreleased)
-* Added Gemini **2.5-Pro** support for richer reasoning
-* New **Ask Next Step (Pro)** shortcut: `Shift+Alt+,`
-* Unified keybinds in `src/utils/shortcutConfig.js`
+**Enhanced Features:**
+* ✅ **Gemini Pro Support** - Advanced reasoning capabilities for complex queries
+* ✅ **Ask Next Step (Pro)** - Enhanced screenshot analysis with Gemini Pro
+* ✅ **Enhanced Animation System** - Word-by-word reveal with blur effects and completion indicators
+* ✅ **Advanced Auto-Scroll** - Content-aware scrolling with reading time estimation
+* ✅ **UI Component Templates** - Reusable components for consistent interface design
+* ✅ **Teleprompter Testing** - Built-in testing utilities for reading assistance features
 
-## Debug Mode
+### Upcoming Features (Roadmap)
+* 🔄 Voice command recognition and natural language interface
+* 🔄 Advanced Notion database querying and content synchronization
+* 🔄 Plugin system for custom AI profiles and integrations
+* 🔄 Enhanced privacy features and enterprise compliance tools
+* 🔄 Mobile companion app for remote control and monitoring
 
-For development and troubleshooting, you can enable debug mode by setting environment variables:
+## 🔧 Development Scripts
+
+The project provides comprehensive npm scripts for development and deployment:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| **Development** | `npm start` | Launch the application in development mode with hot-reload |
+| **Code Quality** | `npm run lint` | Run ESLint for code quality analysis (currently placeholder) |
+| **Formatting** | `npm run format` | Auto-format source files with Prettier (when configured) |
+| **Packaging** | `npm run package` | Package the application without creating installers |
+| **Distribution** | `npm run make` | Build complete distributable packages for all platforms |
+| **Publishing** | `npm run publish` | Publish the application to configured distribution channels |
+
+### 🛠️ Debug Mode
+
+For development and troubleshooting, enable debug mode with environment variables:
 
 ```bash
-# Enable audio debugging
+# Enable comprehensive audio debugging
 DEBUG_AUDIO=true npm start
 
-# Enable general debugging
+# Enable development mode with extended logging
 NODE_ENV=development npm start
+
+# Enable specific component debugging
+DEBUG_GEMINI=true npm start
+DEBUG_NOTION=true npm start
+```
+
+### 🔐 Centralized Configuration
+
+All keyboard shortcuts are managed through a unified configuration system:
+
+- **Location:** `src/utils/shortcutConfig.js`
+- **Benefits:** Single source of truth for all keybinds across views
+- **Customization:** Edit once, automatically propagated to all components
+- **Platform Awareness:** Automatic platform-specific defaults (Cmd vs Ctrl)
+
+```javascript
+// Example: Adding a new shortcut
+const newShortcut = {
+    customAction: isMac ? 'Cmd+Shift+N' : 'Ctrl+Shift+N'
+};
 ```
 
 ## Contributing

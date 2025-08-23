@@ -601,16 +601,18 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                     console.log('Microphone transcription session connected');
                 },
                 onmessage: function (message) {
-                    console.log('Microphone session message received:', message);
+                    console.log('🎤 Microphone session message received:', message);
                     // Handle transcription input for microphone
                     if (message.serverContent?.inputTranscription?.text) {
                         const transcriptionText = message.serverContent.inputTranscription.text;
+                        console.log('🗣️ Transcription text found:', JSON.stringify(transcriptionText));
                         
                         // Sanitize the transcription text to remove corrupted characters
                         //const transcriptionText = sanitizeText(rawTranscriptionText);
                         
                         // Skip if sanitization resulted in empty text
                         if (!transcriptionText || transcriptionText.trim().length === 0) {
+                            console.log('⚠️ Empty transcription text, skipping');
                             return;
                         }
 
@@ -622,6 +624,8 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
 
                         if (!isDuplicate) {
                             microphoneTranscription += transcriptionText + ' ';
+                            console.log('✅ Added to microphoneTranscription:', JSON.stringify(transcriptionText));
+                            console.log('📝 Current microphoneTranscription length:', microphoneTranscription.length);
                             
                             // Count words and manage cleanup
                             const words = microphoneTranscription.trim().split(/\s+/);

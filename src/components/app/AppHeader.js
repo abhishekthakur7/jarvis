@@ -9,13 +9,15 @@ export class AppHeader extends LitElement {
         }
 
         .header {
+            height: 13px;
+            padding: 5px;
             -webkit-app-region: drag;
             display: flex;
             align-items: center;
-            padding: var(--header-padding);
             border: 1px solid var(--border-color);
-            background: var(--header-background);
+            background: rgba(255, 255, 255, 0.05);
             border-radius: var(--border-radius);
+            justify-content: space-between;
         }
 
         .header-title {
@@ -55,7 +57,6 @@ export class AppHeader extends LitElement {
             background: none;
             color: var(--icon-button-color);
             border: none;
-            padding: var(--header-icon-padding);
             border-radius: 8px;
             font-size: var(--header-font-size-small);
             font-weight: 500;
@@ -110,7 +111,7 @@ export class AppHeader extends LitElement {
             border: 2px solid white;
             border-radius: 2px;
             background: white;
-            cursor: pointer;
+            cursor: default;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -152,6 +153,18 @@ export class AppHeader extends LitElement {
             font-size: var(--header-font-size-small);
             color: #00C851;
         }
+
+        .reading-time-display {
+            font-size: var(--header-font-size-small);
+            color: #007aff;
+            margin-left: 4px;
+            opacity: 0.8;
+            font-weight: 500;
+        }
+
+        .reading-time-display .icon {
+            margin-right: 2px;
+        }
     `;
 
     static properties = {
@@ -170,6 +183,7 @@ export class AppHeader extends LitElement {
         onInterviewModeToggle: { type: Function },
         awaitingProResponse: { type: Boolean },
         proResponseReceived: { type: Boolean },
+        readingStats: { type: Object },
     };
 
     constructor() {
@@ -189,6 +203,7 @@ export class AppHeader extends LitElement {
         this.onInterviewModeToggle = () => {};
         this.awaitingProResponse = false;
         this.proResponseReceived = false;
+        this.readingStats = null;
         this._timerInterval = null;
     }
 
@@ -284,6 +299,34 @@ export class AppHeader extends LitElement {
         return navigationViews.includes(this.currentView);
     }
 
+    /**
+     * Update reading statistics
+     */
+    updateReadingStats(stats) {
+        this.readingStats = stats;
+        this.requestUpdate();
+    }
+
+    /**
+     * Get formatted reading time display
+     */
+    getReadingTimeDisplay() {
+        if (!this.readingStats || 
+            this.readingStats.estimatedTimeRemaining <= 0 || 
+            this.readingStats.progress >= 95) {
+            return null;
+        }
+
+        const minutes = Math.floor(this.readingStats.estimatedTimeRemaining / 60);
+        const seconds = this.readingStats.estimatedTimeRemaining % 60;
+        
+        if (minutes > 0) {
+            return `⏱ ${minutes}m ${seconds}s`;
+        } else {
+            return `⏱ ${seconds}s`;
+        }
+    }
+
     render() {
         const elapsedTimeDisplay = this.getElapsedTimeDisplay();
         const isWarning = this.isElapsedTimeWarning();
@@ -307,6 +350,9 @@ export class AppHeader extends LitElement {
                         ? html`
                               <span class="${isWarning ? 'elapsed-time-warning' : ''}">${elapsedTimeDisplay}</span>
                               <span>${this.statusText}</span>
+                              ${this.getReadingTimeDisplay() 
+                                  ? html`<span class="reading-time-display">${this.getReadingTimeDisplay()}</span>`
+                                  : ''}
                           `
                         : ''}
                     ${this.currentView === 'main'

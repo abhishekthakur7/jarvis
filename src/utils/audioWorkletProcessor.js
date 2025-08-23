@@ -34,6 +34,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         
         // Performance monitoring
         this.processedFrames = 0;
+        this.frameCount = 0; // Track total frames for timing
         this.lastStatsTime = 0;
         this.processingTimes = [];
         
@@ -43,13 +44,6 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         
         // Setup message handling
         this.port.onmessage = this.handleMessage.bind(this);
-        
-        console.log('🎵 JarvisAudioProcessor initialized with params:', {
-            sampleRate: this.sampleRate,
-            frameSize: this.frameSize,
-            energyThreshold: this.energyThreshold,
-            chunkDuration: this.chunkDuration
-        });
     }
     
     handleMessage(event) {
@@ -97,6 +91,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         this.chunkBuffer = [];
         this.visualizationBuffer.fill(0);
         this.visualizationIndex = 0;
+        this.frameCount = 0;
         
         this.port.postMessage({
             type: 'reset',
@@ -114,7 +109,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
     }
     
     // Process VAD for a frame
-    processVAD(audioData) {
+    processVAD(audioData, currentTime = 0) {
         const energy = this.calculateEnergy(audioData);
         const isSpeechFrame = energy > this.energyThreshold;
         
@@ -144,7 +139,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
                     const adaptive = Math.max(this.MIN_SILENCE_FRAMES, Math.min(this.MAX_SILENCE_FRAMES, Math.round(avg)));
                     if (adaptive !== this.silenceFrames) {
                         this.silenceFrames = adaptive;
-                        // Inform main thread of the update for debugging/visualization
+                        // Inform main thread of the update
                         this.port.postMessage({ type: 'silenceFramesUpdated', data: { silenceFrames: adaptive } });
                     }
                 }
@@ -160,7 +155,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
 
                 // Record pause duration for adaptive VAD
                 this.lastPauseFrames = this.currentSilenceFrames;
-                this.lastSpeechEndTime = now;
+                this.lastSpeechEndTime = currentTime;
             }
         }
         
@@ -179,7 +174,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
     }
     
     // Update visualization buffer for real-time display
-    updateVisualization(audioData) {
+    updateVisualization(audioData, currentTime = 0) {
         const energy = this.calculateEnergy(audioData);
         
         // Store energy value in circular buffer
@@ -201,7 +196,7 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
     }
     
     // Send performance statistics
-    sendStats() {
+    sendStats(currentTime = 0) {
         const now = currentTime;
         if (now - this.lastStatsTime > 1.0) { // Send stats every second
             const avgProcessingTime = this.processingTimes.length > 0 
@@ -225,10 +220,12 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
     }
     
     process(inputs, outputs, parameters) {
-        const startTime = performance.now();
+        // Calculate current time based on frame count and sample rate
+        const currentTime = this.frameCount * 128 / this.sampleRate;
         
         const input = inputs[0];
         if (!input || input.length === 0) {
+            this.frameCount++; // Increment even if no input
             return true;
         }
         
@@ -245,10 +242,10 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
         // Process VAD in frames
         while (this.audioBuffer.length >= this.frameSize) {
             const frame = this.audioBuffer.splice(0, this.frameSize);
-            const vadResult = this.processVAD(frame);
+            const vadResult = this.processVAD(frame, currentTime);
             
             // Update visualization
-            this.updateVisualization(frame);
+            this.updateVisualization(frame, currentTime);
             
             // Send VAD events
             if (vadResult.speechStart || vadResult.speechEnd) {
@@ -281,24 +278,51 @@ class JarvisAudioProcessor extends AudioWorkletProcessor {
             });
         }
         
-        // Track processing time
-        const processingTime = performance.now() - startTime;
+        // Track that processing occurred (simplified without performance timing)
+        const processingTime = 1.0; // Simplified timing - just track that we processed
         this.processingTimes.push(processingTime);
         
+        // Increment frame count
+        this.frameCount++;
+        
         // Send stats periodically
-        this.sendStats();
+        this.sendStats(currentTime);
         
         return true;
     }
     
-    // Convert ArrayBuffer to base64
+    // Convert ArrayBuffer to base64 (custom implementation for AudioWorklet)
     arrayBufferToBase64(buffer) {
         const bytes = new Uint8Array(buffer);
-        let binary = '';
-        for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        let result = '';
+        let i = 0;
+        
+        // Process bytes in groups of 3
+        while (i < bytes.length) {
+            const a = bytes[i];
+            const b = bytes[i + 1] || 0;
+            const c = bytes[i + 2] || 0;
+            
+            const bitmap = (a << 16) | (b << 8) | c;
+            
+            result += chars.charAt((bitmap >> 18) & 63);
+            result += chars.charAt((bitmap >> 12) & 63);
+            result += chars.charAt((bitmap >> 6) & 63);
+            result += chars.charAt(bitmap & 63);
+            
+            i += 3;
         }
-        return btoa(binary);
+        
+        // Add padding
+        const padding = bytes.length % 3;
+        if (padding === 1) {
+            result = result.slice(0, -2) + '==';
+        } else if (padding === 2) {
+            result = result.slice(0, -1) + '=';
+        }
+        
+        return result;
     }
 }
 

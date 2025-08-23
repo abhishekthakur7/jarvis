@@ -231,20 +231,60 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
     // Register toggle click-through shortcut
     if (keybinds.toggleClickThrough) {
         try {
-            globalShortcut.register(keybinds.toggleClickThrough, () => {
+            // Check if this shortcut is available
+            const isAvailable = globalShortcut.isRegistered(keybinds.toggleClickThrough);
+            if (isAvailable) {
+                console.warn(`⚠️ Shortcut ${keybinds.toggleClickThrough} is already registered by another application`);
+            }
+            
+            const success = globalShortcut.register(keybinds.toggleClickThrough, () => {
+                console.log('🔄 Toggle click-through shortcut triggered!');
+                console.log('Current mouseEventsIgnored state:', mouseEventsIgnored);
+                
                 mouseEventsIgnored = !mouseEventsIgnored;
+                
                 if (mouseEventsIgnored) {
                     mainWindow.setIgnoreMouseEvents(true, { forward: true });
-                    console.log('Mouse events ignored');
+                    console.log('✅ Mouse events IGNORED - Window is now click-through');
                 } else {
                     mainWindow.setIgnoreMouseEvents(false);
-                    console.log('Mouse events enabled');
+                    console.log('✅ Mouse events ENABLED - Window now receives clicks');
                 }
-                mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
+                
+                // Notify renderer about click-through state change
+                try {
+                    mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
+                    console.log('📨 Sent click-through-toggled event to renderer:', mouseEventsIgnored);
+                } catch (error) {
+                    console.error('❌ Error sending click-through event to renderer:', error);
+                }
             });
-            console.log(`Registered toggleClickThrough: ${keybinds.toggleClickThrough}`);
+            
+            if (success) {
+                console.log(`✅ Successfully registered toggleClickThrough: ${keybinds.toggleClickThrough}`);
+                // Also try registering a backup shortcut for testing
+                try {
+                    globalShortcut.register('Ctrl+Shift+M', () => {
+                        console.log('🔄 BACKUP shortcut (Ctrl+Shift+M) triggered!');
+                        mouseEventsIgnored = !mouseEventsIgnored;
+                        if (mouseEventsIgnored) {
+                            mainWindow.setIgnoreMouseEvents(true, { forward: true });
+                            console.log('✅ BACKUP: Mouse events IGNORED');
+                        } else {
+                            mainWindow.setIgnoreMouseEvents(false);
+                            console.log('✅ BACKUP: Mouse events ENABLED');
+                        }
+                        mainWindow.webContents.send('click-through-toggled', mouseEventsIgnored);
+                    });
+                    console.log('🔑 BACKUP shortcut registered: Ctrl+Shift+M (for testing)');
+                } catch (backupError) {
+                    console.error('Could not register backup shortcut:', backupError);
+                }
+            } else {
+                console.error(`❌ Failed to register toggleClickThrough: ${keybinds.toggleClickThrough} - might be taken by system or another app`);
+            }
         } catch (error) {
-            console.error(`Failed to register toggleClickThrough (${keybinds.toggleClickThrough}):`, error);
+            console.error(`❌ Exception when registering toggleClickThrough (${keybinds.toggleClickThrough}):`, error);
         }
     }
 
@@ -531,6 +571,24 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
         }
     });
 
+    // IPC handler for updating window opacity
+    ipcMain.handle('update-window-opacity', async (event, opacity) => {
+        try {
+            if (mainWindow.isDestroyed()) {
+                return { success: false, error: 'Window has been destroyed' };
+            }
+
+            // Ensure opacity is within valid range (0-1)
+            const clampedOpacity = Math.max(0, Math.min(1, opacity));
+            mainWindow.setOpacity(clampedOpacity);
+            
+            return { success: true, opacity: clampedOpacity };
+        } catch (error) {
+            console.error('Error updating window opacity:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     function animateWindowResize(mainWindow, targetWidth, targetHeight, layoutMode) {
         return new Promise(resolve => {
             // Check if window is destroyed before starting animation
@@ -614,6 +672,90 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
         });
     }
 
+    // Function to handle layout mode changes specifically
+    ipcMain.handle('layout-mode-update-sizes', async event => {
+        try {
+            if (mainWindow.isDestroyed()) {
+                return { success: false, error: 'Window has been destroyed' };
+            }
+
+            // Get current view and layout mode from renderer
+            let viewName, layoutMode;
+            try {
+                viewName = await event.sender.executeJavaScript(
+                    'cheddar.getCurrentView()'
+                );
+                layoutMode = await event.sender.executeJavaScript(
+                    'cheddar.getLayoutMode()'
+                );
+            } catch (error) {
+                console.warn('Failed to get view/layout from renderer, using defaults:', error);
+                viewName = 'main';
+                layoutMode = 'normal';
+            }
+
+            console.log('Layout-specific size update for view:', viewName, 'layout:', layoutMode);
+
+            let targetWidth, targetHeight;
+
+            // For layout mode changes, ignore teleprompter mode and use layout-specific dimensions
+            let baseWidth, baseHeight;
+            if (layoutMode === 'compact') {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactWidth")')) || 320;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactHeight")')) || 270;
+            } else if (layoutMode === 'system-design') {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignWidth")')) || 900;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("systemDesignHeight")')) || 500;
+            } else {
+                baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalWidth")')) || 450;
+                baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("normalHeight")')) || 500;
+            }
+
+            // Adjust height based on view
+            switch (viewName) {
+                case 'customize':
+                case 'settings':
+                    targetWidth = baseWidth;
+                    targetHeight = layoutMode === 'compact' ? 500 : 600;
+                    break;
+                case 'help':
+                    targetWidth = baseWidth;
+                    targetHeight = layoutMode === 'compact' ? 450 : 550;
+                    break;
+                case 'history':
+                    targetWidth = baseWidth;
+                    targetHeight = layoutMode === 'compact' ? 450 : 550;
+                    break;
+                case 'advanced':
+                    targetWidth = baseWidth;
+                    targetHeight = layoutMode === 'compact' ? 400 : 500;
+                    break;
+                case 'main':
+                case 'jarvis':
+                case 'onboarding':
+                default:
+                    targetWidth = baseWidth;
+                    targetHeight = baseHeight;
+                    break;
+            }
+
+            const [currentWidth, currentHeight] = mainWindow.getSize();
+            console.log('Current window size:', currentWidth, 'x', currentHeight);
+
+            // If currently resizing, the animation will start from current position
+            if (windowResizing) {
+                console.log('Interrupting current resize animation');
+            }
+
+            await animateWindowResize(mainWindow, targetWidth, targetHeight, `${viewName} view (${layoutMode})`);
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error updating sizes for layout mode:', error);
+            return { success: false, error: error.message };
+        }
+    });
+
     ipcMain.handle('update-sizes', async event => {
         try {
             if (mainWindow.isDestroyed()) {
@@ -641,7 +783,29 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
             // Determine base size from layout mode using stored values or defaults
             let baseWidth, baseHeight;
-            if (layoutMode === 'compact') {
+            
+            // Check for teleprompter mode override
+            let teleprompterMode;
+            try {
+                teleprompterMode = await event.sender.executeJavaScript(
+                    'localStorage.getItem("teleprompterMode")'
+                );
+            } catch (error) {
+                console.warn('Failed to get teleprompter mode, using default');
+                teleprompterMode = 'balanced';
+            }
+            
+            // Apply teleprompter mode dimensions if set
+            if (teleprompterMode === 'ultra-discrete') {
+                baseWidth = 280;
+                baseHeight = 200;
+            } else if (teleprompterMode === 'presentation') {
+                baseWidth = 400;
+                baseHeight = 350;
+            } else if (teleprompterMode === 'balanced') {
+                baseWidth = 350;
+                baseHeight = 300;
+            } else if (layoutMode === 'compact') {
                 baseWidth = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactWidth")')) || 350;
                 baseHeight = parseInt(await event.sender.executeJavaScript('localStorage.getItem("compactHeight")')) || 300;
             } else if (layoutMode === 'system-design') {

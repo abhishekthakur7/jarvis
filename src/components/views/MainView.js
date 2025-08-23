@@ -17,6 +17,7 @@ export class MainView extends LitElement {
             max-width: 500px;
             position: relative;
             overflow: hidden;
+            font-size: inherit; /* Inherit font size from view-container */
         }
 
         .welcome-container {
@@ -87,7 +88,7 @@ export class MainView extends LitElement {
         }
 
         .welcome-title {
-            font-size: 16px;
+            font-size: 1em; /* Relative to centralized font size */
             font-weight: 700;
             margin-bottom: 4px;
             background: linear-gradient(135deg, #ffffff 0%, #e5e5e7 100%);
@@ -98,7 +99,7 @@ export class MainView extends LitElement {
         }
 
         .welcome-subtitle {
-            font-size: 11px;
+            font-size: 0.7em; /* Relative to centralized font size */
             color: var(--description-color, rgba(255, 255, 255, 0.7));
             font-weight: 400;
             line-height: 1.5;
@@ -139,7 +140,7 @@ export class MainView extends LitElement {
             padding: 8px 8px 8px 24px;
             width: 87%;
             border-radius: 6px;
-            font-size: 7.5px;
+            font-size: 0.5em; /* Relative to centralized font size */
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
             position: relative;
@@ -191,14 +192,14 @@ export class MainView extends LitElement {
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 0.75em; /* Relative to centralized font size */
             font-weight: 600;
             white-space: nowrap;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 4px;
-            cursor: pointer;
+            cursor: default;
             transition: all 0.3s ease;
             box-shadow: 
                 0 2px 8px rgba(0, 122, 255, 0.3),
@@ -271,7 +272,7 @@ export class MainView extends LitElement {
         .link {
             color: #007aff;
             text-decoration: none;
-            cursor: pointer;
+            cursor: default;
             font-weight: 500;
             transition: all 0.2s ease;
             border-bottom: 1px solid transparent;

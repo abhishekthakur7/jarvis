@@ -6,6 +6,7 @@ import { HistoryView } from '../views/HistoryView.js';
 import { AssistantView } from '../views/AssistantView.js';
 import { OnboardingView } from '../views/OnboardingView.js';
 import { AdvancedView } from '../views/AdvancedView.js';
+import { LayoutSettingsManager } from '../../utils/layoutSettingsManager.js';
 
 export class AssistantApp extends LitElement {
     static styles = css`
@@ -67,12 +68,14 @@ export class AssistantApp extends LitElement {
         }
 
         .view-container {
+            padding-top: 7px;
             opacity: 1;
             transform: translateY(0);
             transition:
                 opacity 0.15s ease-out,
                 transform 0.15s ease-out;
             height: 100%;
+            font-size: var(--response-font-size, 16px);
         }
 
         .view-container.entering {
@@ -113,6 +116,7 @@ export class AssistantApp extends LitElement {
         selectedScreenshotInterval: { type: String },
         selectedImageQuality: { type: String },
         layoutMode: { type: String },
+        teleprompterMode: { type: String },
         focusMode: { type: Boolean },
         advancedMode: { type: Boolean },
         interviewMode: { type: Boolean },
@@ -127,6 +131,7 @@ export class AssistantApp extends LitElement {
         microphoneEnabled: { type: Boolean },
         microphoneState: { type: String },
         speakerDetectionEnabled: { type: Boolean },
+        readingStats: { type: Object },
     };
 
     constructor() {
@@ -141,6 +146,7 @@ export class AssistantApp extends LitElement {
         this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || '5';
         this.selectedImageQuality = localStorage.getItem('selectedImageQuality') || 'medium';
         this.layoutMode = localStorage.getItem('layoutMode') || 'normal';
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
         this.focusMode = localStorage.getItem('focusMode') === 'true';
         this.advancedMode = localStorage.getItem('advancedMode') === 'true';
         this.interviewMode = false;
@@ -159,6 +165,7 @@ export class AssistantApp extends LitElement {
         this.microphoneTranscription = '';
         this.speakerDetectionEnabled = localStorage.getItem('speakerDetectionEnabled') !== 'false'; // Default to true
         this.previousSpeakerDetectionState = this.speakerDetectionEnabled; // Track previous state for microphone toggle
+        this.readingStats = null;
         
 
 
@@ -301,7 +308,23 @@ export class AssistantApp extends LitElement {
             }
         }
         
-        this.shouldAnimateResponse = true;
+        // Check current layout mode's animation preference instead of hardcoding to true
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        let animationEnabled = false;
+        
+        if (currentLayoutMode === 'normal') {
+            const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
+            animationEnabled = normalAnimateResponse !== null ? normalAnimateResponse === 'true' : false;
+        } else if (currentLayoutMode === 'compact') {
+            const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
+            animationEnabled = compactAnimateResponse !== null ? compactAnimateResponse === 'true' : false;
+        } else if (currentLayoutMode === 'system-design') {
+            const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+            animationEnabled = systemDesignAnimateResponse !== null ? systemDesignAnimateResponse === 'true' : false;
+        }
+        
+        this.shouldAnimateResponse = animationEnabled;
+        console.log(`[AssistantApp] Setting shouldAnimateResponse to ${animationEnabled} for ${currentLayoutMode} mode`);
         this.requestUpdate();
     }
 
@@ -324,6 +347,18 @@ export class AssistantApp extends LitElement {
     handleAutoScrollToggle(event) {
         this.autoScrollEnabled = event.detail.enabled;
         localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
+        this.requestUpdate();
+    }
+
+    handleReadingStatsUpdate(event) {
+        this.readingStats = event.detail.stats;
+        
+        // Update the header with the new reading stats
+        const header = this.shadowRoot.querySelector('app-header');
+        if (header && header.updateReadingStats) {
+            header.updateReadingStats(this.readingStats);
+        }
+        
         this.requestUpdate();
     }
 
@@ -585,65 +620,128 @@ export class AssistantApp extends LitElement {
                 throw new Error('Failed to initialize microphone session: ' + sessionResult.error);
             }
 
-            // Import enhanced microphone manager
-            const { EnhancedMicrophoneManager } = await import('../../utils/enhancedMicrophoneManager.js');
-            
-            // Initialize enhanced microphone manager
-            this.microphoneManager = new EnhancedMicrophoneManager();
-            
-            // Set up callbacks for the manager
-            this.microphoneManager.setCallbacks({
-                onAudioChunk: async (audioData) => {
-                    try {                    
-                        // audioData is already Int16Array from EnhancedMicrophoneManager
-                        // Convert directly to base64 without double conversion
-                        const uint8Array = new Uint8Array(audioData.buffer);
-                        const base64Data = btoa(String.fromCharCode.apply(null, uint8Array));
+            // Try enhanced microphone manager first
+            try {
+                const { EnhancedMicrophoneManager } = await import('../../utils/enhancedMicrophoneManager.js');
+                
+                // Initialize enhanced microphone manager
+                this.microphoneManager = new EnhancedMicrophoneManager();
+                
+                // Set up callbacks for the manager
+                this.microphoneManager.setCallbacks({
+                    onAudioChunk: async (audioData) => {
+                        try {                    
+                            // audioData.audio is already base64 string from AudioWorklet processor
+                            const base64Data = audioData.audio;
+                            
+                            // Send audio to Gemini microphone session
+                            await window.cheddar.sendMicrophoneAudio({
+                                data: base64Data,
+                                mimeType: 'audio/pcm;rate=24000'
+                            });
+                        } catch (error) {
+                            console.error('Failed to send audio to Gemini:', error);
+                        }
+                    },
+                    onVADEvent: (vadEvent) => {
+                        // Update microphone state based on VAD
+                        let newState = 'recording';
+                        if (vadEvent.type === 'speechStart' || vadEvent.isSpeaking) {
+                            newState = 'speaking';
+                        }
                         
-                        // Send audio to Gemini microphone session
-                        await window.cheddar.sendMicrophoneAudio({
-                            data: base64Data,
-                            mimeType: 'audio/pcm;rate=24000'
-                        });
-                    } catch (error) {
-                        console.error('Failed to send audio to Gemini:', error);
+                        if (this.microphoneState !== newState) {
+                            this.microphoneState = newState;
+                            this.updateAssistantViewMicrophoneState();
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Enhanced microphone manager error:', error);
+                        this.setStatus('Microphone error: ' + error.message);
                     }
-                },
-                onVADEvent: (vadEvent) => {
-                    // Update microphone state based on VAD
-                    let newState = 'recording';
-                    if (vadEvent.type === 'speechStart' || vadEvent.isSpeaking) {
-                        newState = 'speaking';
+                });
+                
+                // Initialize and start recording
+                await this.microphoneManager.initialize();
+                await this.microphoneManager.startRecording();
+                
+            } catch (enhancedError) {
+                // Fallback to simple microphone manager
+                const { SimpleMicrophoneManager } = await import('../../utils/simpleMicrophoneManager.js');
+                
+                this.microphoneManager = new SimpleMicrophoneManager();
+                
+                // Set up callbacks for the simple manager
+                this.microphoneManager.setCallbacks({
+                    onAudioChunk: async (audioData) => {
+                        try {                    
+                            const base64Data = audioData.audio;
+                            
+                            await window.cheddar.sendMicrophoneAudio({
+                                data: base64Data,
+                                mimeType: 'audio/pcm;rate=24000'
+                            });
+                        } catch (error) {
+                            console.error('Failed to send audio to Gemini (simple):', error);
+                        }
+                    },
+                    onVADEvent: (vadEvent) => {
+                        let newState = 'recording';
+                        if (vadEvent.speechStart || vadEvent.isSpeaking) {
+                            newState = 'speaking';
+                        }
+                        
+                        if (this.microphoneState !== newState) {
+                            this.microphoneState = newState;
+                            this.updateAssistantViewMicrophoneState();
+                        }
+                    },
+                    onError: (error) => {
+                        console.error('Simple microphone manager error:', error);
+                        this.setStatus('Microphone error: ' + error.message);
                     }
-                    
-                    if (this.microphoneState !== newState) {
-                        this.microphoneState = newState;
-                        this.updateAssistantViewMicrophoneState();
-                        console.log('Microphone state updated to:', newState);
-                    }
-                },
-                onError: (error) => {
-                    console.error('Enhanced microphone manager error:', error);
-                    this.setStatus('Microphone error: ' + error.message);
-                }
-            });
-            
-            // Initialize and start recording
-            await this.microphoneManager.initialize();
-            await this.microphoneManager.startRecording();
+                });
+                
+                // Initialize and start recording with simple manager
+                await this.microphoneManager.initialize();
+                await this.microphoneManager.startRecording();
+                
+                this.setStatus('Microphone started (simplified mode)');
+            }
             
             this.microphoneEnabled = true;
             this.microphoneState = 'recording';
             this.updateAssistantViewMicrophoneState();
             
-            console.log('Enhanced microphone capture started successfully');
-            
         } catch (error) {
             console.error('Failed to start microphone capture:', error);
-            this.setStatus('Microphone access denied - continuing with speaker audio');
+            
+            let errorMessage = 'Microphone access failed';
+            
+            // Provide specific error messages based on the error type
+            if (error.message.includes('denied by user') || error.message.includes('aborted')) {
+                errorMessage = 'Microphone access denied. Please allow microphone access in your browser and try again.';
+            } else if (error.message.includes('permanently denied')) {
+                errorMessage = 'Microphone access is blocked. Please enable microphone permissions in your browser settings and refresh the page.';
+            } else if (error.message.includes('No microphone found')) {
+                errorMessage = 'No microphone detected. Please connect a microphone and try again.';
+            } else if (error.message.includes('being used by another application')) {
+                errorMessage = 'Microphone is busy. Please close other applications using the microphone and try again.';
+            } else {
+                errorMessage = `Microphone error: ${error.message}`;
+            }
+            
+            this.setStatus(errorMessage);
             this.microphoneEnabled = false;
-            this.microphoneState = 'off';
+            this.microphoneState = 'error';
             this.updateAssistantViewMicrophoneState();
+            
+            // Show instructions for enabling microphone permissions
+            console.log('\n📝 To enable microphone access:');
+            console.log('1. Look for the microphone icon in your browser\'s address bar');
+            console.log('2. Click on it and select "Always allow"');
+            console.log('3. Refresh the page and try again');
+            console.log('4. Or go to browser Settings > Privacy > Microphone and allow this site\n');
         }
     }
 
@@ -672,6 +770,14 @@ export class AssistantApp extends LitElement {
         if (jarvisView && jarvisView.updateMicrophoneState) {
             jarvisView.microphoneEnabled = this.microphoneEnabled;
             jarvisView.microphoneState = this.microphoneState;
+            
+            // Provide additional state information for error handling
+            if (this.microphoneState === 'error') {
+                jarvisView.microphoneError = true;
+            } else {
+                jarvisView.microphoneError = false;
+            }
+            
             jarvisView.requestUpdate();
         }
     }
@@ -961,6 +1067,7 @@ export class AssistantApp extends LitElement {
                         .selectedScreenshotInterval=${this.selectedScreenshotInterval}
                         .selectedImageQuality=${this.selectedImageQuality}
                         .layoutMode=${this.layoutMode}
+                        .teleprompterMode=${this.teleprompterMode}
                         .focusMode=${this.focusMode}
                         .advancedMode=${this.advancedMode}
                         .onProfileChange=${profile => this.handleProfileChange(profile)}
@@ -968,6 +1075,7 @@ export class AssistantApp extends LitElement {
                         .onScreenshotIntervalChange=${interval => this.handleScreenshotIntervalChange(interval)}
                         .onImageQualityChange=${quality => this.handleImageQualityChange(quality)}
                         .onLayoutModeChange=${layoutMode => this.handleLayoutModeChange(layoutMode)}
+                        .onTeleprompterModeChange=${teleprompterMode => this.handleTeleprompterModeChange(teleprompterMode)}
                         .onFocusModeChange=${focusMode => this.handleFocusModeChange(focusMode)}
                         .onAdvancedModeChange=${advancedMode => this.handleAdvancedModeChange(advancedMode)}
                     ></customize-view>
@@ -1001,6 +1109,7 @@ export class AssistantApp extends LitElement {
                         @speaker-detection-toggle=${this.handleSpeakerDetectionToggle}
                         @scroll-speed-change=${this.handleScrollSpeedChange}
                         @auto-scroll-toggle=${this.handleAutoScrollToggle}
+                        @reading-stats-update=${this.handleReadingStatsUpdate}
                     ></jarvis-view>
                 `;
 
@@ -1017,6 +1126,9 @@ export class AssistantApp extends LitElement {
         return html`
             <div class="window-container">
                 <div class="container">
+                    <div class="${mainContentClass}">
+                        <div class="view-container">${this.renderCurrentView()}</div>
+                    </div>
                     <app-header
                         .currentView=${this.currentView}
                         .statusText=${this.statusText}
@@ -1025,6 +1137,7 @@ export class AssistantApp extends LitElement {
                         .interviewMode=${this.interviewMode}
                         .awaitingProResponse=${this._awaitingProResponse}
                         .proResponseReceived=${this._proResponseReceived}
+                        .readingStats=${this.readingStats}
                         .onCustomizeClick=${() => this.handleCustomizeClick()}
                         .onHelpClick=${() => this.handleHelpClick()}
                         .onHistoryClick=${() => this.handleHistoryClick()}
@@ -1035,9 +1148,6 @@ export class AssistantApp extends LitElement {
                         .onInterviewModeToggle=${() => this.handleInterviewModeToggle()}
                         ?isClickThrough=${this._isClickThrough}
                     ></app-header>
-                    <div class="${mainContentClass}">
-                        <div class="view-container">${this.renderCurrentView()}</div>
-                    </div>
                 </div>
             </div>
         `;
@@ -1045,13 +1155,11 @@ export class AssistantApp extends LitElement {
 
     updateLayoutMode() {
         // Remove all layout classes first
-        document.documentElement.classList.remove('compact-layout', 'ultra-compact-layout', 'system-design-layout', 'focus-mode');
+        document.documentElement.classList.remove('compact-layout', 'system-design-layout', 'focus-mode');
         
         // Apply the selected layout mode
         if (this.layoutMode === 'compact') {
             document.documentElement.classList.add('compact-layout');
-        } else if (this.layoutMode === 'ultra-compact') {
-            document.documentElement.classList.add('ultra-compact-layout');
         } else if (this.layoutMode === 'system-design') {
             document.documentElement.classList.add('system-design-layout');
         }
@@ -1075,9 +1183,11 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.45 if not set
             const transparency = normalTransparency !== null ? parseFloat(normalTransparency) : 0.45;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${normalFontSize || 12}px`);
+            // Apply layout-specific font size
+            const fontSize = normalFontSize !== null ? parseInt(normalFontSize, 10) : 12;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = normalAutoScroll === 'true';
@@ -1097,9 +1207,11 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.60 if not set
             const transparency = compactTransparency !== null ? parseFloat(compactTransparency) : 0.60;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${compactFontSize || 11}px`);
+            // Apply layout-specific font size
+            const fontSize = compactFontSize !== null ? parseInt(compactFontSize, 10) : 11;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = compactAutoScroll === 'true';
@@ -1119,9 +1231,11 @@ export class AssistantApp extends LitElement {
             // Apply transparency using the correct CSS variables
             // Use default value of 0.40 if not set
             const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : 0.40;
-            this.updateTransparency(transparency);
+            LayoutSettingsManager.updateTransparency(transparency);
             
-            root.style.setProperty('--response-font-size', `${systemDesignFontSize || 14}px`);
+            // Apply layout-specific font size
+            const fontSize = systemDesignFontSize !== null ? parseInt(systemDesignFontSize, 10) : 14;
+            root.style.setProperty('--response-font-size', `${fontSize}px`);
             
             // Update auto-scroll setting
             this.autoScrollEnabled = systemDesignAutoScroll === 'true';
@@ -1131,21 +1245,6 @@ export class AssistantApp extends LitElement {
             this.scrollSpeed = parseInt(systemDesignScrollSpeed, 10) || 2;
             localStorage.setItem('scrollSpeed', this.scrollSpeed.toString());
         }
-    }
-
-    updateTransparency(transparency) {
-        const root = document.documentElement;
-        root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparency * 0.05})`);
-        root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparency * 0.375})`);
-        root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--preview-video-background', `rgba(0, 0, 0, ${transparency * 1.125})`);
-        root.style.setProperty('--screen-option-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
-        root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
     }
 
     async handleLayoutModeChange(layoutMode) {
@@ -1166,12 +1265,40 @@ export class AssistantApp extends LitElement {
         if (window.require) {
             try {
                 const { ipcRenderer } = window.require('electron');
-                await ipcRenderer.invoke('update-sizes');
+                await ipcRenderer.invoke('layout-mode-update-sizes');
             } catch (error) {
                 console.error('Failed to update sizes in main process:', error);
             }
         }
 
+        this.requestUpdate();
+    }
+    
+    async handleTeleprompterModeChange(teleprompterMode) {
+        this.teleprompterMode = teleprompterMode;
+        localStorage.setItem('teleprompterMode', teleprompterMode);
+        
+        // Apply teleprompter mode to document
+        document.documentElement.classList.remove('ultra-discrete-mode', 'balanced-mode', 'presentation-mode');
+        document.documentElement.classList.add(`${teleprompterMode}-mode`);
+        
+        // Notify AssistantView about teleprompter mode change
+        const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+        if (jarvisView) {
+            jarvisView.teleprompterMode = teleprompterMode;
+        }
+        
+        // Notify main process about teleprompter mode change for window resizing
+        if (window.require) {
+            try {
+                const { ipcRenderer } = window.require('electron');
+                await ipcRenderer.invoke('update-sizes');
+            } catch (error) {
+                console.error('Failed to update sizes for teleprompter mode:', error);
+            }
+        }
+        
+        console.log(`Teleprompter mode changed to: ${teleprompterMode}`);
         this.requestUpdate();
     }
 
@@ -1181,7 +1308,7 @@ export class AssistantApp extends LitElement {
     }
 
     handleLayoutModeCycle() {
-        const modes = ['normal', 'compact', 'ultra-compact', 'system-design'];
+        const modes = ['normal', 'compact', 'system-design'];
         const currentIndex = modes.indexOf(this.layoutMode);
         const nextIndex = (currentIndex + 1) % modes.length;
         this.handleLayoutModeChange(modes[nextIndex]);

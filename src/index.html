@@ -51,7 +51,6 @@
                 --header-icon-padding: 8px;
                 --header-font-size-small: 13px;
                 --main-content-padding: 20px;
-                --main-content-margin-top: 10px;
                 --icon-size: 24px;
                 --border-radius: 10px;
                 --content-border-radius: 10px;
@@ -70,21 +69,6 @@
                 --icon-size: 14px;
                 --border-radius: 2px;
                 --content-border-radius: 2px;
-            }
-
-            /* Ultra-compact layout for minimal eye movement */
-            :root.ultra-compact-layout {
-                --header-padding: 2px 4px;
-                --header-font-size: 9px;
-                --header-gap: 2px;
-                --header-button-padding: 1px 3px;
-                --header-icon-padding: 1px;
-                --header-font-size-small: 8px;
-                --main-content-padding: 4px;
-                --main-content-margin-top: 0px;
-                --icon-size: 12px;
-                --border-radius: 1px;
-                --content-border-radius: 1px;
             }
 
             /* System Design layout - optimized for wide diagrams and technical content */
@@ -158,7 +142,8 @@
         <script src="assets/marked-4.3.0.min.js"></script>
         <script src="assets/prism.min.js"></script>
         <script src="assets/prism-java.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.1/dist/mermaid.min.js"></script>
+        <script src="assets/mermaid.min.js"></script>
+        <script src="utils/microphoneHelp.js"></script>
         <script type="module" src="components/app/AssistantApp.js"></script>
 
         <jarvis-app id="cheddar"></jarvis-app>

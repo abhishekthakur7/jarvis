@@ -1,5 +1,7 @@
 # Logs
 src/data
+.qoder
+.qoder/quests
 logs
 *.log
 npm-debug.log*

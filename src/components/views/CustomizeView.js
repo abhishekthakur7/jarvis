@@ -1,5 +1,7 @@
 import { html, css, LitElement } from '../../assets/lit-core-2.7.4.min.js';
 import { resizeLayout } from '../../utils/windowResize.js';
+import { UIComponentTemplates } from '../../utils/uiComponentTemplates.js';
+import { LayoutSettingsManager } from '../../utils/layoutSettingsManager.js';
 
 export class CustomizeView extends LitElement {
     static styles = css`
@@ -406,100 +408,66 @@ export class CustomizeView extends LitElement {
         fontSize: { type: Number },
         selectedFontFamily: { type: String },
         selectedCodeFontFamily: { type: String },
-        // Layout-specific settings
-        normalTransparency: { type: Number },
-        normalFontSize: { type: Number },
-        normalAutoScroll: { type: Boolean },
-        normalScrollSpeed: { type: Number },
-        normalWidth: { type: Number },
-        normalHeight: { type: Number },
-        compactTransparency: { type: Number },
-        compactFontSize: { type: Number },
-        compactAutoScroll: { type: Boolean },
-        compactScrollSpeed: { type: Number },
-        compactWidth: { type: Number },
-        compactHeight: { type: Number },
-        systemDesignTransparency: { type: Number },
-        systemDesignFontSize: { type: Number },
-        systemDesignAutoScroll: { type: Boolean },
-        systemDesignScrollSpeed: { type: Number },
-        systemDesignWidth: { type: Number },
-        systemDesignHeight: { type: Number },
+        teleprompterMode: { type: String },
+        advancedMode: { type: Boolean },
+        // Unified layout settings object
+        layoutSettings: { type: Object },
+        // Selected layout mode for configuration (separate from active layout mode)
+        selectedLayoutModeForConfig: { type: String },
+        // Event handlers
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
         onScreenshotIntervalChange: { type: Function },
         onImageQualityChange: { type: Function },
         onLayoutModeChange: { type: Function },
+        onTeleprompterModeChange: { type: Function },
         onFocusModeChange: { type: Function },
-        advancedMode: { type: Boolean },
         onAdvancedModeChange: { type: Function },
     };
 
     constructor() {
         super();
+        
+        // Core settings
         this.selectedProfile = 'interview';
         this.selectedLanguage = 'en-IN';
         this.selectedScreenshotInterval = '5';
         this.selectedImageQuality = 'medium';
         this.layoutMode = 'compact';
+        this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
         this.focusMode = false;
         this.keybinds = this.getDefaultKeybinds();
+        this.googleSearchEnabled = false;
+        this.advancedMode = false;
+        this.backgroundTransparency = 0.45;
+        this.fontSize = 11;
+        this.selectedFontFamily = 'Inter';
+        this.selectedCodeFontFamily = 'Fira Code';
+        
+        // Event handlers (default no-ops)
         this.onProfileChange = () => {};
         this.onLanguageChange = () => {};
         this.onScreenshotIntervalChange = () => {};
         this.onImageQualityChange = () => {};
         this.onLayoutModeChange = () => {};
+        this.onTeleprompterModeChange = () => {};
         this.onFocusModeChange = () => {};
         this.onAdvancedModeChange = () => {};
 
-        // Google Search default
-        this.googleSearchEnabled = false;
+        // Initialize layout settings using LayoutSettingsManager
+        LayoutSettingsManager.initializeDefaultsInLocalStorage();
+        this.layoutSettings = LayoutSettingsManager.loadAllSettings();
+        
+        // Set initial layout mode for configuration (defaults to current active layout mode)
+        this.selectedLayoutModeForConfig = localStorage.getItem('layoutMode') || 'normal';
 
-        // Advanced mode default
-        this.advancedMode = false;
-
-        // Background transparency default
-        this.backgroundTransparency = 0.45;
-
-        // Font size default (in pixels)
-        this.fontSize = 11;
-
-        // Font family default
-        this.selectedFontFamily = 'Inter';
-
-        // Code font family default
-        this.selectedCodeFontFamily = 'Fira Code';
-
-        // Layout-specific defaults
-        this.normalTransparency = 0.45;
-        this.normalFontSize = 12;
-        this.normalAutoScroll = false;
-        this.normalScrollSpeed = 2;
-        this.normalWidth = 450;
-        this.normalHeight = 500;
-        this.compactTransparency = 0.60;
-        this.compactFontSize = 11;
-        this.compactAutoScroll = true;
-        this.compactScrollSpeed = 2;
-        this.compactWidth = 320;
-        this.compactHeight = 270;
-        this.systemDesignTransparency = 0.40;
-        this.systemDesignFontSize = 14;
-        this.systemDesignAutoScroll = false;
-        this.systemDesignScrollSpeed = 2;
-        this.systemDesignWidth = 900;
-        this.systemDesignHeight = 500;
-
-        // Initialize defaults in localStorage if they don't exist
-        this.initializeDefaultsInLocalStorage();
-
+        // Load other settings
         this.loadKeybinds();
         this.loadGoogleSearchSettings();
         this.loadAdvancedModeSettings();
         this.loadBackgroundTransparency();
         this.loadFontSize();
         this.loadCodeFontFamily();
-        this.loadLayoutSpecificSettings();
     }
 
     connectedCallback() {
@@ -512,8 +480,88 @@ export class CustomizeView extends LitElement {
         this.loadCodeFontFamily();
         // Load Google Fonts
         this.loadGoogleFonts();
+        
+        // Listen for font size changes from AssistantView
+        this.handleFontSizeChange = this.handleFontSizeChange.bind(this);
+        document.addEventListener('font-size-change', this.handleFontSizeChange);
+        
+        // Listen for auto scroll changes from AssistantView
+        this.handleAutoScrollChangeFromAssistantView = this.handleAutoScrollChangeFromAssistantView.bind(this);
+        document.addEventListener('auto-scroll-change', this.handleAutoScrollChangeFromAssistantView);
+        
+        // Dispatch initial state using LayoutSettingsManager
+        requestAnimationFrame(() => {
+            const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+            const currentSettings = this.layoutSettings[currentLayoutMode];
+            
+            if (currentSettings) {
+                document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                    detail: {
+                        layoutMode: currentLayoutMode,
+                        enabled: currentSettings.autoScroll,
+                        source: 'customize-view-init'
+                    }
+                }));
+                
+                document.dispatchEvent(new CustomEvent('animate-response-change', {
+                    detail: {
+                        layoutMode: currentLayoutMode,
+                        enabled: currentSettings.animateResponse,
+                        source: 'customize-view-init'
+                    }
+                }));
+                
+                console.log(`[CustomizeView] Initial sync - ${currentLayoutMode} settings:`, currentSettings);
+            }
+        });
+        
         // Resize window for this view
         resizeLayout();
+    }
+    
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        // Clean up event listeners
+        document.removeEventListener('font-size-change', this.handleFontSizeChange);
+        document.removeEventListener('auto-scroll-change', this.handleAutoScrollChangeFromAssistantView);
+    }
+    
+    /**
+     * Handle auto scroll changes from AssistantView
+     */
+    handleAutoScrollChangeFromAssistantView(event) {
+        const { layoutMode, enabled, source } = event.detail;
+        
+        // Only handle if the change comes from AssistantView to avoid loops
+        if (source === 'assistant-view') {
+            // Update the layoutSettings object
+            if (this.layoutSettings[layoutMode]) {
+                this.layoutSettings[layoutMode].autoScroll = enabled;
+                // Trigger re-render to update the checkbox state
+                this.requestUpdate();
+                
+                console.log(`[CustomizeView] Auto scroll updated from AssistantView: ${layoutMode} mode = ${enabled}`);
+            }
+        }
+    }
+
+    /**
+     * Handle font size changes from AssistantView
+     */
+    handleFontSizeChange(event) {
+        const { layoutMode, fontSize, source } = event.detail;
+        
+        // Only handle if the change comes from AssistantView to avoid loops
+        if (source === 'assistant-view') {
+            // Update the layoutSettings object
+            if (this.layoutSettings[layoutMode]) {
+                this.layoutSettings[layoutMode].fontSize = fontSize;
+                // Trigger re-render to update the slider values
+                this.requestUpdate();
+                
+                console.log(`[CustomizeView] Font size updated: ${layoutMode} mode = ${fontSize}px`);
+            }
+        }
     }
 
     getProfiles() {
@@ -540,8 +588,66 @@ export class CustomizeView extends LitElement {
         };
     }
 
+    /**
+     * Handle layout mode selection change for configuration
+     * This changes which layout mode's settings are being displayed/edited
+     * @param {Event} e - Change event
+     */
+    handleLayoutModeForConfigSelect(e) {
+        this.selectedLayoutModeForConfig = e.target.value;
+        console.log(`[CustomizeView] Switched to configuring ${this.selectedLayoutModeForConfig} layout settings`);
+        this.requestUpdate();
+    }
+
+    /**
+     * Render a unified layout settings section with dropdown selector
+     * @returns {TemplateResult} Unified layout settings HTML
+     */
+    renderUnifiedLayoutSettings() {
+        const layoutModes = LayoutSettingsManager.getAllLayoutModes();
+        const currentSettings = this.layoutSettings[this.selectedLayoutModeForConfig] || {};
+        const currentModeInfo = LayoutSettingsManager.LAYOUT_MODES[this.selectedLayoutModeForConfig];
+        
+        const settingKeys = LayoutSettingsManager.getSettingKeys();
+        const settingsGroups = this.groupSettingsForLayout(settingKeys, this.selectedLayoutModeForConfig);
+        
+        return UIComponentTemplates.section({
+            title: 'Layout Mode Settings',
+            content: html`
+                <!-- Layout Mode Selector -->
+                <div class="form-group full-width">
+                    <label class="form-label">
+                        Configure Settings For
+                        <span class="current-selection">${currentModeInfo?.name || 'Unknown'}</span>
+                    </label>
+                    <select 
+                        class="form-control" 
+                        .value=${this.selectedLayoutModeForConfig} 
+                        @change=${this.handleLayoutModeForConfigSelect}
+                    >
+                        ${layoutModes.map(mode => html`
+                            <option 
+                                value="${mode.key}" 
+                                ?selected=${this.selectedLayoutModeForConfig === mode.key}
+                            >
+                                ${mode.name}
+                            </option>
+                        `)}
+                    </select>
+                    <div class="form-description">
+                        ${currentModeInfo?.description || 'Select a layout mode to configure its settings'}
+                    </div>
+                </div>
+                
+                <!-- Settings for Selected Layout Mode -->
+                <div class="layout-settings-content">
+                    ${settingsGroups.map(group => this.renderSettingsGroup(group, this.selectedLayoutModeForConfig, currentSettings))}
+                </div>
+            `
+        });
+    }
+
     handleProfileSelect(e) {
-        this.selectedProfile = e.target.value;
         localStorage.setItem('selectedProfile', this.selectedProfile);
         this.onProfileChange(this.selectedProfile);
     }
@@ -565,8 +671,36 @@ export class CustomizeView extends LitElement {
 
     handleLayoutModeSelect(e) {
         this.layoutMode = e.target.value;
-        localStorage.setItem('layoutMode', this.layoutMode);
+        // Use LayoutSettingsManager to handle the layout mode change
+        LayoutSettingsManager.handleLayoutModeChange(this.layoutMode);
         this.onLayoutModeChange(e.target.value);
+        
+        console.log(`[CustomizeView] Layout mode changed to ${this.layoutMode}`);
+    }
+
+    handleTeleprompterModeSelect(e) {
+        this.teleprompterMode = e.target.value;
+        localStorage.setItem('teleprompterMode', this.teleprompterMode);
+        this.onTeleprompterModeChange(e.target.value);
+    }
+
+    getTeleprompterModeDisplayName() {
+        switch (this.teleprompterMode) {
+            case 'ultra-discrete': return 'Ultra Discrete';
+            case 'presentation': return 'Presentation';
+            default: return 'Balanced';
+        }
+    }
+
+    getTeleprompterModeDescription() {
+        switch (this.teleprompterMode) {
+            case 'ultra-discrete':
+                return 'Minimal 280×200px interface with single-line key points for maximum discretion';
+            case 'presentation':
+                return 'Spacious 400×350px layout with enhanced visual indicators for clear presentation';
+            default:
+                return 'Balanced 350×300px layout with structured information blocks and moderate hierarchy';
+        }
     }
 
     handleFocusModeChange(e) {
@@ -576,25 +710,32 @@ export class CustomizeView extends LitElement {
     }
 
     getLayoutModeDisplayName() {
-        switch (this.layoutMode) {
-            case 'compact': return 'Compact';
-            case 'ultra-compact': return 'Ultra Compact';
-            case 'system-design': return 'System Design';
-            default: return 'Normal';
-        }
+        return LayoutSettingsManager.getLayoutModeDisplayName(this.layoutMode);
     }
 
     getLayoutModeDescription() {
-        switch (this.layoutMode) {
-            case 'compact':
-                return 'Smaller window size with reduced padding and font sizes for minimal screen footprint';
-            case 'ultra-compact':
-                return 'Extremely compact layout with minimal UI elements and very small fonts for maximum space efficiency';
-            case 'system-design':
-                return 'Large window optimized for system design diagrams and architectural discussions';
-            default:
-                return 'Standard layout with comfortable spacing and font sizes';
+        return LayoutSettingsManager.getLayoutModeDescription(this.layoutMode);
+    }
+
+    /**
+     * Unified handler for layout setting changes
+     * @param {string} layoutMode - The layout mode (normal, compact, system-design)
+     * @param {string} settingKey - The setting key (transparency, fontSize, etc.)
+     * @param {*} value - The new value
+     */
+    handleLayoutSettingChange(layoutMode, settingKey, value) {
+        // Update local state
+        if (this.layoutSettings[layoutMode]) {
+            this.layoutSettings[layoutMode][settingKey] = value;
         }
+        
+        // Update using LayoutSettingsManager (handles localStorage and events)
+        LayoutSettingsManager.updateSetting(layoutMode, settingKey, value);
+        
+        // Trigger re-render
+        this.requestUpdate();
+        
+        console.log(`[CustomizeView] Updated ${layoutMode} ${settingKey}: ${value}`);
     }
 
     handleCustomPromptInput(e) {
@@ -924,6 +1065,11 @@ export class CustomizeView extends LitElement {
         this.updateFontSize();
     }
 
+    updateFontSize() {
+        const root = document.documentElement;
+        root.style.setProperty('--response-font-size', `${this.fontSize}px`);
+    }
+
     handleFontSizeChange(e) {
         this.fontSize = parseInt(e.target.value, 10);
         localStorage.setItem('fontSize', this.fontSize.toString());
@@ -931,309 +1077,15 @@ export class CustomizeView extends LitElement {
         this.requestUpdate();
     }
 
-    updateFontSize() {
-        const root = document.documentElement;
-        root.style.setProperty('--response-font-size', `${this.fontSize}px`);
-    }
 
-    initializeDefaultsInLocalStorage() {
-        // Initialize normal layout defaults if they don't exist
-        if (localStorage.getItem('normalTransparency') === null) {
-            localStorage.setItem('normalTransparency', this.normalTransparency.toString());
-        }
-        if (localStorage.getItem('normalFontSize') === null) {
-            localStorage.setItem('normalFontSize', this.normalFontSize.toString());
-        }
-        if (localStorage.getItem('normalAutoScroll') === null) {
-            localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
-        }
-        if (localStorage.getItem('normalScrollSpeed') === null) {
-            localStorage.setItem('normalScrollSpeed', this.normalScrollSpeed.toString());
-        }
 
-        // Initialize compact layout defaults if they don't exist
-        if (localStorage.getItem('compactTransparency') === null) {
-            localStorage.setItem('compactTransparency', this.compactTransparency.toString());
-        }
-        if (localStorage.getItem('compactFontSize') === null) {
-            localStorage.setItem('compactFontSize', this.compactFontSize.toString());
-        }
-        if (localStorage.getItem('compactAutoScroll') === null) {
-            localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
-        }
-        if (localStorage.getItem('compactScrollSpeed') === null) {
-            localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
-        }
 
-        // Initialize system design layout defaults if they don't exist
-        if (localStorage.getItem('systemDesignTransparency') === null) {
-            localStorage.setItem('systemDesignTransparency', this.systemDesignTransparency.toString());
-        }
-        if (localStorage.getItem('systemDesignFontSize') === null) {
-            localStorage.setItem('systemDesignFontSize', this.systemDesignFontSize.toString());
-        }
-        if (localStorage.getItem('systemDesignAutoScroll') === null) {
-            localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
-        }
-        if (localStorage.getItem('systemDesignScrollSpeed') === null) {
-            localStorage.setItem('systemDesignScrollSpeed', this.systemDesignScrollSpeed.toString());
-        }
-        if (localStorage.getItem('systemDesignWidth') === null) {
-            localStorage.setItem('systemDesignWidth', this.systemDesignWidth.toString());
-        }
-        if (localStorage.getItem('systemDesignHeight') === null) {
-            localStorage.setItem('systemDesignHeight', this.systemDesignHeight.toString());
-        }
-    }
 
-    loadLayoutSpecificSettings() {
-        // Load normal layout settings
-        const normalTransparency = localStorage.getItem('normalTransparency');
-        if (normalTransparency !== null) {
-            this.normalTransparency = parseFloat(normalTransparency);
-        }
-        const normalFontSize = localStorage.getItem('normalFontSize');
-        if (normalFontSize !== null) {
-            this.normalFontSize = parseInt(normalFontSize, 10);
-        }
-        const normalAutoScroll = localStorage.getItem('normalAutoScroll');
-        if (normalAutoScroll !== null) {
-            this.normalAutoScroll = normalAutoScroll === 'true';
-        }
-        const normalScrollSpeed = localStorage.getItem('normalScrollSpeed');
-        if (normalScrollSpeed !== null) {
-            this.normalScrollSpeed = parseInt(normalScrollSpeed, 10);
-        }
-        const normalWidth = localStorage.getItem('normalWidth');
-        if (normalWidth !== null) {
-            this.normalWidth = parseInt(normalWidth, 10);
-        }
-        const normalHeight = localStorage.getItem('normalHeight');
-        if (normalHeight !== null) {
-            this.normalHeight = parseInt(normalHeight, 10);
-        }
 
-        // Load compact layout settings
-        const compactTransparency = localStorage.getItem('compactTransparency');
-        if (compactTransparency !== null) {
-            this.compactTransparency = parseFloat(compactTransparency);
-        }
-        const compactFontSize = localStorage.getItem('compactFontSize');
-        if (compactFontSize !== null) {
-            this.compactFontSize = parseInt(compactFontSize, 10);
-        }
-        const compactAutoScroll = localStorage.getItem('compactAutoScroll');
-        if (compactAutoScroll !== null) {
-            this.compactAutoScroll = compactAutoScroll === 'true';
-        }
-        const compactScrollSpeed = localStorage.getItem('compactScrollSpeed');
-        if (compactScrollSpeed !== null) {
-            this.compactScrollSpeed = parseInt(compactScrollSpeed, 10);
-        }
-        const compactWidth = localStorage.getItem('compactWidth');
-        if (compactWidth !== null) {
-            this.compactWidth = parseInt(compactWidth, 10);
-        }
-        const compactHeight = localStorage.getItem('compactHeight');
-        if (compactHeight !== null) {
-            this.compactHeight = parseInt(compactHeight, 10);
-        }
 
-        // Load system design layout settings
-        const systemDesignTransparency = localStorage.getItem('systemDesignTransparency');
-        if (systemDesignTransparency !== null) {
-            this.systemDesignTransparency = parseFloat(systemDesignTransparency);
-        }
-        const systemDesignFontSize = localStorage.getItem('systemDesignFontSize');
-        if (systemDesignFontSize !== null) {
-            this.systemDesignFontSize = parseInt(systemDesignFontSize, 10);
-        }
-        const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
-        if (systemDesignAutoScroll !== null) {
-            this.systemDesignAutoScroll = systemDesignAutoScroll === 'true';
-        }
-        const systemDesignScrollSpeed = localStorage.getItem('systemDesignScrollSpeed');
-        if (systemDesignScrollSpeed !== null) {
-            this.systemDesignScrollSpeed = parseInt(systemDesignScrollSpeed, 10);
-        }
-        const systemDesignWidth = localStorage.getItem('systemDesignWidth');
-        if (systemDesignWidth !== null) {
-            this.systemDesignWidth = parseInt(systemDesignWidth, 10);
-        }
-        const systemDesignHeight = localStorage.getItem('systemDesignHeight');
-        if (systemDesignHeight !== null) {
-            this.systemDesignHeight = parseInt(systemDesignHeight, 10);
-        }
-    }
 
-    handleNormalTransparencyChange(e) {
-        this.normalTransparency = parseFloat(e.target.value);
-        localStorage.setItem('normalTransparency', this.normalTransparency.toString());
-        
-        // Apply transparency immediately if we're in normal layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'normal') {
-            this.updateTransparency(this.normalTransparency);
-        }
-        
-        this.requestUpdate();
-    }
 
-    handleNormalFontSizeChange(e) {
-        this.normalFontSize = parseInt(e.target.value, 10);
-        localStorage.setItem('normalFontSize', this.normalFontSize.toString());
-        
-        // Apply font size immediately if we're in normal layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'normal') {
-            this.updateFontSize(this.normalFontSize);
-        }
-        
-        this.requestUpdate();
-    }
 
-    handleNormalAutoScrollChange(e) {
-        this.normalAutoScroll = e.target.checked;
-        localStorage.setItem('normalAutoScroll', this.normalAutoScroll.toString());
-        this.requestUpdate();
-    }
-
-    handleNormalScrollSpeedChange(e) {
-        this.normalScrollSpeed = parseInt(e.target.value, 10);
-        localStorage.setItem('normalScrollSpeed', this.normalScrollSpeed.toString());
-        this.requestUpdate();
-    }
-
-    handleNormalWidthChange(e) {
-        this.normalWidth = parseInt(e.target.value, 10);
-        localStorage.setItem('normalWidth', this.normalWidth.toString());
-        this.requestUpdate();
-    }
-
-    handleNormalHeightChange(e) {
-        this.normalHeight = parseInt(e.target.value, 10);
-        localStorage.setItem('normalHeight', this.normalHeight.toString());
-        this.requestUpdate();
-    }
-
-    handleCompactTransparencyChange(e) {
-        this.compactTransparency = parseFloat(e.target.value);
-        localStorage.setItem('compactTransparency', this.compactTransparency.toString());
-        
-        // Apply transparency immediately if we're in compact layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'compact') {
-            this.updateTransparency(this.compactTransparency);
-        }
-        
-        this.requestUpdate();
-    }
-
-    handleCompactFontSizeChange(e) {
-        this.compactFontSize = parseInt(e.target.value, 10);
-        localStorage.setItem('compactFontSize', this.compactFontSize.toString());
-        
-        // Apply font size immediately if we're in compact layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'compact') {
-            this.updateFontSize(this.compactFontSize);
-        }
-        
-        this.requestUpdate();
-    }
-
-    handleCompactAutoScrollChange(e) {
-        this.compactAutoScroll = e.target.checked;
-        localStorage.setItem('compactAutoScroll', this.compactAutoScroll.toString());
-        this.requestUpdate();
-    }
-
-    handleCompactScrollSpeedChange(e) {
-        this.compactScrollSpeed = parseInt(e.target.value, 10);
-        localStorage.setItem('compactScrollSpeed', this.compactScrollSpeed.toString());
-        this.requestUpdate();
-    }
-
-    handleCompactWidthChange(e) {
-        this.compactWidth = parseInt(e.target.value, 10);
-        localStorage.setItem('compactWidth', this.compactWidth.toString());
-        this.requestUpdate();
-    }
-
-    handleCompactHeightChange(e) {
-        this.compactHeight = parseInt(e.target.value, 10);
-        localStorage.setItem('compactHeight', this.compactHeight.toString());
-        this.requestUpdate();
-    }
-
-    handleSystemDesignTransparencyChange(e) {
-        this.systemDesignTransparency = parseFloat(e.target.value);
-        localStorage.setItem('systemDesignTransparency', this.systemDesignTransparency.toString());
-        
-        // Apply transparency immediately if we're in system-design layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'system-design') {
-            this.updateTransparency(this.systemDesignTransparency);
-        }
-        
-        this.requestUpdate();
-    }
-
-    handleSystemDesignFontSizeChange(e) {
-        this.systemDesignFontSize = parseInt(e.target.value, 10);
-        localStorage.setItem('systemDesignFontSize', this.systemDesignFontSize.toString());
-        
-        // Apply font size immediately if we're in system-design layout mode
-        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-        if (currentLayoutMode === 'system-design') {
-            this.updateFontSize(this.systemDesignFontSize);
-        }
-        
-        this.requestUpdate();
-    }
-
-    handleSystemDesignAutoScrollChange(e) {
-        this.systemDesignAutoScroll = e.target.checked;
-        localStorage.setItem('systemDesignAutoScroll', this.systemDesignAutoScroll.toString());
-        this.requestUpdate();
-    }
-
-    handleSystemDesignScrollSpeedChange(e) {
-        this.systemDesignScrollSpeed = parseInt(e.target.value, 10);
-        localStorage.setItem('systemDesignScrollSpeed', this.systemDesignScrollSpeed.toString());
-        this.requestUpdate();
-    }
-
-    handleSystemDesignWidthChange(e) {
-        this.systemDesignWidth = parseInt(e.target.value, 10);
-        localStorage.setItem('systemDesignWidth', this.systemDesignWidth.toString());
-        this.requestUpdate();
-    }
-
-    handleSystemDesignHeightChange(e) {
-        this.systemDesignHeight = parseInt(e.target.value, 10);
-        localStorage.setItem('systemDesignHeight', this.systemDesignHeight.toString());
-        this.requestUpdate();
-    }
-
-    updateTransparency(transparency) {
-        const root = document.documentElement;
-        root.style.setProperty('--header-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--main-content-background', `rgba(0, 0, 0, ${transparency})`);
-        root.style.setProperty('--card-background', `rgba(255, 255, 255, ${transparency * 0.05})`);
-        root.style.setProperty('--input-background', `rgba(0, 0, 0, ${transparency * 0.375})`);
-        root.style.setProperty('--input-focus-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--button-background', `rgba(0, 0, 0, ${transparency * 0.625})`);
-        root.style.setProperty('--preview-video-background', `rgba(0, 0, 0, ${transparency * 1.125})`);
-        root.style.setProperty('--screen-option-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--screen-option-hover-background', `rgba(0, 0, 0, ${transparency * 0.75})`);
-        root.style.setProperty('--scrollbar-background', `rgba(0, 0, 0, ${transparency * 0.5})`);
-        root.style.setProperty('--code-block-background', `rgba(6, 6, 6, ${transparency})`);
-    }
-
-    updateFontSize(fontSize) {
-        document.documentElement.style.setProperty('--response-font-size', `${fontSize}px`);
-    }
 
     loadFontFamily() {
         const savedFontFamily = localStorage.getItem('selectedFontFamily');
@@ -1342,6 +1194,130 @@ export class CustomizeView extends LitElement {
             { value: '"Source Code Pro", "Fira Code", "SF Mono", Monaco, Consolas, monospace', label: 'Source Code Pro' },
             { value: '"Ubuntu Mono", "Fira Code", "SF Mono", Monaco, Consolas, monospace', label: 'Ubuntu Mono' }
         ];
+    }
+
+    /**
+     * Render a layout-specific settings section
+     * @param {string} layoutMode - The layout mode key
+     * @returns {TemplateResult} Layout section HTML
+     */
+    renderLayoutSection(layoutMode) {
+        const settings = this.layoutSettings[layoutMode] || {};
+        const modeInfo = LayoutSettingsManager.LAYOUT_MODES[layoutMode];
+        
+        if (!modeInfo) return html``;
+        
+        const settingKeys = LayoutSettingsManager.getSettingKeys();
+        const settingsGroups = this.groupSettingsForLayout(settingKeys, layoutMode);
+        
+        return UIComponentTemplates.section({
+            title: `${modeInfo.name} Layout Settings`,
+            content: html`
+                ${settingsGroups.map(group => this.renderSettingsGroup(group, layoutMode, settings))}
+            `
+        });
+    }
+    
+    /**
+     * Group settings for better layout organization
+     * @param {Array} settingKeys - Array of setting keys
+     * @param {string} layoutMode - The layout mode
+     * @returns {Array} Grouped settings
+     */
+    groupSettingsForLayout(settingKeys, layoutMode) {
+        return [
+            {
+                type: 'sliders',
+                keys: ['transparency', 'fontSize', 'scrollSpeed']
+            },
+            {
+                type: 'checkboxes', 
+                keys: ['autoScroll', 'animateResponse']
+            },
+            {
+                type: 'dimensions',
+                keys: ['width', 'height']
+            }
+        ];
+    }
+    
+    /**
+     * Render a group of settings
+     * @param {Object} group - Settings group
+     * @param {string} layoutMode - The layout mode
+     * @param {Object} settings - Current settings
+     * @returns {TemplateResult} Settings group HTML
+     */
+    renderSettingsGroup(group, layoutMode, settings) {
+        const { type, keys } = group;
+        
+        switch (type) {
+            case 'sliders':
+                return html`
+                    ${keys.map(key => this.renderLayoutSlider(layoutMode, key, settings[key]))}
+                `;
+            case 'checkboxes':
+                return UIComponentTemplates.formRow([
+                    ...keys.map(key => this.renderLayoutCheckbox(layoutMode, key, settings[key]))
+                ]);
+            case 'dimensions':
+                return UIComponentTemplates.formRow([
+                    ...keys.map(key => this.renderLayoutSlider(layoutMode, key, settings[key]))
+                ]);
+            default:
+                return html``;
+        }
+    }
+    
+    /**
+     * Render a slider for a layout setting
+     * @param {string} layoutMode - The layout mode
+     * @param {string} settingKey - The setting key
+     * @param {*} value - Current value
+     * @returns {TemplateResult} Slider HTML
+     */
+    renderLayoutSlider(layoutMode, settingKey, value) {
+        const definition = LayoutSettingsManager.getSettingDefinition(settingKey, layoutMode);
+        
+        // Pass raw value to slider, but format value for display
+        const displayValue = definition.formatValue ? definition.formatValue(value) : value;
+        
+        return UIComponentTemplates.slider({
+            label: definition.label,
+            value: displayValue,
+            min: definition.min,
+            max: definition.max,
+            step: definition.step,
+            unit: definition.unit,
+            description: definition.description,
+            minLabel: definition.minLabel,
+            maxLabel: definition.maxLabel,
+            onChange: (e) => {
+                const newValue = settingKey === 'transparency' ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
+                this.handleLayoutSettingChange(layoutMode, settingKey, newValue);
+            },
+            // Pass the raw value to the slider input
+            rawValue: value
+        });
+    }
+    
+    /**
+     * Render a checkbox for a layout setting
+     * @param {string} layoutMode - The layout mode
+     * @param {string} settingKey - The setting key
+     * @param {boolean} value - Current value
+     * @returns {TemplateResult} Checkbox HTML
+     */
+    renderLayoutCheckbox(layoutMode, settingKey, value) {
+        const definition = LayoutSettingsManager.getSettingDefinition(settingKey, layoutMode);
+        
+        return UIComponentTemplates.checkbox({
+            id: `${layoutMode}-${settingKey}`,
+            label: definition.label,
+            checked: value,
+            description: definition.description,
+            onChange: (e) => this.handleLayoutSettingChange(layoutMode, settingKey, e.target.checked)
+        });
     }
 
     loadGoogleFonts() {
@@ -1454,11 +1430,24 @@ export class CustomizeView extends LitElement {
                                 <select class="form-control" .value=${this.layoutMode} @change=${this.handleLayoutModeSelect}>
                                     <option value="normal" ?selected=${this.layoutMode === 'normal'}>Normal</option>
                                     <option value="compact" ?selected=${this.layoutMode === 'compact'}>Compact</option>
-                                    <option value="ultra-compact" ?selected=${this.layoutMode === 'ultra-compact'}>Ultra Compact</option>
                                     <option value="system-design" ?selected=${this.layoutMode === 'system-design'}>System Design</option>
                                 </select>
                                 <div class="form-description">
                                     ${this.getLayoutModeDescription()}
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">
+                                    Teleprompter Mode
+                                    <span class="current-selection">${this.getTeleprompterModeDisplayName()}</span>
+                                </label>
+                                <select class="form-control" .value=${this.teleprompterMode} @change=${this.handleTeleprompterModeSelect}>
+                                    <option value="balanced" ?selected=${this.teleprompterMode === 'balanced'}>Balanced</option>
+                                    <option value="ultra-discrete" ?selected=${this.teleprompterMode === 'ultra-discrete'}>Ultra Discrete</option>
+                                    <option value="presentation" ?selected=${this.teleprompterMode === 'presentation'}>Presentation</option>
+                                </select>
+                                <div class="form-description">
+                                    ${this.getTeleprompterModeDescription()}
                                 </div>
                             </div>
                         </div>
@@ -1522,623 +1511,92 @@ export class CustomizeView extends LitElement {
                     </div>
                 </div>
 
-                <!-- Normal Layout Settings Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>Normal Layout Settings</span>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Background Transparency</label>
-                                    <span class="slider-value">${Math.round(this.normalTransparency * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="0"
-                                    max="1"
-                                    step="0.01"
-                                    .value=${this.normalTransparency}
-                                    @input=${this.handleNormalTransparencyChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Transparent</span>
-                                    <span>Opaque</span>
-                                </div>
-                                <div class="form-description">
-                                    Background transparency when in normal layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Font Size</label>
-                                    <span class="slider-value">${this.normalFontSize}px</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="10"
-                                    max="32"
-                                    step="1"
-                                    .value=${this.normalFontSize}
-                                    @input=${this.handleNormalFontSizeChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>10px</span>
-                                    <span>32px</span>
-                                </div>
-                                <div class="form-description">
-                                    Font size for AI responses when in normal layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input
-                                        type="checkbox"
-                                        id="normal-auto-scroll"
-                                        class="checkbox-input"
-                                        .checked=${this.normalAutoScroll}
-                                        @change=${this.handleNormalAutoScrollChange}
-                                    />
-                                    <label for="normal-auto-scroll" class="checkbox-label">Auto Scroll</label>
-                                </div>
-                                <div class="form-description">
-                                    Automatically scroll to new content when in normal layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Auto Scroll Speed</label>
-                                    <span class="slider-value">${this.normalScrollSpeed}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="1"
-                                    max="10"
-                                    step="1"
-                                    .value=${this.normalScrollSpeed}
-                                    @input=${this.handleNormalScrollSpeedChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Slow</span>
-                                    <span>Fast</span>
-                                </div>
-                                <div class="form-description">
-                                    Speed of automatic scrolling when in normal layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Width</label>
-                                        <span class="slider-value">${this.normalWidth}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="400"
-                                        max="800"
-                                        step="10"
-                                        .value=${this.normalWidth}
-                                        @input=${this.handleNormalWidthChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>400px</span>
-                                        <span>800px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window width when in normal layout mode
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Height</label>
-                                        <span class="slider-value">${this.normalHeight}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="300"
-                                        max="700"
-                                        step="10"
-                                        .value=${this.normalHeight}
-                                        @input=${this.handleNormalHeightChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>300px</span>
-                                        <span>700px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window height when in normal layout mode
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Compact Layout Settings Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>Compact Layout Settings</span>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Background Transparency</label>
-                                    <span class="slider-value">${Math.round(this.compactTransparency * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="0"
-                                    max="1"
-                                    step="0.01"
-                                    .value=${this.compactTransparency}
-                                    @input=${this.handleCompactTransparencyChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Transparent</span>
-                                    <span>Opaque</span>
-                                </div>
-                                <div class="form-description">
-                                    Background transparency when in compact layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Font Size</label>
-                                    <span class="slider-value">${this.compactFontSize}px</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="10"
-                                    max="32"
-                                    step="1"
-                                    .value=${this.compactFontSize}
-                                    @input=${this.handleCompactFontSizeChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>10px</span>
-                                    <span>32px</span>
-                                </div>
-                                <div class="form-description">
-                                    Font size for AI responses when in compact layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input
-                                        type="checkbox"
-                                        id="compact-auto-scroll"
-                                        class="checkbox-input"
-                                        .checked=${this.compactAutoScroll}
-                                        @change=${this.handleCompactAutoScrollChange}
-                                    />
-                                    <label for="compact-auto-scroll" class="checkbox-label">Auto Scroll</label>
-                                </div>
-                                <div class="form-description">
-                                    Automatically scroll to new content when in compact layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Auto Scroll Speed</label>
-                                    <span class="slider-value">${this.compactScrollSpeed}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="1"
-                                    max="10"
-                                    step="1"
-                                    .value=${this.compactScrollSpeed}
-                                    @input=${this.handleCompactScrollSpeedChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Slow</span>
-                                    <span>Fast</span>
-                                </div>
-                                <div class="form-description">
-                                    Speed of automatic scrolling when in compact layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Width</label>
-                                        <span class="slider-value">${this.compactWidth}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="150"
-                                        max="500"
-                                        step="5"
-                                        .value=${this.compactWidth}
-                                        @input=${this.handleCompactWidthChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>150px</span>
-                                        <span>500px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window width when in compact layout mode
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Height</label>
-                                        <span class="slider-value">${this.compactHeight}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="150"
-                                        max="500"
-                                        step="5"
-                                        .value=${this.compactHeight}
-                                        @input=${this.handleCompactHeightChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>150px</span>
-                                        <span>500px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window height when in compact layout mode
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- System Design Layout Settings Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>System Design Layout Settings</span>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Background Transparency</label>
-                                    <span class="slider-value">${Math.round(this.systemDesignTransparency * 100)}%</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="0"
-                                    max="1"
-                                    step="0.01"
-                                    .value=${this.systemDesignTransparency}
-                                    @input=${this.handleSystemDesignTransparencyChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Transparent</span>
-                                    <span>Opaque</span>
-                                </div>
-                                <div class="form-description">
-                                    Background transparency when in system design layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Font Size</label>
-                                    <span class="slider-value">${this.systemDesignFontSize}px</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="10"
-                                    max="32"
-                                    step="1"
-                                    .value=${this.systemDesignFontSize}
-                                    @input=${this.handleSystemDesignFontSizeChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>10px</span>
-                                    <span>32px</span>
-                                </div>
-                                <div class="form-description">
-                                    Font size for AI responses when in system design layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="checkbox-group">
-                                    <input
-                                        type="checkbox"
-                                        id="system-design-auto-scroll"
-                                        class="checkbox-input"
-                                        .checked=${this.systemDesignAutoScroll}
-                                        @change=${this.handleSystemDesignAutoScrollChange}
-                                    />
-                                    <label for="system-design-auto-scroll" class="checkbox-label">Auto Scroll</label>
-                                </div>
-                                <div class="form-description">
-                                    Automatically scroll to new content when in system design layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-group full-width">
-                            <div class="slider-container">
-                                <div class="slider-header">
-                                    <label class="form-label">Auto Scroll Speed</label>
-                                    <span class="slider-value">${this.systemDesignScrollSpeed}</span>
-                                </div>
-                                <input
-                                    type="range"
-                                    class="slider-input"
-                                    min="1"
-                                    max="10"
-                                    step="1"
-                                    .value=${this.systemDesignScrollSpeed}
-                                    @input=${this.handleSystemDesignScrollSpeedChange}
-                                />
-                                <div class="slider-labels">
-                                    <span>Slow</span>
-                                    <span>Fast</span>
-                                </div>
-                                <div class="form-description">
-                                    Speed of automatic scrolling when in system design layout mode
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="form-row">
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Width</label>
-                                        <span class="slider-value">${this.systemDesignWidth}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="600"
-                                        max="1200"
-                                        step="10"
-                                        .value=${this.systemDesignWidth}
-                                        @input=${this.handleSystemDesignWidthChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>600px</span>
-                                        <span>1200px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window width when in system design layout mode
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="slider-container">
-                                    <div class="slider-header">
-                                        <label class="form-label">Window Height</label>
-                                        <span class="slider-value">${this.systemDesignHeight}px</span>
-                                    </div>
-                                    <input
-                                        type="range"
-                                        class="slider-input"
-                                        min="400"
-                                        max="800"
-                                        step="10"
-                                        .value=${this.systemDesignHeight}
-                                        @input=${this.handleSystemDesignHeightChange}
-                                    />
-                                    <div class="slider-labels">
-                                        <span>400px</span>
-                                        <span>800px</span>
-                                    </div>
-                                    <div class="form-description">
-                                        Window height when in system design layout mode
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
+                <!-- Unified Layout Settings Section -->
+                ${this.renderUnifiedLayoutSettings()}
                 <!-- Screen Capture Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>Screen Capture Settings</span>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">
-                                    Capture Interval
-                                    <span class="current-selection"
-                                        >${this.selectedScreenshotInterval === 'manual' ? 'Manual' : this.selectedScreenshotInterval + 's'}</span
-                                    >
-                                </label>
-                                <select class="form-control" .value=${this.selectedScreenshotInterval} @change=${this.handleScreenshotIntervalSelect}>
-                                    <option value="manual" ?selected=${this.selectedScreenshotInterval === 'manual'}>Manual (On demand)</option>
-                                    <option value="1" ?selected=${this.selectedScreenshotInterval === '1'}>Every 1 second</option>
-                                    <option value="2" ?selected=${this.selectedScreenshotInterval === '2'}>Every 2 seconds</option>
-                                    <option value="5" ?selected=${this.selectedScreenshotInterval === '5'}>Every 5 seconds</option>
-                                    <option value="10" ?selected=${this.selectedScreenshotInterval === '10'}>Every 10 seconds</option>
-                                </select>
-                                <div class="form-description">
-                                    ${
-                                        this.selectedScreenshotInterval === 'manual'
-                                            ? 'Screenshots will only be taken when you use the "Ask Next Step" shortcut'
-                                            : 'Automatic screenshots will be taken at the specified interval'
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">
-                                    Image Quality
-                                    <span class="current-selection"
-                                        >${this.selectedImageQuality.charAt(0).toUpperCase() + this.selectedImageQuality.slice(1)}</span
-                                    >
-                                </label>
-                                <select class="form-control" .value=${this.selectedImageQuality} @change=${this.handleImageQualitySelect}>
-                                    <option value="high" ?selected=${this.selectedImageQuality === 'high'}>High Quality</option>
-                                    <option value="medium" ?selected=${this.selectedImageQuality === 'medium'}>Medium Quality</option>
-                                    <option value="low" ?selected=${this.selectedImageQuality === 'low'}>Low Quality</option>
-                                </select>
-                                <div class="form-description">
-                                    ${
-                                        this.selectedImageQuality === 'high'
-                                            ? 'Best quality, uses more tokens'
-                                            : this.selectedImageQuality === 'medium'
-                                              ? 'Balanced quality and token usage'
-                                              : 'Lower quality, uses fewer tokens'
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                ${UIComponentTemplates.section({
+                    title: 'Screen Capture Settings',
+                    content: UIComponentTemplates.formRow([
+                        UIComponentTemplates.select({
+                            label: 'Capture Interval',
+                            value: this.selectedScreenshotInterval,
+                            currentSelection: this.selectedScreenshotInterval === 'manual' ? 'Manual' : this.selectedScreenshotInterval + 's',
+                            options: [
+                                { value: 'manual', label: 'Manual (On demand)' },
+                                { value: '1', label: 'Every 1 second' },
+                                { value: '2', label: 'Every 2 seconds' },
+                                { value: '5', label: 'Every 5 seconds' },
+                                { value: '10', label: 'Every 10 seconds' }
+                            ],
+                            onChange: this.handleScreenshotIntervalSelect.bind(this),
+                            description: this.selectedScreenshotInterval === 'manual' 
+                                ? 'Screenshots will only be taken when you use the "Ask Next Step" shortcut'
+                                : 'Automatic screenshots will be taken at the specified interval'
+                        }),
+                        UIComponentTemplates.select({
+                            label: 'Image Quality',
+                            value: this.selectedImageQuality,
+                            currentSelection: this.selectedImageQuality.charAt(0).toUpperCase() + this.selectedImageQuality.slice(1),
+                            options: [
+                                { value: 'high', label: 'High Quality' },
+                                { value: 'medium', label: 'Medium Quality' },
+                                { value: 'low', label: 'Low Quality' }
+                            ],
+                            onChange: this.handleImageQualitySelect.bind(this),
+                            description: this.selectedImageQuality === 'high' 
+                                ? 'Best quality, uses more tokens'
+                                : this.selectedImageQuality === 'medium'
+                                  ? 'Balanced quality and token usage'
+                                  : 'Lower quality, uses fewer tokens'
+                        })
+                    ])
+                })}
 
                 <!-- Keyboard Shortcuts Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>Keyboard Shortcuts</span>
-                    </div>
-
-                    <table class="keybinds-table">
-                        <thead>
-                            <tr>
-                                <th>Action</th>
-                                <th>Shortcut</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${this.getKeybindActions().map(
-                                action => html`
-                                    <tr>
-                                        <td>
-                                            <div class="action-name">${action.name}</div>
-                                            <div class="action-description">${action.description}</div>
-                                        </td>
-                                        <td>
-                                            <input
-                                                type="text"
-                                                class="form-control keybind-input"
-                                                .value=${this.keybinds[action.key]}
-                                                placeholder="Press keys..."
-                                                data-action=${action.key}
-                                                @keydown=${this.handleKeybindInput}
-                                                @focus=${this.handleKeybindFocus}
-                                                readonly
-                                            />
-                                        </td>
-                                    </tr>
-                                `
-                            )}
-                            <tr class="table-reset-row">
-                                <td colspan="2">
-                                    <button class="reset-keybinds-button" @click=${this.resetKeybinds}>Reset to Defaults</button>
-                                    <div class="form-description" style="margin-top: 8px;">
-                                        Restore all keyboard shortcuts to their default values
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                ${UIComponentTemplates.section({
+                    title: 'Keyboard Shortcuts',
+                    content: UIComponentTemplates.keybindsTable({
+                        actions: this.getKeybindActions(),
+                        keybinds: this.keybinds,
+                        onKeydown: this.handleKeybindInput.bind(this),
+                        onFocus: this.handleKeybindFocus.bind(this),
+                        onReset: this.resetKeybinds.bind(this)
+                    })
+                })}
 
 
 
                 <!-- Google Search Section -->
-                <div class="settings-section">
-                    <div class="section-title">
-                        <span>Google Search</span>
-                    </div>
+                ${UIComponentTemplates.section({
+                    title: 'Google Search',
+                    content: html`
+                        ${UIComponentTemplates.checkbox({
+                            id: 'google-search-enabled',
+                            label: 'Enable Google Search',
+                            checked: this.googleSearchEnabled,
+                            onChange: this.handleGoogleSearchChange.bind(this),
+                            description: 'Allow the AI to search Google for up-to-date information and facts during conversations. Changes take effect when starting a new AI session.'
+                        })}
+                    `
+                })}
 
-                    <div class="form-grid">
-                        <div class="checkbox-group">
-                            <input
-                                type="checkbox"
-                                class="checkbox-input"
-                                id="google-search-enabled"
-                                .checked=${this.googleSearchEnabled}
-                                @change=${this.handleGoogleSearchChange}
-                            />
-                            <label for="google-search-enabled" class="checkbox-label"> Enable Google Search </label>
-                        </div>
-                        <div class="form-description" style="margin-left: 24px; margin-top: -8px;">
-                            Allow the AI to search Google for up-to-date information and facts during conversations
-                            <br /><strong>Note:</strong> Changes take effect when starting a new AI session
-                        </div>
-                    </div>
-                </div>
-
-                <div class="settings-note">
-                    💡 Settings are automatically saved as you change them. Changes will take effect immediately or on the next session start.
-                </div>
+                ${UIComponentTemplates.settingsNote('Settings are automatically saved as you change them. Changes will take effect immediately or on the next session start.')}
 
                 <!-- Advanced Mode Section (Danger Zone) -->
-                <div class="settings-section" style="border-color: var(--danger-border, rgba(239, 68, 68, 0.3)); background: var(--danger-background, rgba(239, 68, 68, 0.05));">
-                    <div class="section-title" style="color: var(--danger-color, #ef4444);">
-                        <span>⚠️ Advanced Mode</span>
-                    </div>
-
-                    <div class="form-grid">
-                        <div class="checkbox-group">
-                            <input
-                                type="checkbox"
-                                class="checkbox-input"
-                                id="advanced-mode"
-                                .checked=${this.advancedMode}
-                                @change=${this.handleAdvancedModeChange}
-                            />
-                            <label for="advanced-mode" class="checkbox-label"> Enable Advanced Mode </label>
-                        </div>
-                        <div class="form-description" style="margin-left: 24px; margin-top: -8px;">
-                            Unlock experimental features, developer tools, and advanced configuration options
-                            <br /><strong>Note:</strong> Advanced mode adds a new icon to the main navigation bar
-                        </div>
-                    </div>
-                </div>
+                ${UIComponentTemplates.section({
+                    title: '⚠️ Advanced Mode',
+                    content: UIComponentTemplates.checkbox({
+                        id: 'advanced-mode',
+                        label: 'Enable Advanced Mode',
+                        checked: this.advancedMode,
+                        onChange: this.handleAdvancedModeChange.bind(this),
+                        description: 'Unlock experimental features, developer tools, and advanced configuration options. Advanced mode adds a new icon to the main navigation bar.'
+                    }),
+                    style: {
+                        'border-color': 'var(--danger-border, rgba(239, 68, 68, 0.3))',
+                        'background': 'var(--danger-background, rgba(239, 68, 68, 0.05))'
+                    }
+                })}
             </div>
         `;
     }

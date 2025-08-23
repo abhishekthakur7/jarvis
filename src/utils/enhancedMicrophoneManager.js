@@ -1,4 +1,6 @@
 // Enhanced microphone manager with AudioWorklet processing and real-time visualization
+import { microphonePermissionHelper } from './microphonePermissionHelper.js';
+
 // Addresses CRIT-001 (main thread), UX improvements (visualization, progressive transcripts)
 
 class EnhancedMicrophoneManager {
@@ -21,7 +23,7 @@ class EnhancedMicrophoneManager {
         this.config = {
             sampleRate: 24000,
             frameSize: 480,
-            energyThreshold: 0.002,
+            energyThreshold: 0.0005, // Lowered from 0.002 for better sensitivity
             silenceFrames: 8,
             speechFrames: 1,
             chunkDuration: 0.5
@@ -50,9 +52,31 @@ class EnhancedMicrophoneManager {
         };
     }
     
+    async checkMicrophonePermissions() {
+        try {
+            const permissionState = await microphonePermissionHelper.checkPermissionStatus();
+            
+            if (permissionState === 'denied') {
+                microphonePermissionHelper.showPermissionInstructions();
+                throw new Error('Microphone access is permanently denied. Please enable microphone access in your browser settings.');
+            }
+            
+            return permissionState;
+        } catch (error) {
+            console.error('❌ Error checking microphone permissions:', error);
+            throw error;
+        }
+    }
+
     async initialize() {
         try {
-            console.log('🎤 Initializing enhanced microphone manager...');
+            // Check permissions first
+            await this.checkMicrophonePermissions();
+            
+            // Check if AudioWorklet is supported
+            if (!window.AudioContext && !window.webkitAudioContext) {
+                throw new Error('Web Audio API is not supported in this browser');
+            }
             
             // Create audio context
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)({
@@ -60,8 +84,42 @@ class EnhancedMicrophoneManager {
                 latencyHint: 'interactive'
             });
             
-            // Load AudioWorklet processor
-            await this.audioContext.audioWorklet.addModule('/src/utils/audioWorkletProcessor.js');
+            // Resume audio context if suspended (required for user gesture in some browsers)
+            if (this.audioContext.state === 'suspended') {
+                await this.audioContext.resume();
+            }
+            
+            // Check if AudioWorklet is supported
+            if (!this.audioContext.audioWorklet) {
+                throw new Error('AudioWorklet is not supported in this browser. Please use a modern browser.');
+            }
+            
+            // Load AudioWorklet processor with multiple fallback paths for Electron
+            const possiblePaths = [
+                '/src/utils/audioWorkletProcessor.js',
+                './src/utils/audioWorkletProcessor.js',
+                '../utils/audioWorkletProcessor.js',
+                'src/utils/audioWorkletProcessor.js',
+                window.location.origin + '/src/utils/audioWorkletProcessor.js'
+            ];
+            
+            let workletLoaded = false;
+            let lastError = null;
+            
+            for (const workletPath of possiblePaths) {
+                try {
+                    await this.audioContext.audioWorklet.addModule(workletPath);
+                    workletLoaded = true;
+                    break;
+                } catch (error) {
+                    lastError = error;
+                    continue;
+                }
+            }
+            
+            if (!workletLoaded) {
+                throw new Error(`Failed to load AudioWorklet processor from any path. Last error: ${lastError?.message || 'Unknown error'}`);
+            }
             
             // Create worklet node
             this.workletNode = new AudioWorkletNode(this.audioContext, 'jarvis-audio-processor', {
@@ -71,8 +129,13 @@ class EnhancedMicrophoneManager {
             // Setup message handling
             this.workletNode.port.onmessage = this.handleWorkletMessage.bind(this);
             
+            // Handle worklet errors
+            this.workletNode.onprocessorerror = (error) => {
+                console.error('❌ AudioWorklet processor error:', error);
+                this.handleError(new Error(`AudioWorklet processor error: ${error.message || 'Unknown error'}`));
+            };
+            
             this.isInitialized = true;
-            console.log('✅ Enhanced microphone manager initialized');
             
         } catch (error) {
             console.error('❌ Failed to initialize enhanced microphone manager:', error);
@@ -123,8 +186,6 @@ class EnhancedMicrophoneManager {
     }
     
     handleVADEvent(data) {
-        console.log(`🎙️ VAD Event: ${data.speechStart ? 'Speech Start' : data.speechEnd ? 'Speech End' : 'Speaking'} (energy: ${data.energy.toFixed(4)})`);
-        
         if (data.speechStart) {
             this.startTranscriptSegment();
         } else if (data.speechEnd) {
@@ -176,22 +237,25 @@ class EnhancedMicrophoneManager {
             }
             
             if (this.isRecording) {
-                console.warn('⚠️ Already recording');
                 return;
             }
             
-            console.log('🎤 Starting enhanced audio recording...');
+            // Check permissions before attempting to access microphone
+            const permissionState = await this.checkMicrophonePermissions();
             
-            // Get microphone access
-            this.mediaStream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    sampleRate: this.config.sampleRate,
-                    channelCount: 1,
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true
-                }
-            });
+            if (permissionState === 'denied') {
+                throw new Error('Microphone access is denied. Please allow microphone access and try again.');
+            }
+            
+            // Request microphone access using the permission helper
+            const accessResult = await microphonePermissionHelper.requestMicrophoneAccess();
+            
+            if (!accessResult.success) {
+                microphonePermissionHelper.showPermissionInstructions();
+                throw new Error(accessResult.error);
+            }
+            
+            this.mediaStream = accessResult.stream;
             
             // Create source node
             this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
@@ -205,7 +269,6 @@ class EnhancedMicrophoneManager {
             }
             
             this.isRecording = true;
-            console.log('✅ Enhanced audio recording started');
             
         } catch (error) {
             console.error('❌ Failed to start enhanced recording:', error);
@@ -217,11 +280,8 @@ class EnhancedMicrophoneManager {
     async stopRecording() {
         try {
             if (!this.isRecording) {
-                console.warn('⚠️ Not currently recording');
                 return;
             }
-            
-            console.log('🛑 Stopping enhanced audio recording...');
             
             // Disconnect nodes
             if (this.sourceNode) {
@@ -243,8 +303,6 @@ class EnhancedMicrophoneManager {
             this.isRecording = false;
             this.endTranscriptSegment();
             
-            console.log('✅ Enhanced audio recording stopped');
-            
         } catch (error) {
             console.error('❌ Failed to stop enhanced recording:', error);
             this.handleError(error);
@@ -260,8 +318,6 @@ class EnhancedMicrophoneManager {
                 data: newConfig
             });
         }
-        
-        console.log('📊 Configuration updated:', this.config);
     }
     
     // Progressive transcript management
@@ -269,7 +325,6 @@ class EnhancedMicrophoneManager {
         if (!this.isTranscribing) {
             this.isTranscribing = true;
             this.currentTranscript = '';
-            console.log('📝 Started new transcript segment');
         }
     }
     
@@ -367,8 +422,6 @@ class EnhancedMicrophoneManager {
             this.audioContext = null;
             this.workletNode = null;
             this.isInitialized = false;
-            
-            console.log('🧹 Enhanced microphone manager cleaned up');
             
         } catch (error) {
             console.error('❌ Error during cleanup:', error);
