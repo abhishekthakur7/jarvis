@@ -9,7 +9,17 @@
         "package": "electron-forge package",
         "make": "electron-forge make",
         "publish": "electron-forge publish",
-        "lint": "echo \"No linting configured\""
+        "lint": "echo \"No linting configured\"",
+        "test": "npm run test:validate && npm run test:simple",
+        "test:jest": "jest --passWithNoTests",
+        "test:manual": "node test/manualValidation.js",
+        "test:watch": "jest --watch --passWithNoTests",
+        "test:coverage": "jest --coverage --passWithNoTests",
+        "test:layout": "jest test/layoutSettings*.test.js --passWithNoTests",
+        "test:integration": "jest test/assistantAppLayoutIntegration.test.js --passWithNoTests",
+        "test:simple": "node test/simpleTransparencyTest.js",
+        "test:validate": "node test/validateFixes.js",
+        "test:all": "npm run test:validate && npm run test:simple && npm run test:manual"
     },
     "keywords": [
         "jarvis",
@@ -29,6 +39,8 @@
         "electron-squirrel-startup": "^1.0.1"
     },
     "devDependencies": {
+        "@babel/core": "^7.28.3",
+        "@babel/preset-env": "^7.28.3",
         "@electron-forge/cli": "^7.8.1",
         "@electron-forge/maker-deb": "^7.8.1",
         "@electron-forge/maker-dmg": "^7.8.1",
@@ -38,6 +50,42 @@
         "@electron-forge/plugin-auto-unpack-natives": "^7.8.1",
         "@electron-forge/plugin-fuses": "^7.8.1",
         "@electron/fuses": "^1.8.0",
-        "electron": "^30.0.5"
+        "babel-jest": "^30.0.5",
+        "electron": "^30.0.5",
+        "jest": "^30.0.5",
+        "jest-environment-jsdom": "^30.0.5"
+    },
+    "jest": {
+        "testEnvironment": "jsdom",
+        "setupFilesAfterEnv": ["<rootDir>/test/setupTests.js"],
+        "testMatch": [
+            "<rootDir>/test/**/*.test.js"
+        ],
+        "collectCoverageFrom": [
+            "src/utils/layoutSettingsManager.js",
+            "src/components/app/AssistantApp.js",
+            "src/components/views/CustomizeView.js"
+        ],
+        "moduleNameMapper": {
+            "^@/(.*)$": "<rootDir>/src/$1"
+        },
+        "transform": {
+            "^.+\\.js$": "babel-jest"
+        },
+        "verbose": true,
+        "testTimeout": 10000,
+        "passWithNoTests": true
+    },
+    "babel": {
+        "presets": [
+            [
+                "@babel/preset-env",
+                {
+                    "targets": {
+                        "node": "16"
+                    }
+                }
+            ]
+        ]
     }
 }
