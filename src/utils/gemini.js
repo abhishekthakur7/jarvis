@@ -43,7 +43,7 @@ const MAX_MICROPHONE_WORDS = 200;
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input (FALLBACK)
+const INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay to wait for complete input (FALLBACK)
 
 // Enhanced debounce system for technical interview optimization
 let vadAdaptiveData = null; // VAD data from AudioWorklet
@@ -353,6 +353,11 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             
             // Execute the actual Gemini request with metrics
             lastAiRequestStart = Date.now();
+            
+            // ENHANCED: Prepare request with optimized context and follow-up intelligence
+            let requestText = combinedText.trim();
+            let contextSources = [];
+            
             recordMetric('ai_request_start', { 
                 conversationId: currentConversationId, 
                 textLength: combinedText.length,
@@ -365,10 +370,6 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                 followUpConfidence: followUpAnalysis.confidence,
                 contextSources: contextSources.length
             });
-            
-            // ENHANCED: Prepare request with optimized context and follow-up intelligence
-            let requestText = combinedText.trim();
-            let contextSources = [];
             
             // Include optimized context if available and beneficial
             if (requestContext.optimizedContext && 
@@ -1413,7 +1414,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                         const similarity = entry.transcription.trim() === pendingInput.trim() ||
                                                           entry.transcription.includes(pendingInput.trim()) ||
                                                           pendingInput.includes(entry.transcription.trim());
-                                        const isRecent = (Date.now() - entry.timestamp) < 8000; // Within 8 seconds
+                                        const isRecent = (Date.now() - entry.timestamp) < 6000; // Within 6 seconds
                                         return similarity && isRecent;
                                     });
                                     

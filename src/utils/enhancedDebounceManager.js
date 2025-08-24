@@ -11,9 +11,9 @@
 class EnhancedDebounceManager {
     constructor() {
         // Preserve existing constants but make them dynamic bounds
-        this.baseDebounceMs = 8000;      // Keep current as maximum safety
-        this.minDebounceMs = 2000;       // New minimum for clear questions
-        this.mediumDebounceMs = 4000;    // Medium complexity questions
+        this.baseDebounceMs = 6000;      // Keep current as maximum safety
+        this.minDebounceMs = 1500;       // New minimum for clear questions
+        this.mediumDebounceMs = 3000;    // Medium complexity questions
         this.currentDebounceMs = this.baseDebounceMs;
         
         // Interview-specific optimization

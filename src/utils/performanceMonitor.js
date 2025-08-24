@@ -29,10 +29,10 @@ class PerformanceMonitor {
             
             // Latency metrics (from Enhanced Debounce Manager)
             latency: {
-                currentDelay: 8000,
-                averageDelay: 8000,
-                minDelay: 2000,
-                maxDelay: 8000,
+                currentDelay: 6000,
+                averageDelay: 6000,
+                minDelay: 1500,
+                maxDelay: 6000,
                 totalDecisions: 0,
                 recentLatencies: []
             },
@@ -684,10 +684,10 @@ class PerformanceMonitor {
             timestamp: Date.now(),
             sessionStartTime: Date.now(),
             latency: {
-                currentDelay: 8000,
-                averageDelay: 8000,
-                minDelay: 2000,
-                maxDelay: 8000,
+                currentDelay: 6000,
+                averageDelay: 6000,
+                minDelay: 1500,
+                maxDelay: 6000,
                 totalDecisions: 0,
                 recentLatencies: []
             },

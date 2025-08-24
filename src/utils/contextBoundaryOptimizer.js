@@ -157,11 +157,14 @@ class ContextBoundaryOptimizer {
     analyzeInput(input, interviewContext) {
         const text = input.toLowerCase().trim();
         
+        // Ensure interviewContext is not null or undefined
+        const context = interviewContext || {};
+        
         const analysis = {
             input: input.trim(),
-            type: interviewContext.type || 'unknown',
-            priority: interviewContext.priority || 'normal',
-            confidence: interviewContext.confidence || 0.5,
+            type: context.type || 'unknown',
+            priority: context.priority || 'normal',
+            confidence: context.confidence || 0.5,
             technicalTopics: [],
             questionType: null,
             contextReferences: [],
