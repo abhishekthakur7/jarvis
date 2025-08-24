@@ -951,8 +951,7 @@ export class AssistantView extends LitElement {
         
         .priority-primary {
             font-size: 1.125em; /* 18px relative to 16px base */
-            line-height: 1.8;
-            font-weight: 500;
+            line-height: 1.3;
             letter-spacing: 0.02em;
             color: var(--primary-text-color, #ffffff);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
