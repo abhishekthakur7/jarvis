@@ -1026,7 +1026,6 @@ export class AssistantView extends LitElement {
         .key-term {
             font-size: 0.9em;
             font-weight: 600;
-            color: var(--key-term-color, #ffd700);
             background: var(--key-term-background, rgba(255, 215, 0, 0.1));
             border-radius: 3px;
         }
