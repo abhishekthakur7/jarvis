@@ -274,7 +274,7 @@ export class TeleprompterFormatter {
             .teleprompter-container {
                 margin-top: -15px;
                 font-size: var(--response-font-size, 16px); /* Inherit centralized font size */
-                line-height: var(--reading-line-height, 1.8);
+                line-height: 1.5;
                 word-spacing: var(--reading-word-spacing, 0.1em);
                 font-feature-settings: "liga" 1, "kern" 1;
                 text-rendering: optimizeLegibility;

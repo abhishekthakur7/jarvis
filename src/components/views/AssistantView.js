@@ -23,7 +23,7 @@ export class AssistantView extends LitElement {
             overflow-y: auto;
             border-radius: 8px;
             font-size: var(--response-font-size, 18px);
-            line-height: 1.5;
+            line-height: 1.3;
             background: var(--main-content-background);
             padding: 3px;
             letter-spacing: 0.01em;
@@ -148,7 +148,6 @@ export class AssistantView extends LitElement {
             color: #ffd700;
             white-space: pre-wrap;
             word-break: break-word;
-            border: 2px solid rgba(255, 255, 255, 0.1);
             font-weight: 500;
         }
 
@@ -933,7 +932,7 @@ export class AssistantView extends LitElement {
         @media (max-width: 400px) {
             .response-container {
                 letter-spacing: 0.03em;
-                line-height: 1.8;
+                line-height: 1.3;
             }
             
             .response-container p {
@@ -944,7 +943,7 @@ export class AssistantView extends LitElement {
         /* Teleprompter Typography System */
         .teleprompter-container {
             margin-top: -15px;
-            line-height: var(--reading-line-height, 1.8);
+            line-height: 1.5;
             letter-spacing: var(--reading-letter-spacing, 0.02em);
             font-feature-settings: "liga" 1, "kern" 1;
             text-rendering: optimizeLegibility;
@@ -1077,19 +1076,19 @@ export class AssistantView extends LitElement {
         /* Layout mode specific enhancements */
         :host(.ultra-discrete-mode) .response-container {
             font-size: var(--teleprompter-font-size, var(--response-font-size, 14px));
-            line-height: var(--teleprompter-line-height, 1.4);
+            line-height: var(--teleprompter-line-height, 1.3);
             padding: 6px;
         }
         
         :host(.balanced-mode) .response-container {
             font-size: var(--teleprompter-font-size, var(--response-font-size, 16px));
-            line-height: var(--teleprompter-line-height, 1.6);
+            line-height: var(--teleprompter-line-height, 1.3);
             padding: 8px;
         }
         
         :host(.presentation-mode) .response-container {
             font-size: var(--teleprompter-font-size, var(--response-font-size, 18px));
-            line-height: var(--teleprompter-line-height, 1.8);
+            line-height: var(--teleprompter-line-height, 1.3);
             padding: 12px;
         }
             
