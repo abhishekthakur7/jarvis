@@ -25,6 +25,10 @@ function getDefaultKeybinds() {
         toggleAutoScroll: 'Shift+Alt+3',
         windowClose: 'Shift+Alt+;',
         
+        // Transparency Controls
+        increaseTransparency: 'Ctrl+Alt+PageUp',
+        decreaseTransparency: 'Ctrl+Alt+PageDown',
+        
         // Teleprompter Reading Flow Controls
         pauseResumeReading: 'Shift+Alt+P',
         restartCurrentSection: 'Shift+Alt+R',

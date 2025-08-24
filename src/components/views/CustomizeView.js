@@ -769,7 +769,9 @@ export class CustomizeView extends LitElement {
             scrollUp: 'Shift+Alt+1',
             scrollDown: 'Shift+Alt+2',
             toggleAutoScroll: isMac ? 'Shift+Alt+3' : 'Shift+Alt+3',
-            windowClose: 'Shift+Alt+;'
+            windowClose: 'Shift+Alt+;',
+            increaseTransparency: 'Ctrl+Alt+PageUp',
+            decreaseTransparency: 'Ctrl+Alt+PageDown'
         };
     }
 
@@ -896,6 +898,16 @@ export class CustomizeView extends LitElement {
                 key: 'windowClose',
                 name: 'Close Window/Session',
                 description: 'Close the current session or application window',
+            },
+            {
+                key: 'increaseTransparency',
+                name: 'Increase Transparency',
+                description: 'Increase transparency of the current layout mode by 5%',
+            },
+            {
+                key: 'decreaseTransparency',
+                name: 'Decrease Transparency',
+                description: 'Decrease transparency of the current layout mode by 5%',
             },
         ];
     }
@@ -1073,6 +1085,23 @@ export class CustomizeView extends LitElement {
         localStorage.setItem('fontSize', this.fontSize.toString());
         this.updateFontSize();
         this.requestUpdate();
+    }
+
+    // Transparency adjustment methods for shortcuts
+    increaseTransparency() {
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
+        const currentTransparency = Math.round(settings.transparency * 100);
+        const newTransparency = Math.min(100, currentTransparency + 5);
+        LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
+    }
+
+    decreaseTransparency() {
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
+        const currentTransparency = Math.round(settings.transparency * 100);
+        const newTransparency = Math.max(30, currentTransparency - 5);
+        LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
     }
 
 

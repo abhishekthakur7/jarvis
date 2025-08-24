@@ -732,7 +732,7 @@ ipcRenderer.on('save-conversation-turn', async (event, data) => {
 initConversationStorage().catch(console.error);
 
 // Handle shortcuts based on current view
-function handleShortcut(shortcutKey) {
+async function handleShortcut(shortcutKey) {
     //console.log('🎯 [SHORTCUT_HANDLER] Received shortcut:', shortcutKey);
     const currentView = cheddar.getCurrentView();
     //console.log('🎯 [SHORTCUT_HANDLER] Current view:', currentView);
@@ -777,6 +777,22 @@ function handleShortcut(shortcutKey) {
             // Trigger session reinitialization in jarvis view
             cheddar.element().reinitializeSession();
         }
+    } else if (shortcutKey === 'ctrl+alt+pageup' || shortcutKey === 'Ctrl+Alt+PageUp') {
+        // Increase transparency by 5% - works from any view
+        const { LayoutSettingsManager } = await import('../utils/layoutSettingsManager.js');
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
+        const currentTransparency = Math.round(settings.transparency * 100);
+        const newTransparency = Math.min(100, currentTransparency + 5);
+        LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
+    } else if (shortcutKey === 'ctrl+alt+pagedown' || shortcutKey === 'Ctrl+Alt+PageDown') {
+        // Decrease transparency by 5% - works from any view
+        const { LayoutSettingsManager } = await import('../utils/layoutSettingsManager.js');
+        const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
+        const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
+        const currentTransparency = Math.round(settings.transparency * 100);
+        const newTransparency = Math.max(30, currentTransparency - 5);
+        LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
     }
 }
 

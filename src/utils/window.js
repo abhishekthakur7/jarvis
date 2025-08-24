@@ -478,6 +478,40 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
         }
     }
 
+    // Register increase transparency shortcut
+    if (keybinds.increaseTransparency) {
+        try {
+            globalShortcut.register(keybinds.increaseTransparency, () => {
+                console.log('Increase transparency shortcut triggered');
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('ctrl+alt+pageup');
+                `).catch(error => {
+                    console.error('Error executing increase transparency script:', error);
+                });
+            });
+            console.log(`Registered increaseTransparency: ${keybinds.increaseTransparency}`);
+        } catch (error) {
+            console.error(`Failed to register increaseTransparency (${keybinds.increaseTransparency}):`, error);
+        }
+    }
+
+    // Register decrease transparency shortcut
+    if (keybinds.decreaseTransparency) {
+        try {
+            globalShortcut.register(keybinds.decreaseTransparency, () => {
+                console.log('Decrease transparency shortcut triggered');
+                mainWindow.webContents.executeJavaScript(`
+                    cheddar.handleShortcut('ctrl+alt+pagedown');
+                `).catch(error => {
+                    console.error('Error executing decrease transparency script:', error);
+                });
+            });
+            console.log(`Registered decreaseTransparency: ${keybinds.decreaseTransparency}`);
+        } catch (error) {
+            console.error(`Failed to register decreaseTransparency (${keybinds.decreaseTransparency}):`, error);
+        }
+    }
+
     // Register window close shortcut
     if (keybinds.windowClose) {
         try {

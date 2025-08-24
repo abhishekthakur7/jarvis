@@ -37,12 +37,12 @@ export class LayoutSettingsManager {
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 2,
-            width: 450,
-            height: 500
+            width: 550,
+            height: 600
         },
         compact: {
-            transparency: 0.85,
-            fontSize: 12,
+            transparency: 0.90,
+            fontSize: 11,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 2,
@@ -50,13 +50,13 @@ export class LayoutSettingsManager {
             height: 270
         },
         'system-design': {
-            transparency: 0.85,
+            transparency: 0.90,
             fontSize: 14,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 2,
-            width: 900,
-            height: 500
+            width: 1100,
+            height: 800
         }
     };
 
