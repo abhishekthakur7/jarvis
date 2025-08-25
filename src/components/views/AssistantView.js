@@ -317,6 +317,7 @@ export class AssistantView extends LitElement {
         .response-container strong {
             font-weight: 600;
             color: #80bfff;
+            font-size: 1.2em;
         } /* Emphasis: Vibrant blue */
         
         .response-container .filler {
