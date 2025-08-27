@@ -549,18 +549,18 @@
         "response_pattern": "functional_programming_focused",
         "triggers": ["stream", "using java 8", "using java streams", "filter", "map", "collect", "reduce", "foreach", "lambda", "functional", "pipeline", "optional"],
         "natural_thinking_patterns": {
-          "initial_approach": ["For this, I'd use streams...", "The functional approach here would be...", "Let me think about the stream pipeline..."],
           "method_selection": ["I'd probably go with filter() here...", "Map would work well for this transformation...", "Collect is what we need to gather the results..."],
-          "optimization_thinking": ["This could be more efficient with...", "Actually, parallel streams might help here...", "Wait, there's a simpler way using..."]
+          "optimization_thinking": ["This could be more efficient with...", "Actually, parallel streams might help here...", "Wait, there's a simpler way using..."],
+          "pipeline_building": ["Let me chain these operations...", "The pipeline would flow like...", "Each step transforms the data by..."]
         },
         "structure": {
-          "problem_analysis": "Explain the concept behind the problem in 2-3 sentences - focus on English explanation, no code discussion",
+          "problem_analysis": "Identify the core problem requirements and determine the optimal stream-based solution approach in 2-3 sentences",
           "streams_operations": "Step by step explanation for each stream operation needed to implement the solution",
           "code_solution": "Provide clean, commented, executable stream code with method references, null handling, and performance considerations",
           "time_space_complexity": "Analyze time and space complexity of the stream solution"
         },
         "section_requirements": {
-           "problem_analysis": "2-3 sentences explaining the core concept, no code discussion",
+           "problem_analysis": "2-3 sentences identifying the problem requirements AND the chosen stream solution approach - must include solution direction, not just concept explanation",
            "streams_operations": "Step-by-step breakdown of each stream operation to be used",
            "code_solution": "Clean, commented, executable code with method references, null handling, Optional usage, and performance considerations",
            "time_space_complexity": "Clear analysis of algorithmic complexity"
@@ -579,7 +579,7 @@
           "single_chaining_enforcement": "When 'single chaining' keywords detected, MUST use only one continuous stream pipeline without helper methods or nested streams",
           "required_completeness": "ALL four sections are mandatory - no skipping or combining sections",
           "content_validation": {
-            "problem_analysis": "MUST be 2-3 sentences explaining concept WITHOUT any code snippets",
+            "problem_analysis": "MUST be 2-3 sentences identifying problem requirements AND chosen solution approach - cannot be just conceptual explanation without solution direction",
             "streams_operations": "MUST list each stream operation step-by-step with purpose explanation",
             "code_solution": "MUST be clean, commented, executable code with proper formatting",
             "complexity_analysis": "MUST include both time and space complexity with brief explanation"

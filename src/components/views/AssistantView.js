@@ -79,7 +79,7 @@ export class AssistantView extends LitElement {
         }
         .response-container h3 {
             font-weight: 600;
-            color: #e8e8e8;
+            color: rgb(244 76 76);
             margin: 3px;
         }
         .response-container h4 {

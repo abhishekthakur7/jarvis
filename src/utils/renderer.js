@@ -778,20 +778,20 @@ async function handleShortcut(shortcutKey) {
             cheddar.element().reinitializeSession();
         }
     } else if (shortcutKey === 'ctrl+alt+pageup' || shortcutKey === 'Ctrl+Alt+PageUp') {
-        // Increase transparency by 5% - works from any view
+        // Increase transparency by 10% - works from any view
         const { LayoutSettingsManager } = await import('../utils/layoutSettingsManager.js');
         const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
         const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
         const currentTransparency = Math.round(settings.transparency * 100);
-        const newTransparency = Math.min(100, currentTransparency + 5);
+        const newTransparency = Math.min(100, currentTransparency + 10);
         LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
     } else if (shortcutKey === 'ctrl+alt+pagedown' || shortcutKey === 'Ctrl+Alt+PageDown') {
-        // Decrease transparency by 5% - works from any view
+        // Decrease transparency by 10% - works from any view
         const { LayoutSettingsManager } = await import('../utils/layoutSettingsManager.js');
         const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
         const settings = LayoutSettingsManager.loadSettings(currentLayoutMode);
         const currentTransparency = Math.round(settings.transparency * 100);
-        const newTransparency = Math.max(30, currentTransparency - 5);
+        const newTransparency = Math.max(30, currentTransparency - 10);
         LayoutSettingsManager.updateSetting(currentLayoutMode, 'transparency', newTransparency / 100);
     }
 }
