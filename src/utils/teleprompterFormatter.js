@@ -248,11 +248,11 @@ export class TeleprompterFormatter {
         let formattedContent = htmlContent;
         
         // Wrap key terms with emphasis classes
-        analysis.keyTerms.forEach(term => {
-            const regex = new RegExp(`\\b(${term})\\b`, 'gi');
-            formattedContent = formattedContent.replace(regex, 
-                '<span class="key-term" data-term="$1">$1</span>');
-        });
+        // analysis.keyTerms.forEach(term => {
+        //     const regex = new RegExp(`\\b(${term})\\b`, 'gi');
+        //     formattedContent = formattedContent.replace(regex, 
+        //         '<span class="key-term" data-term="$1">$1</span>');
+        // });
         
         // Apply priority-based styling
         const priorityClass = `priority-${analysis.priority}`;
