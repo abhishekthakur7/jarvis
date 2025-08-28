@@ -347,6 +347,8 @@ export class MainView extends LitElement {
         isInitializing: { type: Boolean },
         onLayoutModeChange: { type: Function },
         showApiKeyError: { type: Boolean },
+        selectedAiModel: { type: String },
+        showOpenRouterApiKeyError: { type: Boolean },
     };
 
     constructor() {
@@ -356,6 +358,8 @@ export class MainView extends LitElement {
         this.isInitializing = false;
         this.onLayoutModeChange = () => {};
         this.showApiKeyError = false;
+        this.selectedAiModel = 'gemini'; // Default to Gemini
+        this.showOpenRouterApiKeyError = false;
         this.boundKeydownHandler = this.handleKeydown.bind(this);
     }
 
@@ -368,6 +372,9 @@ export class MainView extends LitElement {
         // Add keyboard event listener for Ctrl+Enter (or Cmd+Enter on Mac)
         document.addEventListener('keydown', this.boundKeydownHandler);
 
+        // Load selected AI model from localStorage
+        this.loadSelectedAiModel();
+        
         // Load and apply layout mode on startup
         this.loadLayoutMode();
         // Resize window for this view
@@ -396,6 +403,21 @@ export class MainView extends LitElement {
         // Clear error state when user starts typing
         if (this.showApiKeyError) {
             this.showApiKeyError = false;
+        }
+    }
+
+    handleOpenRouterApiKeyInput(e) {
+        localStorage.setItem('openRouterApiKey', e.target.value);
+        // Clear error state when user starts typing
+        if (this.showOpenRouterApiKeyError) {
+            this.showOpenRouterApiKeyError = false;
+        }
+    }
+
+    loadSelectedAiModel() {
+        const savedAiModel = localStorage.getItem('selectedAiModel');
+        if (savedAiModel) {
+            this.selectedAiModel = savedAiModel;
         }
     }
 
@@ -430,6 +452,15 @@ export class MainView extends LitElement {
         // Remove the error class after 1 second
         setTimeout(() => {
             this.showApiKeyError = false;
+        }, 1000);
+    }
+
+    // Method to trigger OpenRouter API key error
+    triggerOpenRouterApiKeyError() {
+        this.showOpenRouterApiKeyError = true;
+        // Remove the error class after 1 second
+        setTimeout(() => {
+            this.showOpenRouterApiKeyError = false;
         }, 1000);
     }
 
@@ -472,10 +503,12 @@ export class MainView extends LitElement {
             ></path>
         </svg>`;
 
+        const providerName = this.selectedAiModel === 'openrouter' ? 'OpenRouter' : 'Gemini';
+        
         if (isMac) {
-            return html`Start Session <span class="shortcut-icons">${cmdIcon}${enterIcon}</span>`;
+            return html`Start Session (${providerName}) <span class="shortcut-icons">${cmdIcon}${enterIcon}</span>`;
         } else {
-            return html`Start Session <span class="shortcut-icons">Shift+Alt+4</span>`;
+            return html`Start Session (${providerName}) <span class="shortcut-icons">Shift+Alt+4</span>`;
         }
     }
 
@@ -501,20 +534,37 @@ export class MainView extends LitElement {
 
                 <div class="input-section">
                     <div class="input-group">
-                        <div class="input-wrapper">
-                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
-                                <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
-                            </svg>
-                            <input
-                                type="password"
-                                placeholder="Enter your Gemini API Key"
-                                .value=${localStorage.getItem('apiKey') || ''}
-                                @input=${this.handleInput}
-                                class="${this.showApiKeyError ? 'api-key-error' : ''}"
-                            />
-                        </div>
+                        ${this.selectedAiModel === 'gemini' ? html`
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <input
+                                    type="password"
+                                    placeholder="Enter your Gemini API Key"
+                                    .value=${localStorage.getItem('apiKey') || ''}
+                                    @input=${this.handleInput}
+                                    class="${this.showApiKeyError ? 'api-key-error' : ''}"
+                                />
+                            </div>
+                        ` : html`
+                            <div class="input-wrapper">
+                                <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                    <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                <input
+                                    type="password"
+                                    placeholder="Enter your OpenRouter API Key"
+                                    .value=${localStorage.getItem('openRouterApiKey') || ''}
+                                    @input=${this.handleOpenRouterApiKeyInput}
+                                    class="${this.showOpenRouterApiKeyError ? 'api-key-error' : ''}"
+                                />
+                            </div>
+                        `}
                         <button @click=${this.handleStartClick} class="start-button ${this.isInitializing ? 'initializing' : ''}">
                             ${this.getStartButtonText()}
                         </button>

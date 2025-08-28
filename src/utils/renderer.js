@@ -143,29 +143,48 @@ function arrayBufferToBase64(buffer) {
     return btoa(binary);
 }
 
-async function initializeGemini(profile = 'interview', language = 'en-IN') {
-    const apiKey = localStorage.getItem('apiKey')?.trim();
-    if (apiKey) {
-        const customPrompt = localStorage.getItem('customPrompt') || '';
-        const success = await ipcRenderer.invoke('initialize-gemini', apiKey, customPrompt, profile, language);
-        if (success) {
-            cheddar.setStatus('Live');
-            
-            // Reset session state for new session
-            sessionState = {
-                isInitialized: true,
-                systemPromptExecuted: false,
-                sessionId: Date.now() // Simple session ID
-            };
-            
-            console.log('Session initialized, system prompt will execute on first Ask Next Step usage');
-            
-            // REMOVED: Auto-execution of custom prompt
-            // The system prompt will now execute when shift+alt+4 is used for the first time
-        } else {
-            cheddar.setStatus('error');
+async function initializeAI(profile = 'interview', language = 'en-IN') {
+    const selectedAiModel = localStorage.getItem('selectedAiModel') || 'gemini';
+    let apiKey, success;
+    
+    if (selectedAiModel === 'openrouter') {
+        apiKey = localStorage.getItem('openRouterApiKey')?.trim();
+        if (apiKey) {
+            const customPrompt = localStorage.getItem('customPrompt') || '';
+            success = await ipcRenderer.invoke('initialize-openrouter', apiKey, customPrompt, profile, language);
+        }
+    } else {
+        // Default to Gemini
+        apiKey = localStorage.getItem('apiKey')?.trim();
+        if (apiKey) {
+            const customPrompt = localStorage.getItem('customPrompt') || '';
+            success = await ipcRenderer.invoke('initialize-gemini', apiKey, customPrompt, profile, language);
         }
     }
+    
+    if (apiKey && success) {
+        cheddar.setStatus('Live');
+        
+        // Reset session state for new session
+        sessionState = {
+            isInitialized: true,
+            systemPromptExecuted: false,
+            sessionId: Date.now(), // Simple session ID
+            aiProvider: selectedAiModel
+        };
+        
+        console.log(`${selectedAiModel.toUpperCase()} session initialized, system prompt will execute on first Ask Next Step usage`);
+        
+        // REMOVED: Auto-execution of custom prompt
+        // The system prompt will now execute when shift+alt+4 is used for the first time
+    } else if (apiKey) {
+        cheddar.setStatus('error');
+    }
+}
+
+// Keep backward compatibility
+async function initializeGemini(profile = 'interview', language = 'en-IN') {
+    return await initializeAI(profile, language);
 }
 
 // Listen for status updates
@@ -853,7 +872,8 @@ const cheddar = {
     },
     
     // Core functionality
-    initializeGemini,
+    initializeAI,
+    initializeGemini, // Keep for backward compatibility
     startCapture,
     stopCapture,
     sendTextMessage,

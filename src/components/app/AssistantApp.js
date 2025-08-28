@@ -111,6 +111,7 @@ export class AssistantApp extends LitElement {
         sessionActive: { type: Boolean },
         selectedProfile: { type: String },
         selectedLanguage: { type: String },
+        selectedAiModel: { type: String },
         responses: { type: Array },
         currentResponseIndex: { type: Number },
         selectedScreenshotInterval: { type: String },
@@ -143,6 +144,7 @@ export class AssistantApp extends LitElement {
         this.sessionActive = false;
         this.selectedProfile = localStorage.getItem('selectedProfile') || 'interview';
         this.selectedLanguage = localStorage.getItem('selectedLanguage') || 'en-US';
+        this.selectedAiModel = localStorage.getItem('selectedAiModel') || 'gemini';
         this.selectedScreenshotInterval = localStorage.getItem('selectedScreenshotInterval') || '5';
         this.selectedImageQuality = localStorage.getItem('selectedImageQuality') || 'medium';
         this.layoutMode = localStorage.getItem('layoutMode') || 'normal';
@@ -252,7 +254,8 @@ export class AssistantApp extends LitElement {
 
 
     setStatus(text) {
-        this.statusText = text;
+        const aiProvider = this.selectedAiModel === 'openrouter' ? 'OpenRouter' : 'Gemini';
+        this.statusText = `[${aiProvider}] ${text}`;
     }
 
     setResponse(response) {
@@ -425,24 +428,54 @@ export class AssistantApp extends LitElement {
 
     // Main view event handlers
     async handleStart() {
-        // check if api key is empty do nothing
-        const apiKey = localStorage.getItem('apiKey')?.trim();
+        // Check API key based on selected AI model
+        const selectedAiModel = this.selectedAiModel || 'gemini';
+        const apiKeyName = selectedAiModel === 'openrouter' ? 'openRouterApiKey' : 'apiKey';
+        const apiKey = localStorage.getItem(apiKeyName)?.trim();
+        
         if (!apiKey || apiKey === '') {
-            // Trigger the red blink animation on the API key input
-            const mainView = this.shadowRoot.querySelector('main-view');
-            if (mainView && mainView.triggerApiKeyError) {
-                mainView.triggerApiKeyError();
+            // Try fallback to alternative provider if available
+            const fallbackSuccess = await this.tryFallbackProvider();
+            if (!fallbackSuccess) {
+                // Trigger the red blink animation on the appropriate API key input
+                const mainView = this.shadowRoot.querySelector('main-view');
+                if (mainView) {
+                    if (selectedAiModel === 'openrouter' && mainView.triggerOpenRouterApiKeyError) {
+                        mainView.triggerOpenRouterApiKeyError();
+                    } else if (mainView.triggerApiKeyError) {
+                        mainView.triggerApiKeyError();
+                    }
+                }
+                return;
             }
-            return;
         }
 
-        await cheddar.initializeGemini(this.selectedProfile, this.selectedLanguage);
-        // Pass the screenshot interval as string (including 'manual' option)
-        cheddar.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
-        this.responses = [];
-        this.currentResponseIndex = -1;
-        this.startTime = Date.now();
-        this.currentView = 'jarvis';
+        try {
+            await cheddar.initializeAI(this.selectedProfile, this.selectedLanguage);
+            // Pass the screenshot interval as string (including 'manual' option)
+            cheddar.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
+            this.responses = [];
+            this.currentResponseIndex = -1;
+            this.startTime = Date.now();
+            this.currentView = 'jarvis';
+        } catch (error) {
+            console.error('Primary AI provider failed:', error);
+            this.setStatus('Primary provider failed, trying fallback...');
+            
+            // Try fallback to alternative provider
+            const fallbackSuccess = await this.tryFallbackProvider();
+            if (fallbackSuccess) {
+                // Retry initialization with fallback provider
+                await cheddar.initializeAI(this.selectedProfile, this.selectedLanguage);
+                cheddar.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
+                this.responses = [];
+                this.currentResponseIndex = -1;
+                this.startTime = Date.now();
+                this.currentView = 'jarvis';
+            } else {
+                this.setStatus('Both providers failed. Please check your API keys.');
+            }
+        }
     }
 
     async reinitializeSession() {
@@ -465,8 +498,8 @@ export class AssistantApp extends LitElement {
         this._awaitingNewResponse = false;
         this.shouldAnimateResponse = false;
         
-        // Reinitialize Gemini session
-        await cheddar.initializeGemini(this.selectedProfile, this.selectedLanguage);
+        // Reinitialize AI session (supports both Gemini and OpenRouter)
+        await cheddar.initializeAI(this.selectedProfile, this.selectedLanguage);
         
         // Restart capture
         cheddar.startCapture(this.selectedScreenshotInterval, this.selectedImageQuality);
@@ -510,6 +543,58 @@ export class AssistantApp extends LitElement {
         localStorage.setItem('advancedMode', advancedMode.toString());
     }
 
+    handleAiModelChange(aiModel) {
+        this.selectedAiModel = aiModel;
+        localStorage.setItem('selectedAiModel', aiModel);
+    }
+
+    /**
+     * Attempts to fallback to an alternative AI provider if the current one fails
+     * @returns {Promise<boolean>} True if fallback was successful, false otherwise
+     */
+    async tryFallbackProvider() {
+        const currentModel = this.selectedAiModel || 'gemini';
+        const fallbackModel = currentModel === 'gemini' ? 'openrouter' : 'gemini';
+        const fallbackApiKeyName = fallbackModel === 'openrouter' ? 'openRouterApiKey' : 'apiKey';
+        const fallbackApiKey = localStorage.getItem(fallbackApiKeyName)?.trim();
+        
+        // Check if fallback provider has a valid API key
+        if (!fallbackApiKey || fallbackApiKey === '') {
+            console.log(`Fallback provider ${fallbackModel} has no API key configured`);
+            return false;
+        }
+        
+        try {
+            console.log(`Attempting fallback from ${currentModel} to ${fallbackModel}`);
+            this.setStatus(`Switching to ${fallbackModel === 'openrouter' ? 'OpenRouter' : 'Gemini'}...`);
+            
+            // Switch to fallback provider
+            this.selectedAiModel = fallbackModel;
+            localStorage.setItem('selectedAiModel', fallbackModel);
+            
+            // Update UI to reflect the change
+            this.requestUpdate();
+            
+            // Test the fallback provider by attempting initialization
+            await cheddar.initializeAI(this.selectedProfile, this.selectedLanguage);
+            
+            this.setStatus(`Successfully switched to ${fallbackModel === 'openrouter' ? 'OpenRouter' : 'Gemini'}`);
+            console.log(`Successfully switched to fallback provider: ${fallbackModel}`);
+            
+            return true;
+            
+        } catch (error) {
+            console.error(`Fallback to ${fallbackModel} also failed:`, error);
+            
+            // Revert to original provider
+            this.selectedAiModel = currentModel;
+            localStorage.setItem('selectedAiModel', currentModel);
+            this.requestUpdate();
+            
+            return false;
+        }
+    }
+
     handleBackClick() {
         this.currentView = 'main';
         this.requestUpdate();
@@ -529,7 +614,21 @@ export class AssistantApp extends LitElement {
 
         if (!result.success) {
             console.error('Failed to send message:', result.error);
-            this.setStatus('Error sending message: ' + result.error);
+            this.setStatus('Message failed, trying fallback provider...');
+            
+            // Try fallback to alternative provider
+            const fallbackSuccess = await this.tryFallbackProvider();
+            if (fallbackSuccess) {
+                // Retry sending message with fallback provider
+                const retryResult = await window.cheddar.sendTextMessage(message);
+                if (retryResult.success) {
+                    this.setStatus('Message sent via fallback provider...');
+                } else {
+                    this.setStatus('Both providers failed to send message.');
+                }
+            } else {
+                this.setStatus('Error sending message: ' + result.error);
+            }
         } else {
             this.setStatus('Message sent...');
             // Note: _awaitingNewResponse is set by the 'new-response-starting' IPC event from gemini.js
@@ -1053,6 +1152,7 @@ export class AssistantApp extends LitElement {
             case 'main':
                 return html`
                     <main-view
+                        .selectedAiModel=${this.selectedAiModel}
                         .onStart=${() => this.handleStart()}
                         .onAPIKeyHelp=${() => this.handleAPIKeyHelp()}
                         .onLayoutModeChange=${layoutMode => this.handleLayoutModeChange(layoutMode)}
@@ -1064,6 +1164,7 @@ export class AssistantApp extends LitElement {
                     <customize-view
                         .selectedProfile=${this.selectedProfile}
                         .selectedLanguage=${this.selectedLanguage}
+                        .selectedAiModel=${this.selectedAiModel}
                         .selectedScreenshotInterval=${this.selectedScreenshotInterval}
                         .selectedImageQuality=${this.selectedImageQuality}
                         .layoutMode=${this.layoutMode}
@@ -1072,6 +1173,7 @@ export class AssistantApp extends LitElement {
                         .advancedMode=${this.advancedMode}
                         .onProfileChange=${profile => this.handleProfileChange(profile)}
                         .onLanguageChange=${language => this.handleLanguageChange(language)}
+                        .onAiModelChange=${aiModel => this.handleAiModelChange(aiModel)}
                         .onScreenshotIntervalChange=${interval => this.handleScreenshotIntervalChange(interval)}
                         .onImageQualityChange=${quality => this.handleImageQualityChange(quality)}
                         .onLayoutModeChange=${layoutMode => this.handleLayoutModeChange(layoutMode)}

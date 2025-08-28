@@ -1126,10 +1126,10 @@ export class AssistantView extends LitElement {
         
         // Initialize shouldAnimateResponse to false by default (will be overridden by loadLayoutSpecificSettings)
         this.shouldAnimateResponse = false;
-        console.log(`[AssistantView] Constructor - shouldAnimateResponse initialized to: ${this.shouldAnimateResponse}`);
+        console.log(` Constructor - shouldAnimateResponse initialized to: ${this.shouldAnimateResponse}`);
         
         // Debug: Check current localStorage values
-        console.log(`[AssistantView] Constructor - Current localStorage values:`);
+        console.log(` Constructor - Current localStorage values:`);
         console.log(`  normalAnimateResponse: ${localStorage.getItem('normalAnimateResponse')}`);
         console.log(`  compactAnimateResponse: ${localStorage.getItem('compactAnimateResponse')}`);
         console.log(`  systemDesignAnimateResponse: ${localStorage.getItem('systemDesignAnimateResponse')}`);
@@ -1231,7 +1231,7 @@ export class AssistantView extends LitElement {
                 // Trigger re-render to update the button state
                 this.requestUpdate();
                 
-                console.log(`[AssistantView] Auto scroll updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+                console.log(` Auto scroll updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
             }
         }
     }
@@ -1242,26 +1242,26 @@ export class AssistantView extends LitElement {
     handleAnimateResponseChange(event) {
         const { layoutMode, enabled, source } = event.detail;
         
-        console.log(`[AssistantView] handleAnimateResponseChange called - layoutMode: ${layoutMode}, enabled: ${enabled}, source: ${source}`);
+        console.log(` handleAnimateResponseChange called - layoutMode: ${layoutMode}, enabled: ${enabled}, source: ${source}`);
         
         // Handle changes from CustomizeView (including initialization and layout changes)
         if (source === 'customize-view' || source === 'customize-view-init' || source === 'customize-view-layout-change') {
             // Get current layout mode
             const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
             
-            console.log(`[AssistantView] Current layout mode: ${currentLayoutMode}, event layout mode: ${layoutMode}`);
+            console.log(` Current layout mode: ${currentLayoutMode}, event layout mode: ${layoutMode}`);
             
             // Only update if the change is for the current layout mode
             if (layoutMode === currentLayoutMode) {
-                console.log(`[AssistantView] Updating shouldAnimateResponse from ${this.shouldAnimateResponse} to ${enabled}`);
+                console.log(` Updating shouldAnimateResponse from ${this.shouldAnimateResponse} to ${enabled}`);
                 this.shouldAnimateResponse = enabled;
                 
                 // Trigger re-render to update any relevant UI
                 this.requestUpdate();
                 
-                console.log(`[AssistantView] Animate response updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
+                console.log(` Animate response updated from CustomizeView: ${layoutMode} mode = ${enabled} (source: ${source})`);
             } else {
-                console.log(`[AssistantView] Ignoring animate response change for different layout mode`);
+                console.log(` Ignoring animate response change for different layout mode`);
             }
         }
     }
@@ -1672,7 +1672,7 @@ export class AssistantView extends LitElement {
     loadLayoutSpecificSettings() {
         const layoutMode = localStorage.getItem('layoutMode') || 'normal';
         
-        console.log(`[AssistantView] loadLayoutSpecificSettings called for mode: ${layoutMode}`);
+        console.log(` loadLayoutSpecificSettings called for mode: ${layoutMode}`);
         
         if (layoutMode === 'normal') {
             // Load normal layout settings with fallback to defaults
@@ -1683,7 +1683,7 @@ export class AssistantView extends LitElement {
             const normalAnimateResponse = localStorage.getItem('normalAnimateResponse');
             this.shouldAnimateResponse = normalAnimateResponse !== null ? normalAnimateResponse === 'true' : false; // Default: false
             
-            console.log(`[AssistantView] Normal mode - normalAnimateResponse localStorage: '${normalAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
+            console.log(` Normal mode - normalAnimateResponse localStorage: '${normalAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'compact') {
             // Load compact layout settings with fallback to defaults
             const compactAutoScroll = localStorage.getItem('compactAutoScroll');
@@ -1693,7 +1693,7 @@ export class AssistantView extends LitElement {
             const compactAnimateResponse = localStorage.getItem('compactAnimateResponse');
             this.shouldAnimateResponse = compactAnimateResponse !== null ? compactAnimateResponse === 'true' : false; // Default: false
             
-            console.log(`[AssistantView] Compact mode - compactAnimateResponse localStorage: '${compactAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
+            console.log(` Compact mode - compactAnimateResponse localStorage: '${compactAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         } else if (layoutMode === 'system-design') {
             // Load system design layout settings with fallback to defaults
             const systemDesignAutoScroll = localStorage.getItem('systemDesignAutoScroll');
@@ -1703,10 +1703,10 @@ export class AssistantView extends LitElement {
             const systemDesignAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
             this.shouldAnimateResponse = systemDesignAnimateResponse !== null ? systemDesignAnimateResponse === 'true' : false; // Default: false
             
-            console.log(`[AssistantView] System design mode - systemDesignAnimateResponse localStorage: '${systemDesignAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
+            console.log(` System design mode - systemDesignAnimateResponse localStorage: '${systemDesignAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         }
         
-        console.log(`[AssistantView] Loaded settings for ${layoutMode} - autoScroll: ${this.autoScrollEnabled}, animateResponse: ${this.shouldAnimateResponse}`);
+        console.log(` Loaded settings for ${layoutMode} - autoScroll: ${this.autoScrollEnabled}, animateResponse: ${this.shouldAnimateResponse}`);
     }
 
     updateLayoutModeClass() {
@@ -1763,11 +1763,11 @@ export class AssistantView extends LitElement {
             
             // Listen for layout mode changes to reload settings
             this.handleLayoutModeChange = () => {
-                console.log('[AssistantView] Layout mode changed, reloading settings');
+                console.log(' Layout mode changed, reloading settings');
                 this.loadLayoutSpecificSettings();
                 this.updateLayoutModeClass();
                 this.requestUpdate();
-                console.log(`[AssistantView] After layout change - auto scroll: ${this.autoScrollEnabled}`);
+                console.log(` After layout change - auto scroll: ${this.autoScrollEnabled}`);
             };
             
             ipcRenderer.on('layout-mode-changed', this.handleLayoutModeChange);
@@ -3045,12 +3045,11 @@ export class AssistantView extends LitElement {
     _animateWords(container) {
         const words = container.querySelectorAll('[data-word]');
         
-        console.log(`[AssistantView] _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
+        //console.log(` _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
         
         if (this.shouldAnimateResponse) {
             // Remove no-animation class to enable transitions
             container.classList.remove('no-animation');
-            console.log(`[AssistantView] Animation enabled - removed no-animation class`);
             
             // Ensure previously animated words remain visible
             for (let i = 0; i < this._lastAnimatedWordCount && i < words.length; i++) {
@@ -3079,7 +3078,6 @@ export class AssistantView extends LitElement {
         } else {
             // No animation: add no-animation class to disable CSS transitions
             container.classList.add('no-animation');
-            console.log(`[AssistantView] Animation disabled - added no-animation class`);
             
             // Make all words visible immediately without any transition effects
             words.forEach(word => {

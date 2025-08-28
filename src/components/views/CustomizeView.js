@@ -410,6 +410,11 @@ export class CustomizeView extends LitElement {
         selectedCodeFontFamily: { type: String },
         teleprompterMode: { type: String },
         advancedMode: { type: Boolean },
+        selectedAiModel: { type: String },
+        openRouterModel: { type: String },
+        openRouterTemperature: { type: Number },
+        openRouterMaxTokens: { type: Number },
+        enhancedResponsesEnabled: { type: Boolean },
         // Unified layout settings object
         layoutSettings: { type: Object },
         // Selected layout mode for configuration (separate from active layout mode)
@@ -423,6 +428,7 @@ export class CustomizeView extends LitElement {
         onTeleprompterModeChange: { type: Function },
         onFocusModeChange: { type: Function },
         onAdvancedModeChange: { type: Function },
+        onAiModelChange: { type: Function },
     };
 
     constructor() {
@@ -443,6 +449,11 @@ export class CustomizeView extends LitElement {
         this.fontSize = 11;
         this.selectedFontFamily = 'Inter';
         this.selectedCodeFontFamily = 'Fira Code';
+        this.selectedAiModel = 'gemini'; // Default to Gemini
+        this.openRouterModel = 'openai/gpt-oss-20b:free'; // Default OpenRouter model
+        this.openRouterTemperature = 0.7; // Default temperature
+        this.openRouterMaxTokens = 2048; // Default max tokens
+        this.enhancedResponsesEnabled = false; // Default to disabled
         
         // Event handlers (default no-ops)
         this.onProfileChange = () => {};
@@ -453,6 +464,7 @@ export class CustomizeView extends LitElement {
         this.onTeleprompterModeChange = () => {};
         this.onFocusModeChange = () => {};
         this.onAdvancedModeChange = () => {};
+        this.onAiModelChange = () => {};
 
         // Initialize layout settings using LayoutSettingsManager
         LayoutSettingsManager.initializeDefaultsInLocalStorage();
@@ -468,6 +480,9 @@ export class CustomizeView extends LitElement {
         this.loadBackgroundTransparency();
         this.loadFontSize();
         this.loadCodeFontFamily();
+        this.loadAiModelSettings();
+        this.loadOpenRouterSettings();
+        this.loadEnhancedResponsesSettings();
     }
 
     connectedCallback() {
@@ -1033,6 +1048,82 @@ export class CustomizeView extends LitElement {
         this.requestUpdate();
     }
 
+    loadAiModelSettings() {
+        const aiModel = localStorage.getItem('selectedAiModel');
+        if (aiModel) {
+            this.selectedAiModel = aiModel;
+        }
+    }
+
+    handleAiModelSelect(e) {
+        this.selectedAiModel = e.target.value;
+        localStorage.setItem('selectedAiModel', this.selectedAiModel);
+        this.onAiModelChange(this.selectedAiModel);
+        this.requestUpdate();
+    }
+
+    getAiModelDisplayName() {
+        return this.selectedAiModel === 'gemini' ? 'Gemini' : 'OpenRouter';
+    }
+
+    getAiModelDescription() {
+        return this.selectedAiModel === 'gemini' 
+            ? 'Google\'s Gemini AI model for conversations and analysis'
+            : 'OpenRouter provides access to various AI models including GPT, Claude, and others';
+    }
+
+    loadOpenRouterSettings() {
+        const model = localStorage.getItem('openRouterModel');
+        const temperature = localStorage.getItem('openRouterTemperature');
+        const maxTokens = localStorage.getItem('openRouterMaxTokens');
+        
+        if (model) this.openRouterModel = model;
+        if (temperature) this.openRouterTemperature = parseFloat(temperature);
+        if (maxTokens) this.openRouterMaxTokens = parseInt(maxTokens);
+    }
+
+    handleOpenRouterModelSelect(e) {
+        this.openRouterModel = e.target.value;
+        localStorage.setItem('openRouterModel', this.openRouterModel);
+        this.requestUpdate();
+    }
+
+    handleOpenRouterTemperatureChange(e) {
+        this.openRouterTemperature = parseFloat(e.target.value);
+        localStorage.setItem('openRouterTemperature', this.openRouterTemperature.toString());
+        this.requestUpdate();
+    }
+
+    handleOpenRouterMaxTokensChange(e) {
+        this.openRouterMaxTokens = parseInt(e.target.value);
+        localStorage.setItem('openRouterMaxTokens', this.openRouterMaxTokens.toString());
+        this.requestUpdate();
+    }
+
+    getOpenRouterModelOptions() {
+        return [
+            { value: 'openai/gpt-oss-20b:free', label: 'GPT OSS 20B (Free)' },
+            { value: 'openai/gpt-5', label: 'GPT-5 (Coding)' },
+            { value: 'deepseek/deepseek-chat-v3.1', label: 'DeepSeek V3.1' },
+            { value: 'deepseek/deepseek-chat-v3.1:free', label: 'DeepSeek V3.1 (free)' },
+            { value: 'qwen/qwen3-coder', label: 'Qwen3 Coder' },
+            { value: 'qwen/qwen3-coder:free', label: 'Qwen3 Coder (free)' }
+        ];
+    }
+
+    loadEnhancedResponsesSettings() {
+        const enhancedResponsesEnabled = localStorage.getItem('enhancedResponsesEnabled');
+        if (enhancedResponsesEnabled !== null) {
+            this.enhancedResponsesEnabled = enhancedResponsesEnabled === 'true';
+        }
+    }
+
+    handleEnhancedResponsesChange(e) {
+        this.enhancedResponsesEnabled = e.target.checked;
+        localStorage.setItem('enhancedResponsesEnabled', this.enhancedResponsesEnabled.toString());
+        this.requestUpdate();
+    }
+
     loadBackgroundTransparency() {
         const backgroundTransparency = localStorage.getItem('backgroundTransparency');
         if (backgroundTransparency !== null) {
@@ -1412,6 +1503,129 @@ export class CustomizeView extends LitElement {
                         </div>
                     </div>
                 </div>
+
+                <!-- AI Model Selection Section -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>AI Model Provider</span>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">
+                                    AI Provider
+                                    <span class="current-selection">${this.getAiModelDisplayName()}</span>
+                                </label>
+                                <select class="form-control" .value=${this.selectedAiModel} @change=${this.handleAiModelSelect}>
+                                    <option value="gemini" ?selected=${this.selectedAiModel === 'gemini'}>Gemini</option>
+                                    <option value="openrouter" ?selected=${this.selectedAiModel === 'openrouter'}>OpenRouter</option>
+                                </select>
+                                <div class="form-description">
+                                    ${this.getAiModelDescription()}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Enhanced Responses Section -->
+                ${this.selectedAiModel === 'gemini' ? html`
+                    <div class="settings-section">
+                        <div class="section-title">
+                            <span>Enhanced Responses</span>
+                        </div>
+                        <div class="form-grid">
+                            <div class="checkbox-group">
+                                <input 
+                                    type="checkbox" 
+                                    class="checkbox-input" 
+                                    id="enhanced-responses" 
+                                    .checked=${this.enhancedResponsesEnabled} 
+                                    @change=${this.handleEnhancedResponsesChange}
+                                />
+                                <label class="checkbox-label" for="enhanced-responses">
+                                    Enable Enhanced Responses
+                                </label>
+                            </div>
+                            <div class="form-description">
+                                When enabled, responses will be generated using the selected OpenRouter model instead of Gemini, while transcription continues to use Gemini.
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- OpenRouter Configuration Section -->
+                ${this.selectedAiModel === 'openrouter' ? html`
+                    <div class="settings-section">
+                        <div class="section-title">
+                            <span>OpenRouter Configuration</span>
+                        </div>
+
+                        <div class="form-grid">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Model
+                                        <span class="current-selection">${this.getOpenRouterModelOptions().find(m => m.value === this.openRouterModel)?.label || 'Unknown'}</span>
+                                    </label>
+                                    <select class="form-control" .value=${this.openRouterModel} @change=${this.handleOpenRouterModelSelect}>
+                                        ${this.getOpenRouterModelOptions().map(
+                                            model => html`
+                                                <option value=${model.value} ?selected=${this.openRouterModel === model.value}>
+                                                    ${model.label}
+                                                </option>
+                                            `
+                                        )}
+                                    </select>
+                                    <div class="form-description">Select the AI model to use with OpenRouter</div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Temperature
+                                        <span class="current-selection">${this.openRouterTemperature}</span>
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        class="slider-input" 
+                                        min="0" 
+                                        max="2" 
+                                        step="0.1" 
+                                        .value=${this.openRouterTemperature.toString()} 
+                                        @input=${this.handleOpenRouterTemperatureChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>0 (Focused)</span>
+                                        <span>2 (Creative)</span>
+                                    </div>
+                                    <div class="form-description">Controls randomness in responses. Lower values are more focused, higher values are more creative.</div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        Max Tokens
+                                        <span class="current-selection">${this.openRouterMaxTokens}</span>
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        class="slider-input" 
+                                        min="256" 
+                                        max="8192" 
+                                        step="256" 
+                                        .value=${this.openRouterMaxTokens.toString()} 
+                                        @input=${this.handleOpenRouterMaxTokensChange}
+                                    />
+                                    <div class="slider-labels">
+                                        <span>256</span>
+                                        <span>8192</span>
+                                    </div>
+                                    <div class="form-description">Maximum number of tokens in the response. Higher values allow longer responses but may cost more.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
 
                 <!-- Language & Audio Section -->
                 <div class="settings-section">

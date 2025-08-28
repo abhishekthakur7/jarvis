@@ -74,13 +74,6 @@ class ApiKeyManager {
             throw new Error('No valid API keys provided');
         }
 
-        // Validate API key format (basic validation)
-        for (const key of keys) {
-            if (!this.isValidApiKeyFormat(key)) {
-                throw new Error(`Invalid API key format: ${key.substring(0, 10)}...`);
-            }
-        }
-
         this.apiKeys = keys;
         this.currentKeyIndex = 0;
         this.failedKeys.clear();

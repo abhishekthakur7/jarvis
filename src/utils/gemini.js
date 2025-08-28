@@ -13,6 +13,7 @@ const contextBoundaryOptimizer = require('./contextBoundaryOptimizer');
 const audioQualityAssurance = require('./audioQualityAssurance');
 const performanceMonitor = require('./performanceMonitor');
 const enhancedFollowUpClassifier = require('./enhancedFollowUpClassifier');
+const { sendMessageToOpenRouter } = require('./openrouter');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -404,6 +405,30 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             
             console.log(`📝 [CONTEXT_SUMMARY] Total context sources: ${contextSources.join(', ') || 'none'}, Final request length: ${requestText.length} chars`);
             
+            // Check if Enhanced Responses is enabled and current AI provider is Gemini
+            const enhancedResponsesEnabled = await getStoredSetting('enhancedResponsesEnabled', false);
+            const selectedAiModel = await getStoredSetting('selectedAiModel', 'gemini');
+            
+            console.log(`🔍 [ENHANCED_RESPONSES_DEBUG] enhancedResponsesEnabled: ${enhancedResponsesEnabled}, selectedAiModel: ${selectedAiModel}`);
+            
+            if (enhancedResponsesEnabled && selectedAiModel === 'gemini') {
+                console.log('🚀 [ENHANCED_RESPONSES] Routing to OpenRouter instead of Gemini');
+                
+                // Get OpenRouter settings
+                const openRouterModel = await getStoredSetting('openRouterModel', 'google/gemini-2.5-flash');
+                const openRouterTemperature = await getStoredSetting('openRouterTemperature', 0.7);
+                const openRouterMaxTokens = await getStoredSetting('openRouterMaxTokens', 4000);
+                
+                // Route to OpenRouter with the prepared text
+                return await sendMessageToOpenRouter(
+                    requestText,
+                    openRouterModel,
+                    openRouterTemperature,
+                    openRouterMaxTokens
+                );
+            }
+            
+            // Default: send to Gemini
             return await sendInputWithRetry(geminiSession, { 
                 text: requestText, 
                 conversationId: currentConversationId, 
@@ -1362,7 +1387,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 pendingInput = '';
                                 isAiResponding = false;
                                 
-                                console.log('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
+                               // console.log('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
                                 // Process the combined questions immediately
                                 processQuestionQueue(session);
                                 return;
@@ -1386,25 +1411,25 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     
                                     console.log(`⚡ [ENHANCED_DEBOUNCE] Adaptive delay: ${adaptiveDelay}ms (vs fixed ${INPUT_DEBOUNCE_DELAY}ms)`);
                                 } catch (error) {
-                                    console.warn('⚠️ [ENHANCED_DEBOUNCE] Error calculating adaptive delay, using fallback:', error.message);
+                                    //console.warn('⚠️ [ENHANCED_DEBOUNCE] Error calculating adaptive delay, using fallback:', error.message);
                                     adaptiveDelay = INPUT_DEBOUNCE_DELAY;
                                 }
                             }
                             
                             inputDebounceTimer = setTimeout(() => {
                                 if (pendingInput.trim()) {
-                                    console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
+                                   // console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
                                     
                                     // Double-check speaker detection is still enabled before processing
                                     if (!isSpeakerDetectionEnabled) {
-                                        console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
+                                        //console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
                                         pendingInput = '';
                                         return;
                                     }
                                     
                                     // CRITICAL FIX: Check if AI is currently responding to prevent duplicate processing
                                     if (isAiResponding) {
-                                        console.log('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
+                                        //console.log('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
                                         pendingInput = '';
                                         return;
                                     }
@@ -1419,7 +1444,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     });
                                     
                                     if (isDuplicateInDebounce) {
-                                        console.log('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
+                                       // console.log('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
                                         pendingInput = '';
                                         return;
                                     }
@@ -1434,7 +1459,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     });
                                     
                                     if (isRecentlyProcessed) {
-                                        console.log('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
+                                        //console.log('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
                                         pendingInput = '';
                                         return;
                                     }
@@ -2223,9 +2248,28 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-image-content', async (event, { data, debug }) => {
-        if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
-
         try {
+            // Check which AI provider is selected
+            const windows = BrowserWindow.getAllWindows();
+            if (windows.length === 0) {
+                return { success: false, error: 'No active window' };
+            }
+            
+            const selectedAiModel = await windows[0].webContents.executeJavaScript(`
+                localStorage.getItem('selectedAiModel') || 'gemini'
+            `);
+            
+            if (selectedAiModel === 'openrouter') {
+                // Route to OpenRouter
+                const { sendImageToOpenRouter } = require('./openrouter');
+                return await sendImageToOpenRouter(data);
+            }
+            
+            // Default to Gemini for image handling
+            if (!geminiSessionRef.current) {
+                return { success: false, error: 'No active Gemini session' };
+            }
+
             if (!data || typeof data !== 'string') {
                 console.error('Invalid image data received');
                 return { success: false, error: 'Invalid image data' };
@@ -2253,10 +2297,30 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return { success: false, error: 'Invalid text message' };
+            }
+
+            // Check which AI provider is selected
+            const windows = BrowserWindow.getAllWindows();
+            if (windows.length === 0) {
+                return { success: false, error: 'No active window' };
+            }
+            
+            const selectedAiModel = await windows[0].webContents.executeJavaScript(`
+                localStorage.getItem('selectedAiModel') || 'gemini'
+            `);
+            
+            if (selectedAiModel === 'openrouter') {
+                // Route to OpenRouter
+                const { sendTextToOpenRouter } = require('./openrouter');
+                return await sendTextToOpenRouter(text);
+            }
+            
+            // Default to Gemini for text handling
+            if (!geminiSessionRef.current) {
+                return { success: false, error: 'No active Gemini session' };
             }
 
             // Send new-response-starting event to ensure proper response counter

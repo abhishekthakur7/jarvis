@@ -7,6 +7,7 @@ const path = require('path');
 const url = require('url');
 const { createWindow, updateGlobalShortcuts } = require('./utils/window');
 const { setupGeminiIpcHandlers, stopMacOSAudioCapture, sendToRenderer } = require('./utils/gemini');
+const { setupOpenRouterIpcHandlers } = require('./utils/openrouter');
 const { setupNotionIpcHandlers } = require('./utils/notion');
 
 const geminiSessionRef = { current: null };
@@ -20,6 +21,7 @@ function createMainWindow() {
 app.whenReady().then(() => {
     createMainWindow();
     setupGeminiIpcHandlers(geminiSessionRef);
+    setupOpenRouterIpcHandlers();
     setupNotionIpcHandlers();
     setupGeneralIpcHandlers();
 });
