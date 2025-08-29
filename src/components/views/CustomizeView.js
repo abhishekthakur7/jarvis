@@ -398,6 +398,7 @@ export class CustomizeView extends LitElement {
     static properties = {
         selectedProfile: { type: String },
         selectedLanguage: { type: String },
+        selectedAiProvider: { type: String },
         selectedScreenshotInterval: { type: String },
         selectedImageQuality: { type: String },
         layoutMode: { type: String },
@@ -417,6 +418,7 @@ export class CustomizeView extends LitElement {
         // Event handlers
         onProfileChange: { type: Function },
         onLanguageChange: { type: Function },
+        onAiProviderChange: { type: Function },
         onScreenshotIntervalChange: { type: Function },
         onImageQualityChange: { type: Function },
         onLayoutModeChange: { type: Function },
@@ -431,6 +433,7 @@ export class CustomizeView extends LitElement {
         // Core settings
         this.selectedProfile = 'interview';
         this.selectedLanguage = 'en-IN';
+        this.selectedAiProvider = localStorage.getItem('selectedAiProvider') || 'gemini';
         this.selectedScreenshotInterval = '5';
         this.selectedImageQuality = 'medium';
         this.layoutMode = 'compact';
@@ -447,6 +450,7 @@ export class CustomizeView extends LitElement {
         // Event handlers (default no-ops)
         this.onProfileChange = () => {};
         this.onLanguageChange = () => {};
+        this.onAiProviderChange = () => {};
         this.onScreenshotIntervalChange = () => {};
         this.onImageQualityChange = () => {};
         this.onLayoutModeChange = () => {};
@@ -654,6 +658,12 @@ export class CustomizeView extends LitElement {
         this.selectedLanguage = e.target.value;
         localStorage.setItem('selectedLanguage', this.selectedLanguage);
         this.onLanguageChange(this.selectedLanguage);
+    }
+
+    handleAiProviderSelect(e) {
+        this.selectedAiProvider = e.target.value;
+        localStorage.setItem('selectedAiProvider', this.selectedAiProvider);
+        this.onAiProviderChange(this.selectedAiProvider);
     }
 
     handleScreenshotIntervalSelect(e) {
@@ -1436,6 +1446,22 @@ export class CustomizeView extends LitElement {
                                     )}
                                 </select>
                                 <div class="form-description">Language for speech recognition and AI responses</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">
+                                    AI Provider
+                                    <span class="current-selection">${this.selectedAiProvider === 'gemini' ? 'Gemini' : 'ChatGPT-5'}</span>
+                                </label>
+                                <select class="form-control" .value=${this.selectedAiProvider} @change=${this.handleAiProviderSelect}>
+                                    <option value="gemini" ?selected=${this.selectedAiProvider === 'gemini'}>
+                                        Gemini
+                                    </option>
+                                    <option value="chatgpt" ?selected=${this.selectedAiProvider === 'chatgpt'}>
+                                        ChatGPT-5
+                                    </option>
+                                </select>
+                                <div class="form-description">AI model for generating responses (transcription always uses Gemini)</div>
                             </div>
                         </div>
                     </div>

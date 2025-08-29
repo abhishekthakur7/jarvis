@@ -264,8 +264,24 @@ async function processQuestionQueue(geminiSession) {
 }
 
 async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
-    if (!geminiSession || !combinedText.trim()) {
-        console.log('⚠️ [AI_REQUEST] Invalid session or empty text, aborting request');
+    if (!combinedText.trim()) {
+        console.log('⚠️ [AI_REQUEST] Empty text, aborting request');
+        return;
+    }
+    
+    // Check selected AI provider
+    const selectedAiProvider = await getStoredSetting('selectedAiProvider', 'gemini');
+    console.log(`🤖 [AI_PROVIDER] Using ${selectedAiProvider} for response generation`);
+    
+    if (selectedAiProvider === 'openai') {
+        // Route to OpenAI
+        const openaiUtils = require('./openai');
+        return await openaiUtils.sendCombinedQuestionsToOpenAI(combinedText, '', 'interview', 'en-IN');
+    }
+    
+    // Default to Gemini
+    if (!geminiSession) {
+        console.log('⚠️ [AI_REQUEST] Invalid Gemini session, aborting request');
         return;
     }
     
@@ -2253,10 +2269,17 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     });
 
     ipcMain.handle('send-text-message', async (event, text) => {
-        if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
             if (!text || typeof text !== 'string' || text.trim().length === 0) {
                 return { success: false, error: 'Invalid text message' };
+            }
+
+            // Check selected AI provider
+            const selectedAiProvider = await getStoredSetting('selectedAiProvider', 'gemini');
+            console.log(`🤖 [AI_PROVIDER] Using ${selectedAiProvider} for text message`);
+            
+            if (selectedAiProvider === 'gemini' && !geminiSessionRef.current) {
+                return { success: false, error: 'No active Gemini session' };
             }
 
             // Send new-response-starting event to ensure proper response counter
@@ -2267,7 +2290,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             requestStartTime = Date.now();
             const timestamp = new Date(requestStartTime).toISOString();
             console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
-            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini via IPC:');
+            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to AI via IPC:');
             console.log('📄 [TRANSCRIPT_CONTENT]', text.trim());
 
             // Save to conversation history immediately to prevent duplicate processing
@@ -2280,7 +2303,16 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             console.log('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
             
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
-            await performTextRequest(text.trim(), geminiSessionRef.current);
+            
+            if (selectedAiProvider === 'openai') {
+                // Route to OpenAI
+                const openaiUtils = require('./openai');
+                await openaiUtils.sendCombinedQuestionsToOpenAI(text.trim(), '', 'interview', 'en-IN');
+            } else {
+                // Default to Gemini
+                await performTextRequest(text.trim(), geminiSessionRef.current);
+            }
+            
             return { success: true };
         } catch (error) {
             console.error('Error sending text:', error);
@@ -2403,7 +2435,18 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Store the complete transcription for saving after AI response
             global.pendingContextTranscription = completeTranscription.trim();
             
-            await performTextRequest(completeTranscription.trim(), geminiSessionRef.current);
+            // Check selected AI provider for context-with-screenshot requests
+            const selectedAiProvider = await getStoredSetting('selectedAiProvider', 'gemini');
+            console.log(`🤖 [AI_PROVIDER] Using ${selectedAiProvider} for context-with-screenshot response generation`);
+            
+            if (selectedAiProvider === 'openai') {
+                // Route to OpenAI
+                const openaiUtils = require('./openai');
+                await openaiUtils.sendCombinedQuestionsToOpenAI(completeTranscription.trim(), '', 'interview', 'en-IN');
+            } else {
+                // Default to Gemini
+                await performTextRequest(completeTranscription.trim(), geminiSessionRef.current);
+            }
             return { success: true };
         } catch (error) {
             console.error('\nError sending context-with-screenshot:', error);

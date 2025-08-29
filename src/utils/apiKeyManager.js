@@ -7,10 +7,22 @@ const fs = require('fs');
 class ApiKeyManager {
     constructor() {
         this.encryptionKey = this.getOrCreateEncryptionKey();
-        this.apiKeys = [];
-        this.currentKeyIndex = 0;
-        this.failedKeys = new Set();
-        this.keyUsageStats = new Map();
+        this.apiKeys = {
+            gemini: [],
+            openai: []
+        };
+        this.currentKeyIndex = {
+            gemini: 0,
+            openai: 0
+        };
+        this.failedKeys = {
+            gemini: new Set(),
+            openai: new Set()
+        };
+        this.keyUsageStats = {
+            gemini: new Map(),
+            openai: new Map()
+        };
         this.maxRetries = 3;
         this.retryDelay = 1000; // 1 second
     }
@@ -61,10 +73,14 @@ class ApiKeyManager {
         }
     }
 
-    // Set multiple API keys (comma-separated)
-    setApiKeys(apiKeysString) {
+    // Set multiple API keys (comma-separated) for a specific service
+    setApiKeys(apiKeysString, service = 'gemini') {
         if (!apiKeysString || typeof apiKeysString !== 'string') {
             throw new Error('API keys must be a non-empty string');
+        }
+
+        if (!this.apiKeys[service]) {
+            throw new Error(`Unsupported service: ${service}`);
         }
 
         // Parse comma-separated keys and trim whitespace
@@ -76,19 +92,19 @@ class ApiKeyManager {
 
         // Validate API key format (basic validation)
         for (const key of keys) {
-            if (!this.isValidApiKeyFormat(key)) {
-                throw new Error(`Invalid API key format: ${key.substring(0, 10)}...`);
+            if (!this.isValidApiKeyFormat(key, service)) {
+                throw new Error(`Invalid ${service} API key format: ${key.substring(0, 10)}...`);
             }
         }
 
-        this.apiKeys = keys;
-        this.currentKeyIndex = 0;
-        this.failedKeys.clear();
-        this.keyUsageStats.clear();
+        this.apiKeys[service] = keys;
+        this.currentKeyIndex[service] = 0;
+        this.failedKeys[service].clear();
+        this.keyUsageStats[service].clear();
         
         // Initialize usage stats
         keys.forEach((key, index) => {
-            this.keyUsageStats.set(index, {
+            this.keyUsageStats[service].set(index, {
                 requests: 0,
                 failures: 0,
                 lastUsed: null,
@@ -96,119 +112,183 @@ class ApiKeyManager {
             });
         });
 
-        console.log(`✅ Configured ${keys.length} API keys for fallback`);
+        console.log(`✅ Configured ${keys.length} ${service} API keys for fallback`);
     }
 
     // Basic API key format validation
-    isValidApiKeyFormat(apiKey) {
-        // Google AI API keys typically start with 'AIza' and are 39 characters long
-        return typeof apiKey === 'string' && 
-               apiKey.length >= 20 && 
-               apiKey.length <= 50 && 
-               /^[A-Za-z0-9_-]+$/.test(apiKey);
+    isValidApiKeyFormat(apiKey, service = 'gemini') {
+        if (typeof apiKey !== 'string' || apiKey.length < 20) {
+            return false;
+        }
+        
+        if (service === 'gemini') {
+            // Gemini API keys typically start with 'AIza' and contain alphanumeric characters
+            return apiKey.length >= 20 && apiKey.length <= 50 && /^[A-Za-z0-9_-]+$/.test(apiKey);
+        } else if (service === 'openai') {
+            // OpenAI API keys typically start with 'sk-' and contain alphanumeric characters
+            return apiKey.startsWith('sk-') && apiKey.length >= 40 && /^sk-[A-Za-z0-9]+$/.test(apiKey);
+        }
+        
+        return false;
     }
 
     // Get current API key for use
-    getCurrentApiKey() {
-        if (this.apiKeys.length === 0) {
-            throw new Error('No API keys configured');
+    getCurrentApiKey(service = 'gemini') {
+        if (!this.apiKeys[service] || this.apiKeys[service].length === 0) {
+            throw new Error(`No ${service} API keys configured`);
         }
 
         // Find next available key (not in failed set)
-        for (let i = 0; i < this.apiKeys.length; i++) {
-            const keyIndex = (this.currentKeyIndex + i) % this.apiKeys.length;
-            if (!this.failedKeys.has(keyIndex)) {
-                this.currentKeyIndex = keyIndex;
-                return this.apiKeys[keyIndex];
+        for (let i = 0; i < this.apiKeys[service].length; i++) {
+            const keyIndex = (this.currentKeyIndex[service] + i) % this.apiKeys[service].length;
+            if (!this.failedKeys[service].has(keyIndex)) {
+                this.currentKeyIndex[service] = keyIndex;
+                return this.apiKeys[service][keyIndex];
             }
         }
 
         // All keys have failed, reset failed set and try again
-        console.warn('⚠️ All API keys have failed, resetting failure state');
-        this.failedKeys.clear();
-        return this.apiKeys[this.currentKeyIndex];
+        console.warn(`⚠️ All ${service} API keys have failed, resetting failure state`);
+        this.failedKeys[service].clear();
+        return this.apiKeys[service][this.currentKeyIndex[service]];
     }
 
     // Mark current key as failed and move to next
-    markCurrentKeyAsFailed(error) {
-        if (this.apiKeys.length === 0) return;
+    markCurrentKeyAsFailed(error, service = 'gemini') {
+        if (!this.apiKeys[service] || this.apiKeys[service].length === 0) return;
 
-        const currentKey = this.apiKeys[this.currentKeyIndex];
-        const stats = this.keyUsageStats.get(this.currentKeyIndex);
+        const currentKey = this.apiKeys[service][this.currentKeyIndex[service]];
+        const stats = this.keyUsageStats[service].get(this.currentKeyIndex[service]);
         
         if (stats) {
             stats.failures++;
             stats.lastFailure = new Date();
         }
 
-        this.failedKeys.add(this.currentKeyIndex);
+        this.failedKeys[service].add(this.currentKeyIndex[service]);
         
-        console.warn(`❌ API key ${this.currentKeyIndex + 1} failed:`, error?.message || 'Unknown error');
-        console.log(`📊 Key ${this.currentKeyIndex + 1} stats:`, stats);
+        console.warn(`❌ ${service} API key ${this.currentKeyIndex[service] + 1} failed:`, error?.message || 'Unknown error');
+        console.log(`📊 ${service} Key ${this.currentKeyIndex[service] + 1} stats:`, stats);
 
         // Move to next key
-        this.currentKeyIndex = (this.currentKeyIndex + 1) % this.apiKeys.length;
+        this.currentKeyIndex[service] = (this.currentKeyIndex[service] + 1) % this.apiKeys[service].length;
         
         // If we've tried all keys, wait before retrying
-        if (this.failedKeys.size >= this.apiKeys.length) {
-            console.warn('⏳ All keys failed, waiting before retry...');
+        if (this.failedKeys[service].size >= this.apiKeys[service].length) {
+            console.warn(`⏳ All ${service} keys failed, waiting before retry...`);
             setTimeout(() => {
-                this.failedKeys.clear();
-                console.log('🔄 Reset failed keys, retrying...');
-            }, this.retryDelay * this.apiKeys.length);
+                this.failedKeys[service].clear();
+                console.log(`🔄 Reset failed ${service} keys, retrying...`);
+            }, this.retryDelay * this.apiKeys[service].length);
         }
     }
 
     // Mark current key as successful
-    markCurrentKeyAsSuccessful() {
-        if (this.apiKeys.length === 0) return;
+    markCurrentKeyAsSuccessful(service = 'gemini') {
+        if (!this.apiKeys[service] || this.apiKeys[service].length === 0) return;
 
-        const stats = this.keyUsageStats.get(this.currentKeyIndex);
+        const stats = this.keyUsageStats[service].get(this.currentKeyIndex[service]);
         if (stats) {
             stats.requests++;
             stats.lastUsed = new Date();
         }
 
         // Remove from failed set if it was there
-        this.failedKeys.delete(this.currentKeyIndex);
+        this.failedKeys[service].delete(this.currentKeyIndex[service]);
+    }
+
+    // Set OpenAI API key
+    setOpenAiApiKey(apiKey) {
+        if (!apiKey || typeof apiKey !== 'string') {
+            throw new Error('OpenAI API key must be a non-empty string');
+        }
+        
+        if (!this.isValidApiKeyFormat(apiKey, 'openai')) {
+            throw new Error('Invalid OpenAI API key format');
+        }
+        
+        this.setApiKeys(apiKey, 'openai');
+    }
+    
+    // Get OpenAI API key
+    getOpenAiApiKey() {
+        try {
+            return this.getCurrentApiKey('openai');
+        } catch (error) {
+            return null;
+        }
+    }
+    
+    // Set Gemini API key (for backward compatibility)
+    setGeminiApiKey(apiKey) {
+        if (!apiKey || typeof apiKey !== 'string') {
+            throw new Error('Gemini API key must be a non-empty string');
+        }
+        
+        if (!this.isValidApiKeyFormat(apiKey, 'gemini')) {
+            throw new Error('Invalid Gemini API key format');
+        }
+        
+        this.setApiKeys(apiKey, 'gemini');
+    }
+    
+    // Get Gemini API key
+    getGeminiApiKey() {
+        try {
+            return this.getCurrentApiKey('gemini');
+        } catch (error) {
+            return null;
+        }
     }
 
     // Get API key usage statistics
-    getUsageStats() {
-        const stats = [];
-        for (let i = 0; i < this.apiKeys.length; i++) {
-            const keyStats = this.keyUsageStats.get(i);
-            stats.push({
-                keyIndex: i + 1,
-                isCurrent: i === this.currentKeyIndex,
-                isFailed: this.failedKeys.has(i),
-                ...keyStats
-            });
+    getUsageStats(service = null) {
+        if (service) {
+            const stats = [];
+            if (this.apiKeys[service]) {
+                for (let i = 0; i < this.apiKeys[service].length; i++) {
+                    const keyStats = this.keyUsageStats[service].get(i);
+                    stats.push({
+                        keyIndex: i + 1,
+                        service: service,
+                        isCurrent: i === this.currentKeyIndex[service],
+                        isFailed: this.failedKeys[service].has(i),
+                        ...keyStats
+                    });
+                }
+            }
+            return stats;
+        } else {
+            // Return stats for all services
+            const allStats = {};
+            for (const svc of ['gemini', 'openai']) {
+                allStats[svc] = this.getUsageStats(svc);
+            }
+            return allStats;
         }
-        return stats;
     }
 
     // Execute API call with automatic fallback
-    async executeWithFallback(apiCallFunction, maxAttempts = null) {
-        const attempts = maxAttempts || this.apiKeys.length;
+    async executeWithFallback(apiCallFunction, service = 'gemini', maxAttempts = null) {
+        const attempts = maxAttempts || (this.apiKeys[service] ? this.apiKeys[service].length : 1);
         let lastError = null;
 
         for (let attempt = 0; attempt < attempts; attempt++) {
             try {
-                const apiKey = this.getCurrentApiKey();
-                console.log(`🔑 Attempting API call with key ${this.currentKeyIndex + 1}/${this.apiKeys.length}`);
+                const apiKey = this.getCurrentApiKey(service);
+                console.log(`🔑 Attempting ${service} API call with key ${this.currentKeyIndex[service] + 1}/${this.apiKeys[service].length}`);
                 
                 const result = await apiCallFunction(apiKey);
-                this.markCurrentKeyAsSuccessful();
+                this.markCurrentKeyAsSuccessful(service);
                 return result;
                 
             } catch (error) {
                 lastError = error;
-                console.error(`❌ API call failed with key ${this.currentKeyIndex + 1}:`, error.message);
+                console.error(`❌ ${service} API call failed with key ${this.currentKeyIndex[service] + 1}:`, error.message);
                 
                 // Check if this is a key-specific error (authentication, quota, etc.)
                 if (this.isKeySpecificError(error)) {
-                    this.markCurrentKeyAsFailed(error);
+                    this.markCurrentKeyAsFailed(error, service);
                     
                     // If we have more keys to try, continue
                     if (attempt < attempts - 1 && this.failedKeys.size < this.apiKeys.length) {

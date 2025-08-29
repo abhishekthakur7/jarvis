@@ -399,6 +399,14 @@ export class MainView extends LitElement {
         }
     }
 
+    handleOpenAiInput(e) {
+        localStorage.setItem('openaiApiKey', e.target.value);
+        // Clear error state when user starts typing
+        if (this.showApiKeyError) {
+            this.showApiKeyError = false;
+        }
+    }
+
     handleStartClick() {
         if (this.isInitializing) {
             return;
@@ -512,6 +520,20 @@ export class MainView extends LitElement {
                                 placeholder="Enter your Gemini API Key"
                                 .value=${localStorage.getItem('apiKey') || ''}
                                 @input=${this.handleInput}
+                                class="${this.showApiKeyError ? 'api-key-error' : ''}"
+                            />
+                        </div>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <input
+                                type="password"
+                                placeholder="Enter your ChatGPT API Key"
+                                .value=${localStorage.getItem('openaiApiKey') || ''}
+                                @input=${this.handleOpenAiInput}
                                 class="${this.showApiKeyError ? 'api-key-error' : ''}"
                             />
                         </div>
