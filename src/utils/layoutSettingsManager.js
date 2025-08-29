@@ -32,17 +32,17 @@ export class LayoutSettingsManager {
      */
     static DEFAULT_SETTINGS = {
         normal: {
-            transparency: 0.70,
-            fontSize: 13,
+            transparency: 0.60,
+            fontSize: 12,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
-            width: 550,
-            height: 650
+            width: 380,
+            height: 350
         },
         compact: {
-            transparency: 0.90,
-            fontSize: 12,
+            transparency: 0.80,
+            fontSize: 11,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
@@ -137,7 +137,7 @@ export class LayoutSettingsManager {
      */
     static DIMENSION_CONSTRAINTS = {
         normal: {
-            width: { min: 400, max: 800, step: 10 },
+            width: { min: 300, max: 800, step: 10 },
             height: { min: 300, max: 700, step: 10 }
         },
         compact: {

@@ -324,7 +324,7 @@ export class AssistantApp extends LitElement {
         }
         
         this.shouldAnimateResponse = animationEnabled;
-        console.log(`[AssistantApp] Setting shouldAnimateResponse to ${animationEnabled} for ${currentLayoutMode} mode`);
+        //console.log(`[AssistantApp] Setting shouldAnimateResponse to ${animationEnabled} for ${currentLayoutMode} mode`);
         this.requestUpdate();
     }
 

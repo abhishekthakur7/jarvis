@@ -173,7 +173,7 @@ function updateGlobalShortcuts(keybinds, mainWindow, sendToRenderer, geminiSessi
 
     const primaryDisplay = screen.getPrimaryDisplay();
     const { width, height } = primaryDisplay.workAreaSize;
-    const moveIncrement = Math.floor(Math.min(width, height) * 0.1);
+    const moveIncrement = Math.floor(Math.min(width, height) * 0.075);
 
     // Register window movement shortcuts
     const movementActions = {
