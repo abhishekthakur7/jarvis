@@ -176,8 +176,8 @@ export class AssistantApp extends LitElement {
         // Apply layout mode to document root
         this.updateLayoutMode();
         
-        // Apply layout-specific settings
-        this.applyLayoutSpecificSettings(this.layoutMode);
+        // Apply layout-specific settings using LayoutSettingsManager
+        LayoutSettingsManager.applyAllSettingsForLayoutMode(this.layoutMode);
     }
 
     connectedCallback() {
@@ -1252,8 +1252,8 @@ export class AssistantApp extends LitElement {
         localStorage.setItem('layoutMode', layoutMode);
         this.updateLayoutMode();
         
-        // Apply layout-specific settings
-        this.applyLayoutSpecificSettings(layoutMode);
+        // Apply layout-specific settings using LayoutSettingsManager
+        LayoutSettingsManager.applyAllSettingsForLayoutMode(layoutMode);
         
         // Notify AssistantView about layout mode change
         if (window.require) {

@@ -32,16 +32,16 @@ export class LayoutSettingsManager {
      */
     static DEFAULT_SETTINGS = {
         normal: {
-            transparency: 0.60,
-            fontSize: 12,
+            transparency: 0.70,
+            fontSize: 11,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
-            width: 380,
+            width: 400,
             height: 350
         },
         compact: {
-            transparency: 0.80,
+            transparency: 0.85,
             fontSize: 11,
             autoScroll: false,
             animateResponse: false,
@@ -51,7 +51,7 @@ export class LayoutSettingsManager {
         },
         'system-design': {
             transparency: 0.90,
-            fontSize: 14,
+            fontSize: 12,
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
@@ -406,6 +406,9 @@ export class LayoutSettingsManager {
         // Load settings for new layout mode
         const settings = this.loadSettings(newLayoutMode);
         
+        // Apply all settings immediately
+        this.applyAllSettingsForLayoutMode(newLayoutMode, settings);
+        
         // Dispatch events for auto scroll and animate response
         requestAnimationFrame(() => {
             document.dispatchEvent(new CustomEvent('auto-scroll-change', {
@@ -424,6 +427,32 @@ export class LayoutSettingsManager {
                 }
             }));
         });
+    }
+
+    /**
+     * Apply all settings for a specific layout mode immediately
+     * 
+     * @param {string} layoutMode - The layout mode
+     * @param {Object} settings - The settings object (optional, will load if not provided)
+     */
+    static applyAllSettingsForLayoutMode(layoutMode, settings = null) {
+        if (!settings) {
+            settings = this.loadSettings(layoutMode);
+        }
+        
+        const root = document.documentElement;
+        
+        // Apply transparency
+        this.updateTransparency(settings.transparency);
+        
+        // Apply font size
+        root.style.setProperty('--response-font-size', `${settings.fontSize}px`);
+        
+        // Update auto-scroll setting in localStorage for global access
+        localStorage.setItem('autoScrollEnabled', settings.autoScroll.toString());
+        
+        // Update scroll speed in localStorage for global access
+        localStorage.setItem('scrollSpeed', settings.scrollSpeed.toString());
     }
 
     /**
