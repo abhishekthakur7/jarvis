@@ -37,7 +37,7 @@ export class LayoutSettingsManager {
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
-            width: 380,
+            width: 410,
             height: 350
         },
         compact: {
