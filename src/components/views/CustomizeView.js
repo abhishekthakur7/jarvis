@@ -431,7 +431,7 @@ export class CustomizeView extends LitElement {
         // Core settings
         this.selectedProfile = 'interview';
         this.selectedLanguage = 'en-IN';
-        this.selectedScreenshotInterval = '5';
+        this.selectedScreenshotInterval = 'manual';
         this.selectedImageQuality = 'medium';
         this.layoutMode = 'compact';
         this.teleprompterMode = localStorage.getItem('teleprompterMode') || 'balanced';
