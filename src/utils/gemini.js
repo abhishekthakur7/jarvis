@@ -224,7 +224,7 @@ function shouldInterrupt(newInput) {
 async function processQuestionQueue(geminiSession) {
     if (questionQueue.length === 0 || isAiResponding) return;
     
-    console.log('🔍 [QUEUE_VALIDATION] Validating question queue before processing');
+    //console.log('🔍 [QUEUE_VALIDATION] Validating question queue before processing');
     
     // Enforce complete context boundary before processing new questions
     enforceContextBoundary();
@@ -232,7 +232,7 @@ async function processQuestionQueue(geminiSession) {
     // Validate and clean question queue
     const validQuestions = questionQueue.filter(q => q && q.trim().length > 0);
     if (validQuestions.length === 0) {
-        console.log('⚠️ [QUEUE_VALIDATION] No valid questions found in queue');
+        //console.log('⚠️ [QUEUE_VALIDATION] No valid questions found in queue');
         questionQueue = [];
         return;
     }
@@ -257,7 +257,7 @@ async function processQuestionQueue(geminiSession) {
     
     questionQueue = []; // Clear the queue
     
-    console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
+    //console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
     
     // Send combined questions to AI
     await sendCombinedQuestionsToAI(combinedQuestions, geminiSession);
@@ -672,14 +672,14 @@ function resetReconstructionState() {
 // Complete context isolation function to prevent context bleeding
 function enforceContextBoundary() {
     summariseHistoryIfNeeded();
-    console.log('🚧 [CONTEXT_BOUNDARY] Enforcing complete context isolation');
+    //console.log('🚧 [CONTEXT_BOUNDARY] Enforcing complete context isolation');
     
     // Clear all response-related buffers
     messageBuffer = '';
     
     // Clear context accumulator to prevent question mixing
     if (contextAccumulator && contextAccumulator.trim()) {
-        console.log('🚧 [CONTEXT_BOUNDARY] Clearing context accumulator to prevent question mixing');
+        //console.log('🚧 [CONTEXT_BOUNDARY] Clearing context accumulator to prevent question mixing');
         contextAccumulator = '';
     }
     
@@ -694,7 +694,7 @@ function enforceContextBoundary() {
     // Reset AI state
     isAiResponding = false;
     
-    console.log('✅ [CONTEXT_BOUNDARY] Context boundary enforced - clean slate achieved');
+    //console.log('✅ [CONTEXT_BOUNDARY] Context boundary enforced - clean slate achieved');
 }
 
 // Conversation management functions
@@ -1673,8 +1673,8 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             lastResponseTime = responseTimeMs;
                             const endTimestamp = new Date(responseEndTime).toISOString();
                             
-                            console.log('⏰ [RESPONSE_COMPLETE] Timestamp:', endTimestamp);
-                            console.log('⚡ [RESPONSE_TIME] Total time for complete response:', responseTimeMs, 'ms');
+                            //console.log('⏰ [RESPONSE_COMPLETE] Timestamp:', endTimestamp);
+                            //console.log('⚡ [RESPONSE_TIME] Total time for complete response:', responseTimeMs, 'ms');
                             
 
                             
