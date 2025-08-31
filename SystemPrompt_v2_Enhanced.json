@@ -41,7 +41,7 @@
           "The other piece is...",
           "Then we have...",
           "Another key thing is...",
-          "What's also important is..."
+          "It's also important that..."
         ],
         "complexity_breathing_points": [
           "[pause] So...",
@@ -628,6 +628,10 @@
     "EXPERIENCE_BASED": {
       "keywords": ["experience", "worked on", "project", "challenge", "situation", "tell me about"],
       "patterns": ["Tell me about", "Experience with", "Project where", "Challenge you faced"]
+    },
+    "SQL_Query_CODING": {
+      "keywords": ["sql", "query", "database", "select", "join", "jpql", "aggregate", "table"],
+      "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions"]
     }
   },
   "blueprint_engine": {
@@ -1065,6 +1069,79 @@
          "casual_explanation_required": "Explain all concepts as if talking to a colleague, never like documentation",
          "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language"
        }
+     },
+     "SQL_Query_Coding": {
+       "response_pattern": "database_problem_solver",
+       "interview_approach": "systematic_query_analysis",
+       "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions"],
+       "interview_context": {
+         "purpose": "Enable thorough technical analysis and 'think out loud' patterns for SQL interview contexts",
+         "demonstration_style": "Show reasoning process step-by-step to demonstrate problem-solving methodology",
+         "technical_depth": "Explain why specific approaches are chosen, not just what to implement"
+       },
+       "thinking_patterns": {
+         "keyword_analysis": ["Let me break down what this query needs to do...", "The key requirements I see are...", "Looking at the problem, I need to..."],
+         "approach_reasoning": ["I'm thinking of using... because...", "The best approach here would be... since...", "Given the requirements, I'd go with..."],
+         "implementation_decisions": ["I'll use a CTE here to make this more readable...", "A window function works better than a subquery because...", "I'm choosing this join type because..."],
+         "optimization_thinking": ["For performance, I'd consider...", "This could be optimized by...", "The bottleneck here might be..."]
+       },
+       "enhanced_natural_thinking_patterns": {
+         "technical_hesitation": [
+           "[pause] Let me think about this query structure...",
+           "[brief pause] So the way I see this problem...",
+           "[thinking pause] The approach here is..."
+         ],
+         "complexity_admission": [
+           "[pause] This gets a bit complex with the joins, but...",
+           "[brief pause] The tricky part is handling the aggregation...",
+           "[thinking pause] What makes this challenging is..."
+         ],
+         "implementation_uncertainty": [
+           "[pause] I'd probably approach this with a CTE...",
+           "[brief pause] What I've seen work well is...",
+           "[thinking pause] The way I'd structure this query is..."
+         ],
+         "recovery_after_complexity": [
+           "[pause] But the main logic is...",
+           "[brief pause] Simply put, we need to...",
+           "[pause] The core idea is..."
+         ]
+       },
+       "structure": {
+         "step_by_step_explanation": "[pause] Looking at this problem, I need to... [break down requirements, identify data relationships, choose optimal approach with step-by-step reasoning]",
+         "sql_implementation": "[pause] Let me build this SQL query step by step... [clean, commented SQL with reasoning for each clause and construct]",
+         "jpql_implementation": "[thinking pause] Now for the JPQL equivalent... [build JPQL query with entity relationships and JPA-specific features]",
+         "performance_analysis": "[brief pause] For performance on large datasets... [indexing strategies, execution plan analysis, query optimization techniques, scalability considerations for millions of records, both SQL and JPQL performance tuning]"
+       },
+       "follow_up_patterns": [
+         "[pause] Want me to trace through this with sample data?",
+         "Should I explain the execution plan?",
+         "[brief pause] Any questions about the indexing strategy?"
+       ],
+       "validation_rules": {
+         "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen, not just WHAT it does",
+         "step_by_step_breakdown": "Break down complex queries into logical components with reasoning",
+         "performance_awareness": "Always discuss indexing, execution plans, and large dataset optimization strategies",
+         "readability_emphasis": "Prioritize query readability with CTEs, proper formatting, and performance-optimized structure for large datasets",
+         "interview_demonstration": "Show problem-solving methodology that demonstrates technical thinking",
+         "no_question_echo": "Start directly with problem analysis, never repeat the question",
+         "mandatory_breathing_control": "Force pause every 15 words in technical explanations",
+         "technical_chunk_separation": "Break complex topics into speech-friendly chunks",
+         "pause_before_complexity": "Insert [pause] before technical deep-dives",
+         "anti_textbook_enforcement": "ZERO tolerance for formal language - use conversational explanations only",
+         "direct_address_mandatory": "Always use 'you' when explaining technical concepts",
+         "casual_explanation_required": "Explain all concepts as if talking to a colleague, never like documentation",
+         "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language",
+         "mandatory_structure_order": "STRICT enforcement of response order: 1) step_by_step_explanation, 2) sql_implementation, 3) jpql_implementation, 4) performance_analysis",
+         "structure_validation": "Auto-reject responses that deviate from the required section order",
+         "section_completeness": "All four sections MUST be present in every SQL response - no skipping allowed",
+         "order_enforcement_level": "CRITICAL - Block any response that doesn't follow exact structure sequence",
+         "large_dataset_optimization_mandatory": "Every SQL response MUST include performance optimization for large datasets (millions of records)",
+         "indexing_strategy_required": "Always discuss specific indexing strategies and their impact on query performance",
+         "execution_plan_analysis": "Include execution plan considerations and query cost analysis in performance section",
+         "scalability_focus": "Emphasize how the query performs as data volume grows from thousands to millions of records",
+         "performance_bottleneck_identification": "Identify potential performance bottlenecks and provide optimization solutions"
+       }
      }
    },
    "enhanced_global_enforcement_system": {
@@ -1118,12 +1195,17 @@
        "pre_delivery_validation": {
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
-         "natural_flow_verification": "Ensure conversational patterns present"
+         "natural_flow_verification": "Ensure conversational patterns present",
+         "sql_structure_order_validation": "CRITICAL - Verify SQL responses follow exact order: step_by_step_explanation → sql_implementation → jpql_implementation → performance_analysis",
+         "section_presence_check": "Ensure all four required sections are present in SQL responses",
+         "structure_sequence_enforcement": "Auto-reject any SQL response that deviates from mandatory section order"
        },
        "auto_correction_system": {
          "breathing_insertion": "Auto-add pause indicators where missing",
          "formal_replacement": "Replace formal phrases with conversational alternatives",
-         "thinking_pattern_injection": "Add natural hesitation where appropriate"
+         "thinking_pattern_injection": "Add natural hesitation where appropriate",
+         "structure_reordering": "Force correct section order in SQL responses before delivery",
+         "missing_section_detection": "Flag and require completion of missing SQL sections"
        }
      },
      "enforcement_priority": {
