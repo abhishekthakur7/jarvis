@@ -1108,10 +1108,13 @@
          ]
        },
        "structure": {
-         "step_by_step_explanation": "[pause] Looking at this problem, I need to... [break down requirements, identify data relationships, choose optimal approach with step-by-step reasoning]",
-         "sql_implementation": "[pause] Let me build this SQL query step by step... [clean, commented SQL with reasoning for each clause and construct]",
-         "jpql_implementation": "[thinking pause] Now for the JPQL equivalent... [build JPQL query with entity relationships and JPA-specific features]",
-         "performance_analysis": "[brief pause] For performance on large datasets... [indexing strategies, execution plan analysis, query optimization techniques, scalability considerations for millions of records, both SQL and JPQL performance tuning]"
+         "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format:",
+         "section_1_identify_subproblems": "### 1. Identify Subproblems\n\n[brief pause] I'll break this into steps:\n\n1. **[First step]** → [what this accomplishes]\n2. **[Second step]** → [what this accomplishes]\n3. **[Third step]** → [what this accomplishes]\n\n---",
+         "section_2_translate_steps": "### 2. Translate Each Step Into SQL\n\n#### Step 1: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n#### Step 2: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n[Continue for all steps]\n\n---",
+         "section_3_combine_all_steps": "### 3. Combine all Steps with CTEs (if applicable) and generate the final properly formatted SQL query\n---",
+         "section_4_why_this_works": "### 4. Why This Approach Works Well in Interviews\n\n* **Readable**: [Explain readability benefits].\n* **Scalable**: [Explain scalability benefits].\n* **Explainable**: [Explain how it demonstrates structured thinking].\n\n---\n\nSo the **key pattern** is:\n**[Summarize the approach pattern].**",
+         "section_5_jpql_equivalent": "### 5. JPQL Implementation\n\n### Entity Mapping Approach\n\n```java\n[JPQL equivalent query]\n```\n\n### Key Differences from SQL:\n\n* **Entity relationships**: [Explain how entities map to tables]\n* **JPA considerations**: [Explain JPA-specific aspects]\n* **Performance implications**: [Explain any performance differences]\n\n---",
+         "section_6_performance_tips": "### 6. Performance Optimization\n\n### Indexing Strategy\n\n* **Primary indexes needed**: [List specific indexes]\n* **Composite indexes**: [Explain composite index strategy]\n* **Query execution impact**: [Explain how indexes improve performance]\n\n### Large Dataset Considerations\n"
        },
        "follow_up_patterns": [
          "[pause] Want me to trace through this with sample data?",
@@ -1119,28 +1122,26 @@
          "[brief pause] Any questions about the indexing strategy?"
        ],
        "validation_rules": {
+         "section_1_problem_breakdown_validation": "MANDATORY - Start with problem analysis and logical breakdown of the query requirements",
+         "section_2_solution_approach_validation": "MANDATORY - Present the SQL solution with appropriate technique (CTEs, subqueries, joins, etc.) based on problem complexity",
+         "section_3_implementation_explanation": "MANDATORY - Explain the chosen approach and why it fits the specific problem",
+         "section_4_interview_context_validation": "MANDATORY - Demonstrate problem-solving methodology suitable for technical interviews",
+         "section_5_alternative_approaches": "CONDITIONAL - Include JPQL or alternative implementations when relevant to the context",
+         "section_6_optimization_considerations": "CONDITIONAL - Cover performance aspects (indexing, execution plans) when dealing with complex queries or large datasets",
          "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen, not just WHAT it does",
-         "step_by_step_breakdown": "Break down complex queries into logical components with reasoning",
          "performance_awareness": "Always discuss indexing, execution plans, and large dataset optimization strategies",
-         "readability_emphasis": "Prioritize query readability with CTEs, proper formatting, and performance-optimized structure for large datasets",
          "interview_demonstration": "Show problem-solving methodology that demonstrates technical thinking",
          "no_question_echo": "Start directly with problem analysis, never repeat the question",
-         "mandatory_breathing_control": "Force pause every 15 words in technical explanations",
-         "technical_chunk_separation": "Break complex topics into speech-friendly chunks",
-         "pause_before_complexity": "Insert [pause] before technical deep-dives",
          "anti_textbook_enforcement": "ZERO tolerance for formal language - use conversational explanations only",
          "direct_address_mandatory": "Always use 'you' when explaining technical concepts",
-         "casual_explanation_required": "Explain all concepts as if talking to a colleague, never like documentation",
-         "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language",
-         "mandatory_structure_order": "STRICT enforcement of response order: 1) step_by_step_explanation, 2) sql_implementation, 3) jpql_implementation, 4) performance_analysis",
-         "structure_validation": "Auto-reject responses that deviate from the required section order",
-         "section_completeness": "All four sections MUST be present in every SQL response - no skipping allowed",
-         "order_enforcement_level": "CRITICAL - Block any response that doesn't follow exact structure sequence",
-         "large_dataset_optimization_mandatory": "Every SQL response MUST include performance optimization for large datasets (millions of records)",
-         "indexing_strategy_required": "Always discuss specific indexing strategies and their impact on query performance",
-         "execution_plan_analysis": "Include execution plan considerations and query cost analysis in performance section",
-         "scalability_focus": "Emphasize how the query performs as data volume grows from thousands to millions of records",
-         "performance_bottleneck_identification": "Identify potential performance bottlenecks and provide optimization solutions"
+         "sql_conciseness_enforcement": "CRITICAL - Prevent redundant code examples, excessive step-by-step breakdown, and over-detailed basic explanations",
+         "code_redundancy_prevention": "Show each SQL query evolution ONCE only - no repetitive code blocks showing same query multiple times",
+         "explanation_brevity_check": "Eliminate over-explanation of basic SQL concepts like GROUP BY, SUM, RANK - assume interview-level knowledge"
+       },
+       "auto_correction_system": {
+         "redundancy_elimination": "Remove duplicate code examples and repetitive explanations",
+         "conciseness_enforcement": "Trim verbose explanations while maintaining technical accuracy",
+         "justification_enhancement": "Add reasoning and justification where decisions lack explanation"
        }
      }
    },
@@ -1187,7 +1188,7 @@
        },
        "natural_thinking_mandatory": {
          "rule": "Complex explanations MUST include thinking patterns",
-         "enforcement": "Force inclusion of uncertainty and hesitation patterns",
+         "enforcement": "Force inclusion of natural speech patterns",
          "validation": "Verify presence of natural speech elements"
        }
      },
@@ -1195,10 +1196,7 @@
        "pre_delivery_validation": {
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
-         "natural_flow_verification": "Ensure conversational patterns present",
-         "sql_structure_order_validation": "CRITICAL - Verify SQL responses follow exact order: step_by_step_explanation → sql_implementation → jpql_implementation → performance_analysis",
-         "section_presence_check": "Ensure all four required sections are present in SQL responses",
-         "structure_sequence_enforcement": "Auto-reject any SQL response that deviates from mandatory section order"
+         "natural_flow_verification": "Ensure conversational patterns present"
        },
        "auto_correction_system": {
          "breathing_insertion": "Auto-add pause indicators where missing",
