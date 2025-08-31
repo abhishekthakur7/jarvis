@@ -281,9 +281,28 @@ export class AssistantApp extends LitElement {
                 }, 3000);
             }
             this._awaitingProResponse = false;
-            // Enable auto-scroll for every new answer
-            this.autoScrollEnabled = true;
-            localStorage.setItem('autoScrollEnabled', 'true');
+            // Load layout-specific auto-scroll setting instead of forcing it to true
+            const currentLayoutMode = this.layoutMode || 'normal';
+            let layoutAutoScrollKey;
+            switch (currentLayoutMode) {
+                case 'compact':
+                    layoutAutoScrollKey = 'compactAutoScroll';
+                    break;
+                case 'system-design':
+                    layoutAutoScrollKey = 'systemDesignAutoScroll';
+                    break;
+                default:
+                    layoutAutoScrollKey = 'normalAutoScroll';
+                    break;
+            }
+            
+            // Get the layout-specific auto-scroll setting, defaulting to true for new responses
+            const layoutAutoScrollSetting = localStorage.getItem(layoutAutoScrollKey);
+            this.autoScrollEnabled = layoutAutoScrollSetting !== null ? layoutAutoScrollSetting === 'true' : true;
+            
+            // Save to both layout-specific and general localStorage for compatibility
+            localStorage.setItem(layoutAutoScrollKey, this.autoScrollEnabled.toString());
+            localStorage.setItem('autoScrollEnabled', this.autoScrollEnabled.toString());
         } else {
             // Update current response - this is a streaming update of the existing response
             // Only update if we have responses and a valid current index

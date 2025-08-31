@@ -3045,7 +3045,7 @@ export class AssistantView extends LitElement {
     _animateWords(container) {
         const words = container.querySelectorAll('[data-word]');
         
-        console.log(` _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
+        //console.log(` _animateWords called - shouldAnimateResponse: ${this.shouldAnimateResponse}, words count: ${words.length}`);
         
         if (this.shouldAnimateResponse) {
             // Remove no-animation class to enable transitions
@@ -3079,7 +3079,7 @@ export class AssistantView extends LitElement {
         } else {
             // No animation: add no-animation class to disable CSS transitions
             container.classList.add('no-animation');
-            console.log(` Animation disabled - added no-animation class`);
+            //console.log(` Animation disabled - added no-animation class`);
             
             // Make all words visible immediately without any transition effects
             words.forEach(word => {

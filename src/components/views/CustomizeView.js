@@ -489,28 +489,56 @@ export class CustomizeView extends LitElement {
         this.handleAutoScrollChangeFromAssistantView = this.handleAutoScrollChangeFromAssistantView.bind(this);
         document.addEventListener('auto-scroll-change', this.handleAutoScrollChangeFromAssistantView);
         
-        // Dispatch initial state using LayoutSettingsManager
+        // Dispatch initial state using actual saved localStorage values
         requestAnimationFrame(() => {
             const currentLayoutMode = localStorage.getItem('layoutMode') || 'normal';
-            const currentSettings = this.layoutSettings[currentLayoutMode];
             
-            if (currentSettings) {
-                document.dispatchEvent(new CustomEvent('auto-scroll-change', {
-                    detail: {
-                        layoutMode: currentLayoutMode,
-                        enabled: currentSettings.autoScroll,
-                        source: 'customize-view-init'
-                    }
-                }));
-                
-                document.dispatchEvent(new CustomEvent('animate-response-change', {
-                    detail: {
-                        layoutMode: currentLayoutMode,
-                        enabled: currentSettings.animateResponse,
-                        source: 'customize-view-init'
-                    }
-                }));
+
+            
+            // Get actual saved auto-scroll setting from localStorage, not default settings
+            let savedAutoScroll;
+            if (currentLayoutMode === 'normal') {
+                savedAutoScroll = localStorage.getItem('normalAutoScroll');
+            } else if (currentLayoutMode === 'compact') {
+                savedAutoScroll = localStorage.getItem('compactAutoScroll');
+            } else if (currentLayoutMode === 'system-design') {
+                savedAutoScroll = localStorage.getItem('systemDesignAutoScroll');
             }
+            
+            // Get actual saved animate response setting from localStorage
+            let savedAnimateResponse;
+            if (currentLayoutMode === 'normal') {
+                savedAnimateResponse = localStorage.getItem('normalAnimateResponse');
+            } else if (currentLayoutMode === 'compact') {
+                savedAnimateResponse = localStorage.getItem('compactAnimateResponse');
+            } else if (currentLayoutMode === 'system-design') {
+                savedAnimateResponse = localStorage.getItem('systemDesignAnimateResponse');
+            }
+            
+            // Use saved values if they exist, otherwise fall back to defaults
+            const currentSettings = this.layoutSettings[currentLayoutMode];
+            const autoScrollEnabled = savedAutoScroll !== null ? savedAutoScroll === 'true' : (currentSettings ? currentSettings.autoScroll : false);
+            const animateResponseEnabled = savedAnimateResponse !== null ? savedAnimateResponse === 'true' : (currentSettings ? currentSettings.animateResponse : false);
+            
+            console.log('  savedAutoScroll for', currentLayoutMode, ':', savedAutoScroll);
+            console.log('  autoScrollEnabled resolved to:', autoScrollEnabled);
+            console.log('  Dispatching auto-scroll-change event with enabled:', autoScrollEnabled);
+            
+            document.dispatchEvent(new CustomEvent('auto-scroll-change', {
+                detail: {
+                    layoutMode: currentLayoutMode,
+                    enabled: autoScrollEnabled,
+                    source: 'customize-view-init'
+                }
+            }));
+            
+            document.dispatchEvent(new CustomEvent('animate-response-change', {
+                detail: {
+                    layoutMode: currentLayoutMode,
+                    enabled: animateResponseEnabled,
+                    source: 'customize-view-init'
+                }
+            }));
         });
         
         // Resize window for this view
@@ -729,6 +757,13 @@ export class CustomizeView extends LitElement {
         
         // Update using LayoutSettingsManager (handles localStorage and events)
         LayoutSettingsManager.updateSetting(layoutMode, settingKey, value);
+        
+        // Check what was actually stored
+        if (settingKey === 'autoScroll') {
+            const storageKey = `${layoutMode}${settingKey.charAt(0).toUpperCase() + settingKey.slice(1)}`;
+            const storedValue = localStorage.getItem(storageKey);
+            console.log('  After updateSetting, localStorage[' + storageKey + ']:', storedValue);
+        }
         
         // Trigger re-render
         this.requestUpdate();
