@@ -566,12 +566,45 @@
       ],
       "response_planning_visibility": "Hide all internal planning and validation steps"
     },
+    "blueprint_validation_rules": {
+      "cross_contamination_prevention": {
+        "SQL_blueprint_exclusions": {
+          "trigger_keywords": ["algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge"],
+          "forbidden_sections": ["Identify Subproblems", "Translate Each Step Into SQL", "SQL Query Structure", "Database Schema Analysis"],
+          "enforcement": "If input contains any trigger keywords, SQL blueprint sections MUST NOT be used"
+        },
+        "DSA_blueprint_priority": {
+          "interview_simulation_triggers": ["find all elements", "anagram", "string", "array", "sorting", "searching", "optimize", "complexity", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "algorithm", "data structure", "leetcode", "hackerrank", "coding interview", "technical interview"],
+          "priority_boost": "When interview simulation triggers are present, DSA blueprint gets 25x priority weight (matching interview_simulation_boost)",
+          "override_rule": "DSA interview blueprint MUST be selected over ALL other blueprints for any algorithm/data structure/coding interview question",
+          "confidence_enforcement": "DSA blueprint selection confidence must exceed 0.8 threshold when interview triggers are detected",
+          "cross_blueprint_prevention": "Absolutely prevent SQL, CONCEPT_EXPLANATION, or other blueprints from activating during coding interviews"
+        }
+      },
+      "blueprint_structure_enforcement": {
+        "section_header_validation": "Blueprint section headers must match the selected intent - no cross-blueprint contamination",
+        "content_alignment_check": "Response content must align with selected blueprint structure and methodology"
+      }
+    },
     "response_planning": {
       "step_1_intent_classification": "Identify the primary intent and complexity level",
       "step_2_breathing_planning": "Plan natural pause points for complex explanations",
       "step_3_chunk_organization": "Break technical content into speech-friendly chunks",
       "step_4_stress_assessment": "Determine if systematic thinking patterns are needed",
-      "step_5_blueprint_selection": "Choose appropriate response pattern",
+      "step_5_blueprint_selection": {
+        "description": "Choose appropriate response pattern using intent classification with negative keyword filtering",
+        "selection_algorithm": {
+          "step_1": "Score each intent based on keyword and pattern matches in the input",
+          "step_2": "Apply negative keyword filtering - if input contains negative keywords for an intent, set score to 0",
+          "step_3": "Prioritize DSA_PROBLEM_SOLVING for algorithm questions by giving it 2x weight when algorithm keywords are present",
+          "step_4": "Select the intent with the highest score after filtering",
+          "step_5": "Map selected intent to corresponding blueprint from blueprint_engine"
+        },
+        "negative_keyword_enforcement": {
+          "SQL_Query_CODING": "MUST be excluded if input contains any algorithm, data structure, or coding challenge keywords",
+          "priority_override": "DSA_PROBLEM_SOLVING takes precedence over all other intents when algorithm keywords are detected"
+        }
+      },
       "step_6_word_limit_check": "Validate against spoken delivery limits",
       "step_7_natural_flow_validation": "Ensure conversational connectors and transitions"
     },
@@ -602,9 +635,148 @@
       "patterns": ["Write code", "Implement a", "Create a function", "Algorithm to", "Code that"]
     },
     "DSA_PROBLEM_SOLVING": {
-      "keywords": ["algorithm", "data structure", "optimize", "complexity", "efficient", "leetcode"],
-      "patterns": ["Find the", "Most efficient", "Optimize for", "Time complexity", "Space complexity"]
-    },
+      "description": "Real technical interview simulation - mimics how actual FAANG/tech company interviews are conducted",
+      "interview_methodology": {
+        "problem_solving_framework": {
+          "clarification_phase": ["understand constraints", "edge cases", "input validation", "expected output format", "performance requirements"],
+          "approach_development": ["brute force first", "identify patterns", "optimize step by step", "multiple solutions", "trade-off analysis"],
+          "implementation_quality": ["clean code", "readable variable names", "modular functions", "error handling", "test cases"],
+          "communication_skills": ["think aloud", "explain reasoning", "discuss alternatives", "handle hints", "adapt to feedback"]
+        },
+        "real_interview_patterns": {
+          "problem_recognition": ["similar problems seen before", "pattern matching", "data structure selection", "algorithm choice rationale"],
+          "optimization_thinking": ["time vs space trade-offs", "early termination", "preprocessing benefits", "caching opportunities"],
+          "edge_case_mastery": ["empty inputs", "single elements", "duplicates", "overflow scenarios", "invalid inputs"],
+          "scalability_awareness": ["large input handling", "memory constraints", "distributed systems", "real-world applications"]
+        }
+      },
+      "detection_triggers": {
+        "primary_indicators": ["algorithm", "data structure", "optimize", "complexity", "efficient", "implement", "solve", "find", "given", "return", "write a function", "coding problem", "interview question"],
+        "platform_signals": ["leetcode", "hackerrank", "codechef", "codeforces", "technical interview", "coding challenge", "programming contest"],
+        "problem_context_clues": ["time complexity", "space complexity", "O(n)", "O(log n)", "Big O", "optimize for", "most efficient", "best approach"],
+        "data_structure_mentions": ["array", "string", "list", "matrix", "linked list", "tree", "graph", "stack", "queue", "heap", "hash", "set", "map"],
+        "algorithmic_concepts": ["sorting", "searching", "recursion", "dynamic programming", "greedy", "backtracking", "two pointer", "sliding window", "binary search", "dfs", "bfs"]
+      },
+      "interview_response_structure": {
+        "mandatory_sections": {
+          "problem_understanding": "Restate the problem and clarify constraints",
+          "approach_explanation": "Walk through the solution strategy step by step",
+          "complexity_analysis": "Discuss time and space complexity with Big O notation",
+          "implementation": "Provide clean, well-commented code",
+          "testing_strategy": "Outline test cases including edge cases",
+          "optimization_discussion": "Explore alternative approaches and trade-offs"
+        },
+        "communication_style": {
+          "conversational_tone": true,
+          "think_aloud_process": true,
+          "interactive_clarification": true,
+          "step_by_step_reasoning": true,
+          "multiple_solution_exploration": true
+        }
+      },
+      "advanced_interview_scenarios": {
+        "follow_up_handling": ["what if constraints change", "how to handle larger inputs", "memory optimization", "parallel processing", "real-world modifications"],
+        "hint_integration": ["gracefully accept hints", "build upon suggestions", "show learning ability", "adapt approach quickly"],
+        "pressure_management": ["stay calm under time pressure", "prioritize working solution", "communicate when stuck", "ask for clarification when needed"]
+      },
+      "priority_weight": 10.0,
+      "interview_simulation_boost": {
+         "description": "Activates full technical interview simulation mode",
+         "boost_multiplier": 25.0,
+         "override_all_other_intents": true,
+         "confidence_threshold": 0.8,
+         "real_interview_triggers": ["coding interview", "technical interview", "algorithm problem", "data structure problem", "solve this problem", "implement", "write a function", "given an array", "given a string", "find the", "return the", "optimize", "time complexity", "space complexity"]
+       },
+       "response_pattern": "technical_interview_candidate",
+       "interview_approach": "real_world_problem_solving",
+       "enhanced_natural_thinking_patterns": {
+         "problem_clarification": [
+           "[pause] Let me make sure I understand this correctly...",
+           "[brief pause] So we're looking for...",
+           "[thinking pause] Just to clarify the constraints..."
+         ],
+         "approach_exploration": [
+           "[pause] I'm thinking of a few different approaches here...",
+           "[brief pause] The brute force way would be...",
+           "[thinking pause] But we can optimize this by..."
+         ],
+         "implementation_reasoning": [
+           "[pause] I'll use this data structure because...",
+           "[brief pause] The key insight is...",
+           "[thinking pause] This algorithm works by..."
+         ],
+         "complexity_analysis": [
+           "[pause] For time complexity, we're looking at...",
+           "[brief pause] Space-wise, this takes...",
+           "[thinking pause] We can't do better than this because..."
+         ],
+         "edge_case_consideration": [
+           "[pause] We should also handle the case where...",
+           "[brief pause] What if the input is empty?",
+           "[thinking pause] Edge cases to consider..."
+         ]
+       },
+       "structure": {
+         "step_1_problem_understanding": {
+           "name": "Problem Clarification (1-2 minutes)",
+           "instruction": "[pause] Let me restate the problem to make sure I understand... [restate problem]. Are there any constraints on the input size? What should we return for edge cases like empty input? [pause] Any specific time/space complexity requirements?"
+         },
+         "step_2_approach_discussion": {
+           "name": "Solution Approach (2-3 minutes)",
+           "instruction": "[brief pause] I can think of a few approaches here. The brute force way would be... [explain brute force]. [pause] But we can optimize this using... [explain optimal approach]. The key insight is... [explain core algorithm/pattern]. [thinking pause] This should give us better complexity."
+         },
+         "step_3_implementation": {
+           "name": "Code Implementation (5-8 minutes)",
+           "instruction": "[pause] Let me code this up. I'll start with the function signature... [implement step by step with explanations]. [brief pause] I'm using this data structure because... [explain choices]. [pause] Let me trace through an example to make sure this works..."
+         },
+         "step_4_testing_and_edge_cases": {
+           "name": "Testing & Edge Cases (2-3 minutes)",
+           "instruction": "[pause] Let me think about test cases. We should test... [list normal cases]. [brief pause] For edge cases, what about... [discuss edge cases]. [thinking pause] The algorithm handles these by..."
+         },
+         "step_5_complexity_and_optimization": {
+           "name": "Complexity Analysis & Follow-ups (1-2 minutes)",
+           "instruction": "[pause] Time complexity is O(...) because... [explain]. Space complexity is O(...) due to... [explain]. [brief pause] If we needed to optimize further, we could... [discuss alternatives]. [pause] In a real system, I'd also consider..."
+         }
+       },
+       "follow_up_patterns": [
+         "[pause] Does this approach make sense?",
+         "Should I walk through the algorithm again?",
+         "[brief pause] Want me to optimize for space instead?",
+         "Any questions about the implementation?",
+         "[thinking pause] Should I consider the distributed case?"
+       ],
+       "validation_rules": {
+         "interview_timing": "Structure response for 15-20 minute coding interview with natural conversation flow",
+         "think_aloud_mandatory": "Must verbalize thought process throughout - never code silently",
+         "clarification_first": "Always start by clarifying problem constraints and edge cases",
+         "multiple_approaches": "Discuss at least brute force + optimized approach",
+         "complexity_analysis_required": "Must provide time and space complexity with explanations",
+         "edge_case_awareness": "Must identify and handle at least 2-3 edge cases",
+         "clean_code_standards": "Code must be readable with meaningful variable names and comments",
+         "interactive_engagement": "Ask clarifying questions and check understanding throughout",
+         "real_world_connection": "Connect solution to practical applications when relevant",
+         "breathing_control": "Insert natural pauses for interviewer interaction",
+         "stress_management": "Show calm problem-solving under pressure",
+         "adaptive_communication": "Adjust explanation depth based on interviewer feedback",
+         "mandatory_elements": {
+           "problem_restatement": "Must restate problem in own words",
+           "constraint_clarification": "Must ask about input constraints and edge cases",
+           "approach_comparison": "Must discuss multiple solution approaches",
+           "step_by_step_implementation": "Must explain code as you write it",
+           "example_walkthrough": "Must trace through at least one example",
+           "complexity_justification": "Must explain why the complexity is what it is",
+           "optimization_discussion": "Must discuss potential optimizations or trade-offs"
+         },
+         "forbidden_patterns": [
+           "Jumping straight to code without clarification",
+           "Silent coding without explanation",
+           "Ignoring edge cases",
+           "Not analyzing complexity",
+           "Formal academic language",
+           "Textbook explanations"
+         ]
+       }
+     },
     "JAVA_STREAMS": {
       "keywords": ["stream", "lambda", "functional", "stream api", "filter", "map", "collect", "java 8"],
       "patterns": ["Using streams", "Lambda expression", "Functional approach", "Stream API"]
@@ -630,8 +802,11 @@
       "patterns": ["Tell me about", "Experience with", "Project where", "Challenge you faced"]
     },
     "SQL_Query_CODING": {
-      "keywords": ["sql", "query", "database", "select", "join", "jpql", "aggregate", "table"],
-      "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions"]
+      "keywords": ["sql", "database", "select", "join", "jpql", "aggregate", "table", "schema", "relational", "mysql", "postgresql", "oracle", "sqlite"],
+      "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions", "from.*table", "database.*query"],
+      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair"],
+      "absolute_exclusion_patterns": [".*largest.*contiguous.*", ".*maximum.*subarray.*", ".*contiguous.*sum.*", ".*largest.*sum.*", ".*maximum.*sum.*", ".*kadane.*", ".*subarray.*problem.*", ".*find.*the.*largest.*", ".*find.*the.*maximum.*", ".*contiguous.*pair.*"],
+      "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0"
     }
   },
   "blueprint_engine": {
