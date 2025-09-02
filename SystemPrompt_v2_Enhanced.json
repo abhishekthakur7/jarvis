@@ -847,7 +847,7 @@
          },
          "step_2_approach_discussion": {
            "name": "Solution Approach (2-3 minutes)",
-           "instruction": "[brief pause] Two approaches [Only if there's a better approach than the brute force, otherwise only 1 approach]:\n\n**Brute Force:**\n- Method: [2-3 sentences explaining as if you're explaining to a 10 year old] \n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Space Complexity: O(?) [followed by 1 short sentence for justification] \n- Issue: [why suboptimal, major issue]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 10 year old]\n- Key insight: [main optimization explaining how it improved the solution]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
+           "instruction": "[brief pause] Two approaches:\n\n**Brute Force:**\n- Method: [2-3 sentences explaining as if you're explaining to a 10 year old] \n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Space Complexity: O(?) [followed by 1 short sentence for justification] \n- Issue: [why suboptimal, major issue]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 10 year old]\n- Key insight: [main optimization explaining how it improved the solution]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
          },
          "step_3_implementation": {
            "name": "Walkthrough and Code Implementation (8-15 minutes)",
