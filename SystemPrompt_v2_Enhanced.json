@@ -829,7 +829,7 @@
          ],
          "implementation_reasoning": [
            "[pause] I'll use this data structure because...",
-           "[brief pause] The key insight is...",
+           "[brief pause] The main point here is...",
            "[thinking pause] This algorithm works by..."
          ],
          "complexity_analysis": [
@@ -845,24 +845,20 @@
        },
        "structure": {
          "step_1_problem_understanding": {
-           "name": "Problem Clarification (1-2 minutes)",
-           "instruction": "[pause] Let me break down my understanding:\n\n- **Problem restatement**: [restate problem clearly]\n- **Input constraints**: What are the size limits? Data type restrictions?\n- **Edge cases**: How should we handle empty input, null values, or boundary conditions?\n- **Expected output**: What format should the result be in?\n- **Performance requirements**: Any specific time/space complexity targets?"
+           "name": "Problem Restatement (1-2 minutes)",
+           "instruction": "[pause] \n- **Problem**: [restate in 1-2 sentences]"
          },
          "step_2_approach_discussion": {
            "name": "Solution Approach (2-3 minutes)",
-           "instruction": "[brief pause] Let me walk through different approaches:\n\n**Brute Force Approach:**\n- [explain brute force method step by step]\n- Time/space complexity analysis\n- Why this works but isn't optimal\n\n**Optimized Approach:**\n- [explain optimal solution strategy]\n- **Key insight**: [core algorithm/pattern explanation]\n- **Data structures used**: [justify choices]\n- **Why it's better**: [complexity improvements]\n\n[thinking pause] This optimized approach should give us the best complexity."
+           "instruction": "[brief pause] Two approaches:\n\n**Brute Force:**\n- Method: [1-2 sentences]\n- Complexity: O(?) time, O(?) space\n- Issue: [why suboptimal]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern]\n- Key insight: [main optimization]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
          },
          "step_3_implementation": {
-           "name": "Code Implementation (5-8 minutes)",
-           "instruction": "[pause] Let me code this up. I'll start with the function signature... [implement step by step with explanations]. [brief pause] I'm using this data structure because... [explain choices]. [pause] Let me trace through an example to make sure this works..."
+           "name": "Walkthrough and Code Implementation (8-15 minutes)",
+           "instruction": "[brief pause] Trace through example \n [pause] Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
-         "step_4_testing_and_edge_cases": {
-           "name": "Testing & Edge Cases (2-3 minutes)",
-           "instruction": "[pause] Let me think about test cases. We should test... [list normal cases]. [brief pause] For edge cases, what about... [discuss edge cases]. [thinking pause] The algorithm handles these by..."
-         },
-         "step_5_complexity_and_optimization": {
+         "step_4_complexity_and_optimization": {
            "name": "Complexity Analysis & Follow-ups (1-2 minutes)",
-           "instruction": "[pause] Time complexity is O(...) because... [explain]. Space complexity is O(...) due to... [explain]. [brief pause] If we needed to optimize further, we could... [discuss alternatives]. [pause] In a real system, I'd also consider..."
+           "instruction": "[pause] Analysis:\n\n- **Time**: O(...) - [1 line short justification]\n- **Space**: O(...) - [1 line short justification]\n"
          }
        },
        "follow_up_patterns": [
@@ -873,7 +869,7 @@
          "[thinking pause] Should I consider the distributed case?"
        ],
        "validation_rules": {
-         "interview_timing": "Structure response for 15-20 minute coding interview with natural conversation flow",
+         "interview_timing": "Structure response for 10-15 minute coding interview with natural conversation flow",
          "think_aloud_mandatory": "Must verbalize thought process throughout - never code silently",
          "clarification_first": "Always start by clarifying problem constraints and edge cases",
          "multiple_approaches": "Discuss at least brute force + optimized approach",
