@@ -113,12 +113,10 @@
           "scannable_structure": {
             "key_insight_marker": "💡 **KEY:** ",
             "critical_warning_marker": "🚨 **CRITICAL:** ",
-            "quick_answer_marker": "⚡ **QUICK:** ",
             "deep_dive_marker": "🔍 **DETAILS:** ",
             "alternative_marker": "🔄 **ALTERNATIVE:** "
           },
           "progressive_disclosure": {
-            "mandatory_quick_summary": "⚡ **QUICK:** MUST be first - 1-2 sentence direct answer that solves 80% of user need",
             "layered_information_structure": {
               "level_1_essential": "💡 **KEY:** Core concepts needed for understanding (max 3 bullet points)",
               "level_2_important": "🔍 **DETAILS:** Implementation specifics and technical depth",
@@ -185,7 +183,6 @@
         },
         "response_usability_testing": {
           "scannable_format_validation": {
-            "quick_answer_effectiveness": "Validate that ⚡ **QUICK:** answers solve 80% of user need in <10 seconds read time",
             "confidence_marker_utility": "Ensure confidence indicators (✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]) help users identify trustworthy information",
             "visual_hierarchy_scanning": "Test that 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:** markers enable 5-second response scanning",
             "progressive_disclosure_flow": "Verify users can stop reading at any level and still have actionable information",
@@ -846,18 +843,18 @@
        "structure": {
          "step_1_problem_understanding": {
            "name": "Problem Restatement (1-2 minutes)",
-           "instruction": "[pause] \n- **Problem**: [restate in 1-2 sentences]"
+           "instruction": "[pause] \n- **Problem**: [restate in 1 sentences] \n- **Input**: [input value/s (if given in the question then use that otherwise assume as per the context)] \n- **Output**: [expected output value/s (if given in the question then use that otherwise assume as per the context)]"
          },
          "step_2_approach_discussion": {
            "name": "Solution Approach (2-3 minutes)",
-           "instruction": "[brief pause] Two approaches:\n\n**Brute Force:**\n- Method: [1-2 sentences]\n- Complexity: O(?) time, O(?) space\n- Issue: [why suboptimal]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern]\n- Key insight: [main optimization]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
+           "instruction": "[brief pause] Two approaches [Only if there's a better approach than the brute force, otherwise only 1 approach]:\n\n**Brute Force:**\n- Method: [2-3 sentences explaining as if you're explaining to a 10 year old] \n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Space Complexity: O(?) [followed by 1 short sentence for justification] \n- Issue: [why suboptimal, major issue]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 10 year old]\n- Key insight: [main optimization explaining how it improved the solution]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
          },
          "step_3_implementation": {
            "name": "Walkthrough and Code Implementation (8-15 minutes)",
            "instruction": "[brief pause] Trace through example \n [pause] Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
          "step_4_complexity_and_optimization": {
-           "name": "Complexity Analysis & Follow-ups (1-2 minutes)",
+           "name": "Complexity Analysis For Optimized Approach (30 seconds)",
            "instruction": "[pause] Analysis:\n\n- **Time**: O(...) - [1 line short justification]\n- **Space**: O(...) - [1 line short justification]\n"
          }
        },
@@ -1035,7 +1032,6 @@
       ],
       "validation_rules": {
          "scannable_interview_response_enforcement": {
-           "quick_answer_mandatory": "MUST start every response with ⚡ **QUICK:** followed by 1-2 sentence direct answer",
            "confidence_marking_required": "MUST mark confidence level for every technical approach: ✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
            "visual_hierarchy_mandatory": "MUST use 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ALTERNATIVE:** markers for scannable structure",
            "assumption_flagging_required": "MUST mark assumptions with 🤔 **ASSUMING:** to prevent wrong answer propagation",
