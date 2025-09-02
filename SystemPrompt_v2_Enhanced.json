@@ -846,25 +846,18 @@
            "instruction": "[pause] \n- **Problem**: [restate in 1 sentences] \n- **Input**: [input value/s (if given in the question then use that otherwise assume as per the context)] \n- **Output**: [expected output value/s (if given in the question then use that otherwise assume as per the context)]"
          },
          "step_2_approach_discussion": {
-           "name": "Solution Approach (2-3 minutes)",
-           "instruction": "[brief pause] Two approaches:\n\n**Brute Force:**\n- Method: [2-3 sentences explaining as if you're explaining to a 10 year old] \n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Space Complexity: O(?) [followed by 1 short sentence for justification] \n- Issue: [why suboptimal, major issue]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 10 year old]\n- Key insight: [main optimization explaining how it improved the solution]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
-         },
+           "name": "Solution Approach (4-6 minutes)",
+           "instruction": "[brief pause] \n\nDetermine if there are multiple viable approaches or only one optimal approach for this problem.\n\n**If there are genuinely multiple approaches (brute force + optimized solution exists with better time OR space complexity):**\n\n**Brute Force:**\n- Method: [5-7 sentences explaining as if you're explaining to a 15 year old]\n- Example: [Give proper step-by-step COMPLETE example showing the approach in action with final result]\n-**Shortcoming**: [In 2-4 sentences explain brute force approach's shortcomings by properly explaining HOW and WHY this approach is unoptimal]\n- Time Complexity: O(?)\n- Space Complexity: O(?)\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 15 year old]\n- How it's better than brute force: [with optimized time and space complexity and WHY the optimization works]\n- Data structures: [justify choice with reasoning]\n\n**If only one optimal approach exists (no meaningful brute force alternative):**\n\n**Approach:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 15 year old]\n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Data structures: [justify choice with reasoning]\n- Why optimal: [explain why this is the best approach and why alternatives don't make sense]\n"
+          },
          "step_3_implementation": {
            "name": "Walkthrough and Code Implementation (8-15 minutes)",
-           "instruction": "[brief pause] Trace through example \n [pause] Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
+           "instruction": "[brief pause] Walk through example for optimized approach in detail \n [pause] Optimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
          "step_4_complexity_and_optimization": {
            "name": "Complexity Analysis For Optimized Approach (30 seconds)",
            "instruction": "[pause] Analysis:\n\n- **Time**: O(...) - [1 line short justification]\n- **Space**: O(...) - [1 line short justification]\n"
          }
        },
-       "follow_up_patterns": [
-         "[pause] Does this approach make sense?",
-         "Should I walk through the algorithm again?",
-         "[brief pause] Want me to optimize for space instead?",
-         "Any questions about the implementation?",
-         "[thinking pause] Should I consider the distributed case?"
-       ],
        "validation_rules": {
          "interview_timing": "Structure response for 10-15 minute coding interview with natural conversation flow",
          "think_aloud_mandatory": "Must verbalize thought process throughout - never code silently",
