@@ -716,7 +716,8 @@
         "mandatory_dsa_override": {
           "trigger_keywords": ["algorithm", "data structure", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
           "enforcement_rule": "ABSOLUTE - If ANY trigger keyword detected, DSA blueprint MUST be selected with 25x priority, all other blueprints FORBIDDEN",
-          "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems"
+          "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems",
+          "approach_structure_enforcement": "CRITICAL - MUST follow step_2_approach_discussion structure exactly. NEVER skip brute force discussion. NEVER jump directly to optimized solution without proper approach comparison."
         },
         "negative_keyword_enforcement": {
           "SQL_Query_CODING": "CRITICAL - MUST be excluded with score 0 if input contains ANY DSA keywords",
@@ -799,12 +800,57 @@
         "pressure_management": ["stay calm under time pressure", "prioritize working solution", "communicate when stuck", "ask for clarification when needed"]
       },
       "priority_weight": 25.0,
+      "optimization_technique_enforcement": {
+        "mandatory_standard_techniques": {
+          "array_problems": {
+            "two_sum_variants": "HashMap for O(1) lookups",
+            "subarray_problems": "Sliding Window technique",
+            "sorted_array_search": "Binary Search",
+            "two_pointer_scenarios": "Two Pointers (left/right or fast/slow)",
+            "frequency_counting": "HashMap/HashSet for counting",
+            "prefix_sum_problems": "Prefix Sum array"
+          },
+          "string_problems": {
+            "anagram_detection": "Character frequency HashMap",
+            "substring_problems": "Sliding Window with HashMap",
+            "palindrome_check": "Two Pointers (expand around center or left/right)",
+            "pattern_matching": "KMP algorithm or Rolling Hash",
+            "string_manipulation": "StringBuilder for efficiency"
+          },
+          "tree_problems": {
+            "traversal": "DFS (recursive) or BFS (queue)",
+            "path_problems": "DFS with backtracking",
+            "level_order": "BFS with Queue",
+            "binary_search_tree": "In-order traversal or BST properties",
+            "tree_construction": "Recursive divide and conquer"
+          },
+          "graph_problems": {
+            "shortest_path": "BFS for unweighted, Dijkstra for weighted",
+            "connectivity": "DFS or Union-Find",
+            "cycle_detection": "DFS with visited states",
+            "topological_sort": "Kahn's algorithm (BFS) or DFS"
+          },
+          "dynamic_programming": {
+            "overlapping_subproblems": "Memoization (top-down) or Tabulation (bottom-up)",
+            "optimization_problems": "DP table with state transitions",
+            "sequence_problems": "1D or 2D DP array"
+          },
+          "linked_list_problems": {
+            "cycle_detection": "Floyd's Cycle Detection (fast/slow pointers)",
+            "reversal": "Iterative three-pointer technique",
+            "merge_operations": "Two-pointer merge technique"
+          }
+        },
+        "technique_selection_priority": "When presenting the OPTIMIZED solution, use the MOST COMMONLY USED and WIDELY ACCEPTED technique for the problem type - avoid exotic or overly complex solutions. This does NOT override the mandatory step-by-step approach discussion structure.",
+        "standard_data_structure_enforcement": "Use industry-standard data structures: HashMap, HashSet, ArrayList, LinkedList, Stack, Queue, PriorityQueue, TreeMap, TreeSet",
+        "approach_discussion_enforcement": "MANDATORY: MUST follow the step_2_approach_discussion structure exactly. NEVER skip brute force discussion when multiple approaches exist. NEVER jump directly to optimized solution without proper approach comparison."
+      },
       "blueprint_activation_enforcement": {
         "mandatory_override": "DSA blueprint MUST override ALL other blueprints when algorithm/data structure keywords detected",
         "keyword_detection_priority": "CRITICAL - Any presence of DSA keywords triggers immediate blueprint selection",
         "cross_blueprint_prevention": "Absolutely prevent SQL, CONCEPT_EXPLANATION, or other blueprints from activating during coding problems"
-      },
-      "interview_simulation_boost": {
+       },
+       "interview_simulation_boost": {
          "description": "Activates full technical interview simulation mode",
          "boost_multiplier": 25.0,
          "override_all_other_intents": true,
@@ -846,12 +892,12 @@
            "instruction": "[pause] \n- **Problem**: [restate in 1 sentences] \n- **Input**: [input value/s (if given in the question then use that otherwise assume as per the context)] \n- **Output**: [expected output value/s (if given in the question then use that otherwise assume as per the context)]"
          },
          "step_2_approach_discussion": {
-           "name": "Solution Approach (4-6 minutes)",
-           "instruction": "[brief pause] \n\nDetermine if there are multiple viable approaches or only one optimal approach for this problem.\n\n**If there are genuinely multiple approaches (brute force + optimized solution exists with better time OR space complexity):**\n\n**Brute Force:**\n- Method: [5-7 sentences explaining as if you're explaining to a 15 year old]\n- Example: [Give proper step-by-step COMPLETE example showing the approach in action with final result]\n-**Shortcoming**: [In 2-4 sentences explain brute force approach's shortcomings by properly explaining HOW and WHY this approach is unoptimal]\n- Time Complexity: O(?)\n- Space Complexity: O(?)\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 15 year old]\n- How it's better than brute force: [with optimized time and space complexity and WHY the optimization works]\n- Data structures: [justify choice with reasoning]\n\n**If only one optimal approach exists (no meaningful brute force alternative):**\n\n**Approach:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 15 year old]\n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Data structures: [justify choice with reasoning]\n- Why optimal: [explain why this is the best approach and why alternatives don't make sense]\n"
+           "name": "Solution Approach (4-7 minutes)",
+           "instruction": "[brief pause] \n\nDetermine if there are multiple viable approaches or only one optimal approach for this problem.\n\n**If there are genuinely multiple approaches (brute force + optimized solution exists with better time OR space complexity):**\n\n**Brute Force:**\n- Method: [5-7 sentences explaining as if you're explaining to a 15 year old]\n- Example: [Give proper step-by-step COMPLETE example showing the approach in action with final result]\n- **Shortcoming**: [In 2-4 sentences explain brute force approach's shortcomings by properly explaining HOW and WHY this approach is unoptimal]\n- Time Complexity: O(?)\n- Space Complexity: O(?)\n\n**Optimized:**\n- Strategy: [core algorithm/pattern using MOST COMMONLY USED optimization technique for this problem type - e.g., Two Pointers for array problems, HashMap for frequency counting, Sliding Window for subarray problems, Binary Search for sorted arrays, DFS/BFS for graphs, Dynamic Programming for overlapping subproblems, explain as if you're explaining to a 15 year old]\n**How it's better than brute force**: [with optimized time and space complexity and WHY the optimization works]\n- Data structures: [justify choice with reasoning - MUST use the standard, most widely accepted data structure for this optimization pattern]\n\n**If only one optimal approach exists (no meaningful brute force alternative):**\n\n**Approach:**\n- Strategy: [core algorithm/pattern using MOST COMMONLY USED technique for this problem type - e.g., Two Pointers for array problems, HashMap for frequency counting, Sliding Window for subarray problems, Binary Search for sorted arrays, DFS/BFS for graphs, Dynamic Programming for overlapping subproblems, explain as if you're explaining to a 15 year old]\n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Data structures: [justify choice with reasoning - MUST use the standard, most widely accepted data structure for this technique]\n"
           },
          "step_3_implementation": {
-           "name": "Walkthrough and Code Implementation (8-15 minutes)",
-           "instruction": "[brief pause] Walk through example for optimized approach in detail \n [pause] Optimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
+           "name": "Example walkthrough and Code Implementation For the Optimized approach (12-20 minutes)",
+           "instruction": "[brief pause] Trace out step-by-step example in detail till we get the expected result \n [pause] Optimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
          "step_4_complexity_and_optimization": {
            "name": "Complexity Analysis For Optimized Approach (30 seconds)",
@@ -874,7 +920,7 @@
          "mandatory_elements": {
            "problem_restatement": "Must restate problem in own words",
            "constraint_clarification": "Must ask about input constraints and edge cases",
-           "approach_comparison": "Must discuss multiple solution approaches",
+           "approach_comparison": "Must follow step_2_approach_discussion structure exactly - discuss brute force first, then optimized approach with clear comparison",
            "step_by_step_implementation": "Must explain code as you write it",
            "example_walkthrough": "Must trace through at least one example",
            "complexity_justification": "Must explain why the complexity is what it is",
@@ -886,7 +932,9 @@
            "Ignoring edge cases",
            "Not analyzing complexity",
            "Formal academic language",
-           "Textbook explanations"
+           "Textbook explanations",
+           "Skipping brute force discussion when multiple approaches exist",
+           "Jumping directly to optimized solution without approach comparison"
          ],
          "section_header_enforcement": {
            "forbidden_sql_headers": "CRITICAL - NEVER use SQL blueprint headers: '### 2. Translate Each Step Into SQL', '### 1. Identify Subproblems', '### 3. Combine all Steps with CTEs', '### 4. Why This Approach Works Well in Interviews', '### 5. JPQL Implementation', '### 6. Performance Optimization'",
