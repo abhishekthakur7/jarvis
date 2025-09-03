@@ -31,7 +31,9 @@ const colors = {
 };
 
 function log(message, color = 'reset') {
-    console.log(`${colors[color]}${message}${colors.reset}`);
+    if (process.env.DEBUG_APP === 'true') {
+        console.log(`${colors[color]}${message}${colors.reset}`);
+    }
 }
 
 function header(message) {
@@ -78,14 +80,18 @@ async function runCommand(command, description) {
         });
         
         if (!verbose && output) {
-            console.log(output);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log(output);
+            }
         }
         
         success(`${description} completed successfully`);
         return true;
     } catch (error) {
         error(`${description} failed:`);
-        console.error(error.message);
+        if (process.env.DEBUG_APP === 'true') {
+            console.error(error.message);
+        }
         return false;
     }
 }
@@ -193,7 +199,9 @@ async function runBugValidation() {
             properties: {},
             setProperty: function(prop, value) { 
                 this.properties[prop] = value;
-                console.log('CSS Applied:', prop, '=', value);
+                if (process.env.DEBUG_APP === 'true') {
+                    console.log('CSS Applied:', prop, '=', value);
+                }
             }
         };
         
@@ -206,7 +214,9 @@ async function runBugValidation() {
         // NEW CODE (fixed): const transparency = systemDesignTransparency !== null ? parseFloat(systemDesignTransparency) : DEFAULTS['system-design'].transparency;
         
         function testScenario(description, customValue, expectedResult) {
-            console.log('\\n📋 Test:', description);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log('\\n📋 Test:', description);
+            }
             
             if (customValue !== null) {
                 mockStorage.setItem('systemDesignTransparency', customValue);
@@ -222,13 +232,17 @@ async function runBugValidation() {
             mockCSS.setProperty('--header-background', \`rgba(0, 0, 0, \${transparency})\`);
             
             const passed = Math.abs(transparency - expectedResult) < 0.001;
-            console.log('   Expected:', expectedResult, '| Got:', transparency, '|', passed ? '✅ PASS' : '❌ FAIL');
+            if (process.env.DEBUG_APP === 'true') {
+                console.log('   Expected:', expectedResult, '| Got:', transparency, '|', passed ? '✅ PASS' : '❌ FAIL');
+            }
             
             return passed;
         }
         
-        console.log('🔍 Testing System Design Transparency Bug Fix');
-        console.log('   The fix ensures LayoutSettingsManager defaults are used instead of hardcoded 0.40');
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('🔍 Testing System Design Transparency Bug Fix');
+            console.log('   The fix ensures LayoutSettingsManager defaults are used instead of hardcoded 0.40');
+        }
         
         let allPassed = true;
         allPassed &= testScenario('Default value (no custom setting)', null, 0.85);
@@ -236,14 +250,18 @@ async function runBugValidation() {
         allPassed &= testScenario('Edge case: very transparent', '0.10', 0.10);
         allPassed &= testScenario('Edge case: very opaque', '0.95', 0.95);
         
-        console.log('\\n🎯 Bug Fix Validation:', allPassed ? '✅ PASSED' : '❌ FAILED');
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('\\n🎯 Bug Fix Validation:', allPassed ? '✅ PASSED' : '❌ FAILED');
+        }
         
-        if (allPassed) {
-            console.log('   ✅ The transparency bug has been successfully fixed!');
-            console.log('   ✅ System-design layout now uses correct default (0.85 not 0.40)');
-            console.log('   ✅ Custom transparency settings persist correctly');
-        } else {
-            console.log('   ❌ Bug validation failed - transparency fix may not be working');
+        if (process.env.DEBUG_APP === 'true') {
+            if (allPassed) {
+                console.log('   ✅ The transparency bug has been successfully fixed!');
+                console.log('   ✅ System-design layout now uses correct default (0.85 not 0.40)');
+                console.log('   ✅ Custom transparency settings persist correctly');
+            } else {
+                console.log('   ❌ Bug validation failed - transparency fix may not be working');
+            }
         }
         
         process.exit(allPassed ? 0 : 1);

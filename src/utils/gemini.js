@@ -13,6 +13,7 @@ const contextBoundaryOptimizer = require('./contextBoundaryOptimizer');
 const audioQualityAssurance = require('./audioQualityAssurance');
 const performanceMonitor = require('./performanceMonitor');
 const enhancedFollowUpClassifier = require('./enhancedFollowUpClassifier');
+const { createVadIntegration, patchGeminiVadProcessing } = require('./vadIntegration');
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -48,6 +49,10 @@ const INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay to wait for complete input
 // Enhanced debounce system for technical interview optimization
 let vadAdaptiveData = null; // VAD data from AudioWorklet
 let enhancedDebounceEnabled = true; // Feature flag for easy rollback
+
+// Hybrid VAD Strategy integration
+let vadIntegration = null; // Hybrid VAD strategy instance
+let hybridVadEnabled = true; // Feature flag to enable hybrid VAD processing
 
 // Context and question queue management variables
 let contextAccumulator = '';
@@ -122,7 +127,7 @@ const metricsLog = [];
 let lastAiRequestStart = null;
 function recordMetric(event, data = {}) {
     metricsLog.push({ event, ...data, timestamp: Date.now() });
-    console.log('📈 [Metrics collection]', event, data);
+    //console.log('📈 [Metrics collection]', event, data);
 }
 function computeQualityScore(responseText) {
     const len = responseText.trim().split(/\s+/).length;
@@ -339,9 +344,8 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             requestStartTime = Date.now();
             const timestamp = new Date(requestStartTime).toISOString();
             console.log('🔄 [SMART_REQUEST] Starting AI request with intelligent management');
-            console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
-            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
-            console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
+            //console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini: ' + combinedText.trim());
             
             // Save to conversation history immediately
             conversationHistory.push({
@@ -376,7 +380,8 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                 requestContext.contextOptimization?.inputAnalysis?.requiresContext) {
                 requestText = `${requestContext.optimizedContext}\n\nCurrent question: ${combinedText.trim()}`;
                 contextSources.push('boundary_optimizer');
-                console.log(`🧠 [CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
+                console.log(`[CONTEXT_ENHANCED] optimizedContext: ${requestContext.optimizedContext}`);
+                console.log(`[CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
             }
             
             // ENHANCED: Include follow-up specific context when detected
@@ -1864,6 +1869,31 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
 
         isInitializingSession = false;
         sendToRenderer('session-initializing', false);
+        
+        // Initialize hybrid VAD integration if enabled
+        if (hybridVadEnabled && !vadIntegration) {
+            try {
+                // Create context object with references to gemini.js variables and functions
+                const geminiContext = {
+                    contextAccumulator: { value: contextAccumulator },
+                    questionQueue: { value: questionQueue },
+                    processQuestionQueue: (session) => processQuestionQueue(session || session),
+                    pendingInput: { value: pendingInput },
+                    isAiResponding: { value: isAiResponding }
+                };
+                
+                vadIntegration = createVadIntegration(geminiContext);
+                console.log('✅ Hybrid VAD strategy initialized successfully');
+                
+                // Patch the session to use hybrid VAD processing
+                patchGeminiVadProcessing(session, vadIntegration);
+                console.log('✅ Session patched with hybrid VAD processing');
+            } catch (error) {
+                console.error('❌ Failed to initialize hybrid VAD strategy:', error);
+                hybridVadEnabled = false; // Fallback to enhanced debounce
+            }
+        }
+        
         return session;
     } catch (error) {
         console.error('Failed to initialize Gemini session:', error);
@@ -3307,5 +3337,10 @@ module.exports = {
     classifyFollowUpQuestion,
     provideFollowUpFeedback,
     resetFollowUpClassifierSession,
+    // Hybrid VAD Strategy Controls
+    setHybridVadEnabled: (enabled) => { hybridVadEnabled = enabled; },
+    getHybridVadEnabled: () => hybridVadEnabled,
+    getVadIntegrationMetrics: () => vadIntegration ? vadIntegration.getMetrics() : null,
+    resetVadIntegrationSession: () => vadIntegration ? vadIntegration.resetSession() : null,
 };
 
