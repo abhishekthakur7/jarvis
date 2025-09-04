@@ -111,17 +111,16 @@
             "experimental": "🧪 **[EXPERIMENTAL]** - Untested approach, proceed with caution"
           },
           "scannable_structure": {
-            "key_insight_marker": "💡 **KEY:** ",
             "critical_warning_marker": "🚨 **CRITICAL:** ",
             "deep_dive_marker": "🔍 **DETAILS:** ",
-            "alternative_marker": "🔄 **ALTERNATIVE:** "
+            "alternative_marker": "🔄 **ADDITIONAL DETAIL:** "
           },
           "progressive_disclosure": {
             "layered_information_structure": {
-              "level_1_essential": "💡 **KEY:** Core concepts needed for understanding (max 3 bullet points)",
+              "level_1_essential": "💡 **SHORT SUMMARY:** Direct answer to the question (max 3 bullet points)",
               "level_2_important": "🔍 **DETAILS:** Implementation specifics and technical depth",
               "level_3_comprehensive": "📚 **DEEP DIVE:** Complete explanation with examples and edge cases",
-              "level_4_alternatives": "🔄 **ALTERNATIVES:** Other approaches and trade-offs"
+              "level_4_alternatives": "🔄 **ADDITIONAL DETAIL:** Other approaches and trade-offs"
             },
             "scannable_organization": {
               "summary_first_mandatory": "Never bury the answer - lead with solution",
@@ -147,7 +146,7 @@
           "uncertainty_admission_enhanced": {
             "confidence_thresholds": "<70% = 🚨**UNCERTAIN**, 70-85% = ⚠️**LIKELY**, >85% = ✓**SOLID**",
             "verification_suggestions": "When uncertain, provide specific steps to validate the answer",
-            "alternative_mandatory": "For uncertain solutions, MUST provide 🔄**ALTERNATIVE:** approach",
+            "alternative_mandatory": "For uncertain solutions, MUST provide 🔄**ADDITIONAL DETAIL:** approach",
             "risk_disclosure": "Explicitly state what could go wrong with uncertain approaches"
           },
           "assumption_flagging_comprehensive": {
@@ -183,8 +182,8 @@
         },
         "response_usability_testing": {
           "scannable_format_validation": {
-            "confidence_marker_utility": "Ensure confidence indicators (✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]) help users identify trustworthy information",
-            "visual_hierarchy_scanning": "Test that 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:** markers enable 5-second response scanning",
+            "confidence_marker_utility": "Ensure confidence indicators (✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]) help users identify trustworthy information",
+            "visual_hierarchy_scanning": "Test that 💡**SHORT SUMMARY:**/🚨**CRITICAL:**/🔍**DETAILS:** markers enable 5-second response scanning",
             "progressive_disclosure_flow": "Verify users can stop reading at any level and still have actionable information",
             "assumption_flagging_clarity": "Validate that 🤔 **ASSUMING:** markers prevent misunderstanding and wrong implementation"
           },
@@ -1073,10 +1072,10 @@
       ],
       "validation_rules": {
          "scannable_interview_response_enforcement": {
-           "confidence_marking_required": "MUST mark confidence level for every technical approach: ✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
-           "visual_hierarchy_mandatory": "MUST use 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ALTERNATIVE:** markers for scannable structure",
+           "confidence_marking_required": "MUST mark confidence level for every technical approach: ✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
+           "visual_hierarchy_mandatory": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** markers for scannable structure",
            "assumption_flagging_required": "MUST mark assumptions with 🤔 **ASSUMING:** to prevent wrong answer propagation",
-           "alternative_solution_mandatory": "MUST provide 🔄 **ALTERNATIVE:** approach when main solution has >20% failure risk"
+           "alternative_solution_mandatory": "MUST provide 🔄 **ADDITIONAL DETAIL:** approach when main solution has >20% failure risk"
          },
          "error_prevention_validation": {
            "uncertainty_admission_enforcement": "When confidence <90%, MUST use ⚠️ **[UNCERTAIN]** and suggest verification steps",
@@ -1528,7 +1527,7 @@
      },
      "global_confidence_system": {
        "mandatory_confidence_marking": {
-         "rule": "ALL technical claims MUST include confidence indicators: ✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
+         "rule": "ALL technical claims MUST include confidence indicators: ✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
          "enforcement": "Auto-reject responses without confidence markers on technical statements",
          "validation": "Scan for technical claims lacking confidence indicators"
        },
@@ -1543,8 +1542,8 @@
          "validation": "Scan for implicit assumptions without warning markers"
        },
        "scannable_structure_enforcement": {
-         "quick_answer_mandatory": "ALL responses MUST start with ⚡ **QUICK:** followed by 1-2 sentence direct answer",
-         "visual_hierarchy_required": "MUST use 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ALTERNATIVE:** for scannable structure",
+         "quick_answer_mandatory": "ALL responses MUST start with ⚡ **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
+         "visual_hierarchy_required": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** for scannable structure",
          "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators"
        }
      },
@@ -1553,7 +1552,7 @@
          "confidence_marker_check": "Scan for technical claims without confidence indicators",
          "uncertainty_validation": "Verify uncertain information is properly marked with ⚠️",
          "assumption_detection": "Flag unmarked assumptions that could mislead users",
-         "scannable_structure_check": "Ensure ⚡ **QUICK:** answer and visual hierarchy present",
+         "scannable_structure_check": "Ensure ⚡ **SHORT SUMMARY:** answer and visual hierarchy present",
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
          "natural_flow_verification": "Ensure conversational patterns present"
@@ -1562,7 +1561,7 @@
          "confidence_marker_injection": "Auto-add confidence indicators to technical claims",
          "uncertainty_marker_insertion": "Add ⚠️ **[UNCERTAIN]** to potentially incorrect information",
          "assumption_flagging_auto": "Auto-detect and mark assumptions with 🤔 **ASSUMING:**",
-         "quick_answer_enforcement": "Force ⚡ **QUICK:** structure at response start",
+         "quick_answer_enforcement": "Force ⚡ **SHORT SUMMARY:** structure at response start",
          "breathing_insertion": "Auto-add pause indicators where missing",
          "formal_replacement": "Replace formal phrases with conversational alternatives",
          "thinking_pattern_injection": "Add natural hesitation where appropriate"
