@@ -1660,14 +1660,14 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 return (transcriptionSimilarity || responseSimilarity) && isRecent;
                             });
                             
-                            if (isDuplicateResponse) {
-                                console.log('🚫 [DUPLICATE_RESPONSE] Skipping save of duplicate response to conversation history');
-                            } else {
-                                // Save regular speaker-only transcription
-                                // Pass suppression flag to indicate if this response was suppressed from UI
-                                console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
-                                saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
-                            }
+                            // if (isDuplicateResponse) {
+                            //     console.log('🚫 [DUPLICATE_RESPONSE] Skipping save of duplicate response to conversation history');
+                            // } else {
+                            // Save regular speaker-only transcription
+                            // Pass suppression flag to indicate if this response was suppressed from UI
+                            console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
+                            saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
+                            //}
                             speakerCurrentTranscription = ''; // Reset for next turn
                         }
 
