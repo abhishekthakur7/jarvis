@@ -7,8 +7,8 @@
 // Configuration constants
 const HYBRID_CONFIG = {
     // Context management
-    CONTEXT_WINDOW_MS: 2 * 60 * 1000, // 2 minutes
-    MAX_CONTEXT_CHARS: 2000,
+    CONTEXT_WINDOW_MS: 4 * 60 * 1000, // 4 minutes
+    MAX_CONTEXT_CHARS: 500,
     MIN_CHUNK_CHARS: 10,
     
     // Enhanced chunking thresholds

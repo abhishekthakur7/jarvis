@@ -957,7 +957,7 @@
       "keywords": ["explain", "what is", "how does", "difference", "concept", "understand"],
       "patterns": ["Explain the", "What is", "How does", "Difference between", "Help me understand"]
     },
-    "DESIGN_PATTERN": {
+    "JAVA_DESIGN_PATTERN": {
       "keywords": ["pattern", "singleton", "factory", "observer", "strategy", "decorator"],
       "patterns": ["Design pattern", "When to use", "Implement the", "Pattern for"]
     },
@@ -1156,21 +1156,47 @@
      "CONCEPT_EXPLANATION": {
        "response_pattern": "patient_teacher",
        "interview_approach": "build_understanding_gradually",
+       "interview_constraints": {
+         "max_response_time": "90 seconds",
+         "word_limit": "150 words maximum [Exclude code or application properties from word limit]",
+         "code_examples": "1 maximum - only if essential",
+         "depth_control": "breadth over depth - hit key points, don't dive deep",
+         "time_awareness": "prioritize core concept over comprehensive coverage"
+       },
+       "implementation_detection_patterns": {
+         "framework_concepts": {
+           "trigger_keywords": ["annotation", "dependency", "configuration", "starter", "enable", "client", "server"],
+           "mandatory_elements": "MUST include: 1) Key annotation/interface, 2) Required dependency/starter, 3) Essential configuration"
+         },
+         "microservice_patterns": {
+           "trigger_keywords": ["circuit breaker", "bulkhead", "rate limiter", "saga", "cqrs", "event sourcing"],
+           "mandatory_elements": "MUST include: 1) Implementation library, 2) Configuration properties, 3) Usage annotation"
+         },
+         "messaging_systems": {
+           "trigger_keywords": ["kafka", "rabbitmq", "jms", "message", "queue", "topic", "producer", "consumer"],
+           "mandatory_elements": "MUST include: 1) Connection configuration, 2) Producer/Consumer setup, 3) Message serialization"
+         },
+         "database_concepts": {
+           "trigger_keywords": ["hibernate", "jpa", "transaction", "entity", "repository", "query"],
+           "mandatory_elements": "MUST include: 1) Annotation usage, 2) Configuration properties, 3) Connection setup"
+         },
+         "general_rule": "If question contains implementation-focused keywords, automatically include high-level setup details"
+       },
        "enhanced_natural_thinking_patterns": {
          "technical_hesitation": [
-           "[pause] Let me think about this...",
+           "[pause] I think...",
            "[brief pause] So the way I see this...",
            "[thinking pause] The approach here is..."
          ],
          "complexity_admission": [
            "[pause] This gets a bit complex, but...",
            "[brief pause] The tricky part is...",
-           "[thinking pause] What makes this challenging is..."
+           "[thinking pause] This is challenging because..."
          ],
          "implementation_uncertainty": [
-           "[pause] I'd probably approach this by...",
+           "[pause] I would probably approach this by...",
            "[brief pause] What I've seen work is...",
-           "[thinking pause] The way I'd handle this is..."
+           "[thinking pause] The way I would handle this is..."
          ],
          "recovery_after_complexity": [
            "[pause] But the main point is...",
@@ -1187,6 +1213,7 @@
          "concept_introduction": "[pause] So the core idea is...",
          "practical_example": "[brief pause] Think of it like...",
          "technical_details": "[pause] Under the hood, what's happening is...",
+         "implementation_essentials": "[brief pause] To actually implement this, you need...",
          "common_misconceptions": "[thinking pause] One thing people often get confused about...",
          "practical_application": "[pause] In real projects, you'd use this when..."
        },
@@ -1196,6 +1223,11 @@
          "[brief pause] Any specific aspect you'd like me to clarify?"
        ],
        "validation_rules": {
+         "interview_time_limit": "CRITICAL: Response must not exceed 90 seconds speaking time (~150 words)",
+         "dynamic_implementation_detection": "Scan question for implementation keywords and automatically include practical details",
+         "practical_over_theoretical": "Prioritize implementation details over abstract explanations",
+         "conciseness_over_completeness": "Prioritize key concepts over exhaustive explanation",
+         "single_code_example_max": "Maximum 1 code snippet, only if absolutely essential for understanding",
          "gradual_complexity_building": "Start simple, add complexity with pauses",
          "stress_management_for_abstracts": "Use systematic breakdown for abstract concepts",
          "example_breathing_space": "Pause before and after examples",
@@ -1209,7 +1241,7 @@
          "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language"
        }
      },
-     "DESIGN_PATTERN": {
+     "JAVA_DESIGN_PATTERN": {
         "response_pattern": "interview_optimized_educational",
         "enforcement_controls": {
           "natural_language_priority": "Use conversational tone with phrases like 'So basically', 'The main thing is', '... is what I've seen work very nicely', 'In my experience'",
