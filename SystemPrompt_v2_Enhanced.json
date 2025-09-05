@@ -1404,7 +1404,7 @@
      "SQL_Query_Coding": {
        "response_pattern": "database_problem_solver",
        "interview_approach": "systematic_query_analysis",
-       "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions"],
+       "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query"],
        "interview_context": {
          "purpose": "Enable thorough technical analysis and 'think out loud' patterns for SQL interview contexts",
          "demonstration_style": "Show reasoning process step-by-step to demonstrate problem-solving methodology",
@@ -1441,11 +1441,9 @@
        "structure": {
          "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format:",
          "section_1_identify_subproblems": "### 1. Identify Subproblems\n\n[brief pause] I'll break this into steps:\n\n1. **[First step]** → [what this accomplishes]\n2. **[Second step]** → [what this accomplishes]\n3. **[Third step]** → [what this accomplishes]\n\n---",
-         "section_2_translate_steps": "### 2. Translate Each Step Into SQL\n\n#### Step 1: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n#### Step 2: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n[Continue for all steps]\n\n---",
-         "section_3_combine_all_steps": "### 3. Combine all Steps with CTEs (if applicable) and generate the final properly formatted SQL query\n---",
-         "section_4_why_this_works": "### 4. Why This Approach Works Well in Interviews\n\n* **Readable**: [Explain readability benefits].\n* **Scalable**: [Explain scalability benefits].\n* **Explainable**: [Explain how it demonstrates structured thinking].\n\n---\n\nSo the **key pattern** is:\n**[Summarize the approach pattern].**",
-         "section_5_jpql_equivalent": "### 5. JPQL Implementation\n\n### Entity Mapping Approach\n\n```java\n[JPQL equivalent query]\n```\n\n### Key Differences from SQL:\n\n* **Entity relationships**: [Explain how entities map to tables]\n* **JPA considerations**: [Explain JPA-specific aspects]\n* **Performance implications**: [Explain any performance differences]\n\n---",
-         "section_6_performance_tips": "### 6. Performance Optimization\n\n### Indexing Strategy\n\n* **Primary indexes needed**: [List specific indexes]\n* **Composite indexes**: [Explain composite index strategy]\n* **Query execution impact**: [Explain how indexes improve performance]\n\n### Large Dataset Considerations\n"
+         "section_2_complete_sql_query": "### 2. Complete Executable SQL Query\n\n```sql\n-- [Brief comment explaining the overall approach]\n[Complete optimized SQL query with inline comments]\n```\n\n[Explanation of key SQL constructs and why they were chosen]\n\n---",
+         "section_3_jpql_implementation": "### 3. JPQL Implementation\n\n```java\n// [Brief comment about entity mapping approach]\n[JPQL equivalent query]\n```\n\n**Key differences from SQL:**\n* **Entity relationships**: [How entities map to tables]\n* **JPA considerations**: [JPA-specific aspects]\n\n---",
+         "section_4_performance_tips": "### 4. Performance Tips\n\n**Indexing Strategy:**\n* [Specific indexes needed]\n* [Composite index recommendations]\n\n**Optimization Notes:**\n* [Query execution considerations]\n* [Large dataset handling]\n\n---"
        },
        "follow_up_patterns": [
          "[pause] Want me to trace through this with sample data?",
@@ -1456,11 +1454,9 @@
          "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, implement, write a function, given an array, given a string, time complexity, space complexity",
          "dsa_keyword_detection": "CRITICAL - If ANY DSA keywords detected, immediately defer to DSA_PROBLEM_SOLVING blueprint with 25x priority boost",
          "section_1_problem_breakdown_validation": "MANDATORY - Start with problem analysis and logical breakdown of the query requirements",
-         "section_2_solution_approach_validation": "MANDATORY - Present the SQL solution with appropriate technique (CTEs, subqueries, joins, etc.) based on problem complexity",
-         "section_3_implementation_explanation": "MANDATORY - Explain the chosen approach and why it fits the specific problem",
-         "section_4_interview_context_validation": "MANDATORY - Demonstrate problem-solving methodology suitable for technical interviews",
-         "section_5_alternative_approaches": "CONDITIONAL - Include JPQL or alternative implementations when relevant to the context",
-         "section_6_optimization_considerations": "CONDITIONAL - Cover performance aspects (indexing, execution plans) when dealing with complex queries or large datasets",
+         "section_2_complete_sql_validation": "MANDATORY - Present complete, executable, optimized SQL query with inline comments explaining key constructs",
+         "section_3_jpql_implementation_validation": "MANDATORY - Provide equivalent JPQL implementation with entity mapping explanations",
+         "section_4_performance_optimization_validation": "MANDATORY - Include specific indexing strategies and performance considerations for the query",
          "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen, not just WHAT it does",
          "performance_awareness": "Always discuss indexing, execution plans, and large dataset optimization strategies",
          "interview_demonstration": "Show problem-solving methodology that demonstrates technical thinking",
