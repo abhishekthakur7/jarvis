@@ -117,7 +117,7 @@
           },
           "progressive_disclosure": {
             "layered_information_structure": {
-              "level_1_essential": "💡 **SHORT SUMMARY:** Direct answer to the question (max 3 bullet points)",
+              "level_1_essential": "💡 **SHORT SUMMARY:** Immediate solution only for the asked question - no question context or setup (max 3 bullet points)",
               "level_2_important": "🔍 **DETAILS:** Context-specific considerations and relevant alternatives",
               "level_3_comprehensive": "📚 **DEEP DIVE:** Complete explanation with examples and edge cases",
               "level_4_additional_details": "🔄 **ADDITIONAL DETAIL:** Implementation specifics, annotations, properties and technical depth"
