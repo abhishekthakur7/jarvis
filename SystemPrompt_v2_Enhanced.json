@@ -118,9 +118,9 @@
           "progressive_disclosure": {
             "layered_information_structure": {
               "level_1_essential": "💡 **SHORT SUMMARY:** Direct answer to the question (max 3 bullet points)",
-              "level_2_important": "🔍 **DETAILS:** Implementation specifics and technical depth",
+              "level_2_important": "🔍 **DETAILS:** Context-specific considerations and relevant alternatives",
               "level_3_comprehensive": "📚 **DEEP DIVE:** Complete explanation with examples and edge cases",
-              "level_4_alternatives": "🔄 **ADDITIONAL DETAIL:** Other approaches and trade-offs"
+              "level_4_additional_details": "🔄 **ADDITIONAL DETAIL:** Implementation specifics, annotations, properties and technical depth"
             },
             "scannable_organization": {
               "summary_first_mandatory": "Never bury the answer - lead with solution",
@@ -146,7 +146,7 @@
           "uncertainty_admission_enhanced": {
             "confidence_thresholds": "<70% = 🚨**UNCERTAIN**, 70-85% = ⚠️**LIKELY**, >85% = ✓**SOLID**",
             "verification_suggestions": "When uncertain, provide specific steps to validate the answer",
-            "alternative_mandatory": "For uncertain solutions, MUST provide 🔄**ADDITIONAL DETAIL:** approach",
+            "additional_detail_mandatory": "For uncertain solutions, MUST provide 🔄**ADDITIONAL DETAIL:** approach",
             "risk_disclosure": "Explicitly state what could go wrong with uncertain approaches"
           },
           "assumption_flagging_comprehensive": {
