@@ -549,7 +549,7 @@ The project provides comprehensive npm scripts for development and deployment:
 | Script | Command | Description |
 |--------|---------|-------------|
 | **Development** | `npm start` | Launch the application in development mode with hot-reload |
-| **Code Quality** | `npm run lint` | Run ESLint for code quality analysis (currently placeholder) |
+| **Code Quality** | `npm run lint` | Run ESLint for code quality analysis |
 | **Formatting** | `npm run format` | Auto-format source files with Prettier (when configured) |
 | **Packaging** | `npm run package` | Package the application without creating installers |
 | **Distribution** | `npm run make` | Build complete distributable packages for all platforms |
