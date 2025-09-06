@@ -1,10 +1,12 @@
 # Jarvis - AI-Powered Desktop Assistant
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **Platform:** Cross-platform Desktop Application (Windows, macOS, Linux)  
 **License:** GPL-3.0
 
 Jarvis is a sophisticated desktop AI assistant built with Electron, designed to provide contextual assistance using Google's Gemini AI. Originally conceived as an interview assistant, it has evolved into a comprehensive productivity tool that combines multi-modal input processing, real-time AI assistance, and specialized workflow optimization for professionals, job seekers, and anyone needing intelligent desktop assistance.
+
+**Latest Update:** Enhanced AI classification system with contextual blueprint selection, improved system design pattern recognition, and refined DSA problem-solving capabilities for more accurate and relevant responses.
 
 ## 🎯 Primary Use Cases
 
@@ -18,11 +20,13 @@ Jarvis is a sophisticated desktop AI assistant built with Electron, designed to 
 
 ### 🤖 Core AI Capabilities
 *   **Advanced AI Integration:** Powered by Google Gemini 2.5-Flash-Preview with support for Gemini Pro models
+*   **Intelligent Blueprint Classification:** Enhanced contextual AI response system that accurately routes queries to specialized blueprints (DSA Problem Solving, High-Level System Design, Code Implementation)
 *   **Multi-Modal Processing:** Seamlessly combines text, voice, and visual inputs for comprehensive contextual understanding
 *   **Real-Time Screen Analysis:** Automatic screenshot capture with configurable intervals and AI-powered visual context analysis
 *   **Intelligent Audio Processing:** Advanced microphone and system audio detection with multi-language transcription
 *   **Context-Aware Responses:** Maintains conversation history with smart context management and duplicate prevention
 *   **Streaming Response Handling:** Real-time AI response processing with corruption detection and buffer management
+*   **Contextual Pattern Recognition:** Advanced keyword analysis that distinguishes between algorithmic implementation ("implement binary search") and system design implementation ("implement rate limiter")
 
 ### 🎨 Interface & Layout
 *   **Adaptive Layout Modes:** Three distinct modes - Normal (feature-rich), Compact (minimal), and System Design (integrated)
@@ -172,6 +176,8 @@ Each profile includes specialized prompt engineering, contextual awareness setti
 
 ### 🤖 AI-Powered Intelligence
 - **Dual Model Support**: Gemini 2.5-Flash-Preview for speed, Gemini Pro for complex reasoning
+- **Enhanced Blueprint System**: Intelligent classification system with specialized response patterns for DSA problems, system design, and code implementation
+- **Contextual Trigger Recognition**: Advanced pattern matching that distinguishes between different types of implementation requests
 - **Multi-Modal Processing**: Seamlessly processes text, voice, and visual inputs simultaneously
 - **Context Preservation**: Maintains up to 25 conversation turns with intelligent summarization
 - **Real-Time Streaming**: Live AI responses with buffer management and corruption detection
@@ -321,7 +327,7 @@ jarvis/
 ├── forge.config.js               # Electron Forge build and packaging configuration
 ├── package.json                  # Project dependencies, scripts, and metadata
 ├── package-lock.json             # Dependency lock file
-├── SystemPrompt.json             # AI system prompt configuration
+├── SystemPrompt_v2_Enhanced.json # Enhanced AI system prompt configuration with contextual blueprints
 └── README.md                     # Project documentation (this file)
 ```
 
@@ -521,7 +527,14 @@ The project exposes handy npm scripts:
 
 ## 📋 Changelog
 
-### v0.1.0 (Current)
+### v0.1.1 (Current)
+**Latest Enhancements:**
+* ✅ **Enhanced AI Classification System** - Contextual blueprint selection for more accurate responses
+* ✅ **Refined DSA Problem Recognition** - Improved algorithmic problem identification and routing
+* ✅ **Advanced System Design Patterns** - Enhanced recognition of distributed systems and architecture queries
+* ✅ **Contextual Implementation Triggers** - Smart differentiation between algorithmic and system-level implementation requests
+* ✅ **Improved Blueprint Validation** - Enhanced accuracy in routing queries to appropriate AI response patterns
+
 **Core Features Implemented:**
 * ✅ Multi-modal AI assistance with Gemini 2.5-Flash-Preview
 * ✅ Advanced audio processing with enhanced microphone management
@@ -551,6 +564,8 @@ The project exposes handy npm scripts:
 * ✅ **Teleprompter Testing** - Built-in testing utilities for reading assistance features
 
 ### Upcoming Features (Roadmap)
+* 🔄 **Advanced Context Learning** - AI system that learns from user interaction patterns
+* 🔄 **Dynamic Blueprint Adaptation** - Self-improving classification based on user feedback
 * 🔄 Voice command recognition and natural language interface
 * 🔄 Advanced Notion database querying and content synchronization
 * 🔄 Plugin system for custom AI profiles and integrations
