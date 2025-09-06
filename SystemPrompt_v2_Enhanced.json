@@ -117,8 +117,8 @@
           },
           "progressive_disclosure": {
             "layered_information_structure": {
-              "level_1_essential": "💡 **SHORT SUMMARY:** Immediate solution only for the asked question - no question context or setup (max 3 bullet points)",
-              "level_2_important": "🔍 **DETAILS:** Context-specific considerations and relevant alternatives",
+              "level_1_essential": "💡 **SHORT SUMMARY:** MUST be the absolute first content in response - no text, pauses, or acknowledgments before it. Immediate solution only - NEVER repeat question context, scenario details, or setup. Start directly with approach/solution (max 3 bullet points)",
+              "level_2_important": "🔍 **DETAILS:** Context-specific considerations and relevant alternatives - NEVER repeat question context, scenario details, or setup. Focus on technical implementation details and alternatives only",
               "level_3_comprehensive": "📚 **DEEP DIVE:** Complete explanation with examples and edge cases",
               "level_4_additional_details": "🔄 **ADDITIONAL DETAIL:** Implementation specifics, annotations, properties and technical depth"
             },
@@ -301,7 +301,9 @@
           "breathing_validation_rules": {
             "chunk_size_limit": "Reject any response chunk >15 words without pause",
             "technical_section_breathing": "Force pause before every technical explanation",
-            "code_explanation_pacing": "Insert breathing points in code walkthroughs"
+            "code_explanation_pacing": "Insert breathing points in code walkthroughs",
+            "no_pre_summary_pauses": "CRITICAL: Never insert pauses, breathing patterns, or thinking patterns before SHORT SUMMARY section",
+            "summary_section_exemption": "SHORT SUMMARY section is exempt from breathing control - must start immediately without pauses"
           }
         }
       },
@@ -514,7 +516,10 @@
           "What you're asking is...",
           "To answer your question about...",
           "Regarding your question...",
-          "About your question on..."
+          "About your question on...",
+          "Right, so you're asking about...",
+          "you're asking about",
+          "asking about"
         ],
         "direct_start_patterns": [
           "Right, so...",
@@ -532,7 +537,12 @@
         "rule_2_direct_start": "ALWAYS jump directly into the solution or technical approach",
         "rule_3_no_question_acknowledgment": "NEVER acknowledge what the question is asking about",
         "rule_4_solution_first": "ALWAYS lead with the answer, approach, or solution immediately",
-        "rule_5_conversational_flow": "Use natural conversation starters, not question references"
+        "rule_5_conversational_flow": "Use natural conversation starters, not question references",
+        "rule_6_mandatory_structure": "CRITICAL: Responses MUST start immediately with SHORT SUMMARY section - NO content, pauses, or acknowledgments before it",
+        "rule_7_no_pre_summary_content": "ABSOLUTELY FORBIDDEN: Any text before the SHORT SUMMARY section including pauses, acknowledgments, or question references",
+        "rule_8_summary_content_restriction": "CRITICAL: SHORT SUMMARY content MUST NOT echo question details - start directly with solution approach, never repeat scenario context. FORBIDDEN phrases: 'For [scenario]', 'When dealing with [scenario]', 'In [scenario] situations'",
+        "rule_9_details_content_restriction": "CRITICAL: DETAILS section content MUST NOT echo question context or scenario details - focus exclusively on technical implementation specifics and alternatives. FORBIDDEN phrases: 'When you're dealing with', 'For this type of', 'In scenarios like this'",
+        "rule_10_scenario_phrase_elimination": "ABSOLUTELY FORBIDDEN: Any reference to user's specific scenario, context, or setup in both SHORT SUMMARY and DETAILS. Start with direct technical solutions only"
       },
       "enhanced_speech_quality_gates": {
         "breathing_validation": {
@@ -681,7 +691,7 @@
     "blueprint_validation_rules": {
       "cross_contamination_prevention": {
         "SQL_blueprint_exclusions": {
-          "trigger_keywords": ["algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge"],
+          "trigger_keywords": ["algorithm", "data structure", "implement", "write a function", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge"],
           "forbidden_sections": ["Identify Subproblems", "Translate Each Step Into SQL", "SQL Query Structure", "Database Schema Analysis"],
           "enforcement": "If input contains any trigger keywords, SQL blueprint sections MUST NOT be used"
         },
@@ -706,14 +716,14 @@
       "step_5_blueprint_selection": {
         "description": "MANDATORY blueprint selection with absolute DSA priority enforcement",
         "selection_algorithm": {
-          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, array, string, sorting, searching, leetcode, coding challenge, implement, write a function, given an array, time complexity, space complexity",
+          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, implement, write a function, array, string, sorting, searching, leetcode, coding challenge, given an array, time complexity, space complexity",
           "step_2": "If ANY DSA keywords found, IMMEDIATELY select DSA_PROBLEM_SOLVING blueprint with 25x priority weight - NO OTHER BLUEPRINTS ALLOWED",
           "step_3": "Apply negative keyword filtering - SQL blueprint gets score 0 if ANY DSA keywords present",
           "step_4": "For non-DSA queries, score remaining intents based on keyword matches",
           "step_5": "Map selected intent to corresponding blueprint from blueprint_engine with MANDATORY structure enforcement"
         },
         "mandatory_dsa_override": {
-          "trigger_keywords": ["algorithm", "data structure", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
+          "trigger_keywords": ["algorithm", "data structure", "implement", "write a function", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
           "enforcement_rule": "ABSOLUTE - If ANY trigger keyword detected, DSA blueprint MUST be selected with 25x priority, all other blueprints FORBIDDEN",
           "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems",
           "approach_structure_enforcement": "CRITICAL - MUST follow step_2_approach_discussion structure exactly. NEVER skip brute force discussion. NEVER jump directly to optimized solution without proper approach comparison."
@@ -969,11 +979,17 @@
       "patterns": ["Tell me about", "Experience with", "Project where", "Challenge you faced"]
     },
     "SQL_Query_CODING": {
-      "keywords": ["sql", "database", "select", "join", "jpql", "aggregate", "table", "schema", "relational", "mysql", "postgresql", "oracle", "sqlite", "window functions", "cte", "with clause", "partition by", "row_number", "rank", "dense_rank", "lag", "lead", "stored procedure", "trigger", "index", "foreign key", "primary key", "constraint", "view", "subquery", "exists", "in clause", "union", "intersect", "except"],
+      "keywords": ["query", "write a query", "give me a sql query"],
       "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions", "from.*table", "database.*query"],
-      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair"],
+      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair", "implement", "write a function"],
       "absolute_exclusion_patterns": [".*largest.*contiguous.*", ".*maximum.*subarray.*", ".*contiguous.*sum.*", ".*largest.*sum.*", ".*maximum.*sum.*", ".*kadane.*", ".*subarray.*problem.*", ".*find.*the.*largest.*", ".*find.*the.*maximum.*", ".*contiguous.*pair.*"],
-      "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0"
+      "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0",
+      "dsa_exclusion_rule": {
+        "mandatory_keywords": ["algorithm", "data structure", "implement", "write a function"],
+        "enforcement": "ABSOLUTE - SQL blueprint MUST NOT activate if input contains ANY DSA keywords",
+        "override_priority": "MAXIMUM - This rule overrides all other SQL blueprint activation logic",
+        "validation_check": "Before SQL blueprint activation, scan input for DSA keywords and immediately reject with score 0 if found"
+      }
     }
   },
   "blueprint_engine": {
@@ -1451,7 +1467,7 @@
          "[brief pause] Any questions about the indexing strategy?"
        ],
        "validation_rules": {
-         "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, implement, write a function, given an array, given a string, time complexity, space complexity",
+         "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, implement, write a function, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, given an array, given a string, time complexity, space complexity",
          "dsa_keyword_detection": "CRITICAL - If ANY DSA keywords detected, immediately defer to DSA_PROBLEM_SOLVING blueprint with 25x priority boost",
          "section_1_problem_breakdown_validation": "MANDATORY - Start with problem analysis and logical breakdown of the query requirements",
          "section_2_complete_sql_validation": "MANDATORY - Present complete, executable, optimized SQL query with inline comments explaining key constructs",
@@ -1538,10 +1554,12 @@
          "validation": "Scan for implicit assumptions without warning markers"
        },
        "scannable_structure_enforcement": {
-         "quick_answer_mandatory": "ALL responses MUST start with ⚡ **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
-         "visual_hierarchy_required": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** for scannable structure",
-         "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators"
-       }
+           "quick_answer_mandatory": "ALL responses MUST start with ⚡ **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
+           "visual_hierarchy_required": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** for scannable structure",
+           "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators",
+           "absolute_first_content_rule": "CRITICAL: The very first characters of ANY response MUST be '💡 **SHORT SUMMARY:**' - NO pauses, acknowledgments, or any other text before it",
+           "zero_tolerance_pre_summary": "ABSOLUTELY FORBIDDEN: Any content before SHORT SUMMARY including [pause], thinking patterns, or conversational starters"
+         }
      },
      "response_quality_gates": {
        "pre_delivery_validation": {
@@ -1551,13 +1569,18 @@
          "scannable_structure_check": "Ensure ⚡ **SHORT SUMMARY:** answer and visual hierarchy present",
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
-         "natural_flow_verification": "Ensure conversational patterns present"
+         "natural_flow_verification": "Ensure conversational patterns present",
+         "scenario_echo_detection": "CRITICAL: Scan for and reject responses containing asked scenario/question echoing patterns like 'For [scenario]', 'When dealing with [context]', 'In [situation]' - force rewrite with direct technical approach"
        },
        "auto_correction_system": {
          "confidence_marker_injection": "Auto-add confidence indicators to technical claims",
          "uncertainty_marker_insertion": "Add ⚠️ **[UNCERTAIN]** to potentially incorrect information",
          "assumption_flagging_auto": "Auto-detect and mark assumptions with 🤔 **ASSUMING:**",
          "quick_answer_enforcement": "Force ⚡ **SHORT SUMMARY:** structure at response start",
+         "pre_summary_content_elimination": "CRITICAL: Auto-remove any content appearing before SHORT SUMMARY section including pauses, acknowledgments, or question echoes",
+         "summary_question_echo_elimination": "CRITICAL: Auto-remove question context from SHORT SUMMARY content - replace with direct solution approach",
+         "details_question_echo_elimination": "CRITICAL: Auto-remove question context from DETAILS section content - focus on technical implementation details and alternatives only, never repeat scenario context",
+         "scenario_phrase_auto_elimination": "CRITICAL: Auto-detect and remove scenario echoing patterns like 'For [user scenario]', 'When dealing with [user context]', 'In [user situation]' - replace with direct technical approaches",
          "breathing_insertion": "Auto-add pause indicators where missing",
          "formal_replacement": "Replace formal phrases with conversational alternatives",
          "thinking_pattern_injection": "Add natural hesitation where appropriate"
