@@ -691,12 +691,12 @@
     "blueprint_validation_rules": {
       "cross_contamination_prevention": {
         "SQL_blueprint_exclusions": {
-          "trigger_keywords": ["algorithm", "data structure", "implement", "write a function", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge"],
+          "trigger_keywords": ["algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
           "forbidden_sections": ["Identify Subproblems", "Translate Each Step Into SQL", "SQL Query Structure", "Database Schema Analysis"],
           "enforcement": "If input contains any trigger keywords, SQL blueprint sections MUST NOT be used"
         },
         "DSA_blueprint_priority": {
-          "interview_simulation_triggers": ["find all elements", "anagram", "string", "array", "sorting", "searching", "optimize", "complexity", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "algorithm", "data structure", "leetcode", "hackerrank", "coding interview", "technical interview"],
+          "interview_simulation_triggers": ["find all elements", "anagram", "string", "array", "sorting", "searching", "optimize", "complexity", "given an array", "given a string", "time complexity", "space complexity", "algorithm", "data structure", "leetcode", "hackerrank", "coding interview", "technical interview", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
           "priority_boost": "When interview simulation triggers are present, DSA blueprint gets 25x priority weight (matching interview_simulation_boost)",
           "override_rule": "DSA interview blueprint MUST be selected over ALL other blueprints for any algorithm/data structure/coding interview question",
           "confidence_enforcement": "DSA blueprint selection confidence must exceed 0.8 threshold when interview triggers are detected",
@@ -716,14 +716,16 @@
       "step_5_blueprint_selection": {
         "description": "MANDATORY blueprint selection with absolute DSA priority enforcement",
         "selection_algorithm": {
-          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, implement, write a function, array, string, sorting, searching, leetcode, coding challenge, given an array, time complexity, space complexity",
+          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, array, string, sorting, searching, leetcode, coding challenge, given an array, time complexity, space complexity",
+          "step_1b": "Check for contextual DSA implementation triggers: 'implement algorithm', 'implement data structure', 'write a function to solve/find/calculate'",
           "step_2": "If ANY DSA keywords found, IMMEDIATELY select DSA_PROBLEM_SOLVING blueprint with 25x priority weight - NO OTHER BLUEPRINTS ALLOWED",
           "step_3": "Apply negative keyword filtering - SQL blueprint gets score 0 if ANY DSA keywords present",
           "step_4": "For non-DSA queries, score remaining intents based on keyword matches",
           "step_5": "Map selected intent to corresponding blueprint from blueprint_engine with MANDATORY structure enforcement"
         },
         "mandatory_dsa_override": {
-          "trigger_keywords": ["algorithm", "data structure", "implement", "write a function", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
+          "trigger_keywords": ["algorithm", "data structure", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
+          "contextual_dsa_triggers": ["implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate", "write a function for sorting", "write a function for searching"],
           "enforcement_rule": "ABSOLUTE - If ANY trigger keyword detected, DSA blueprint MUST be selected with 25x priority, all other blueprints FORBIDDEN",
           "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems",
           "approach_structure_enforcement": "CRITICAL - MUST follow step_2_approach_discussion structure exactly. NEVER skip brute force discussion. NEVER jump directly to optimized solution without proper approach comparison."
@@ -753,15 +755,19 @@
   "intent_classifier": {
     "HIGH_LEVEL_DESIGN": {
       "keywords": ["system design", "architecture", "scalability", "high level", "design a system"],
-      "patterns": ["How would you design", "Architecture for", "System to handle", "Scale to support"]
+      "patterns": ["How would you design", "Architecture for", "System to handle", "Scale to support"],
+      "system_component_triggers": ["implement a rate limiter", "implement a cache system", "implement a load balancer", "implement a distributed system", "implement a messaging queue", "implement a notification system", "implement a search engine", "implement a recommendation system", "implement a chat system", "implement a file storage system", "implement a web server", "implement a microservice", "implement a database", "implement a CDN", "implement a proxy server", "implement a API gateway", "implement a service mesh", "implement a monitoring system"],
+      "distributed_system_patterns": ["design a scalable", "design for high availability", "design for fault tolerance", "handle millions of users", "distribute across regions", "partition data", "shard database", "replicate data", "eventual consistency", "CAP theorem", "horizontal scaling", "vertical scaling"],
+      "architecture_keywords": ["microservices", "monolith", "service oriented", "event driven", "message queue", "pub sub", "REST API", "GraphQL", "gRPC", "websockets", "streaming", "batch processing", "real time", "near real time", "asynchronous", "synchronous", "stateless", "stateful", "idempotent", "circuit breaker", "bulkhead", "timeout", "retry", "exponential backoff"]
     },
     "LOW_LEVEL_DESIGN": {
       "keywords": ["class design", "database schema", "API design", "low level", "detailed design"],
       "patterns": ["Design the classes", "Database structure", "API endpoints", "Implementation details"]
     },
     "CODE_IMPLEMENTATION": {
-      "keywords": ["implement", "code", "write a function", "algorithm", "solve", "program"],
-      "patterns": ["Write code", "Implement a", "Create a function", "Algorithm to", "Code that"]
+      "keywords": ["code", "program", "create", "build", "develop"],
+      "patterns": ["Write code", "Create a function", "Code that", "Build a", "Develop a"],
+      "system_design_implementation_triggers": ["implement a system", "implement a service", "implement a cache", "implement a rate limiter", "implement a load balancer", "implement a database", "implement a web server", "implement a microservice"]
     },
     "DSA_PROBLEM_SOLVING": {
       "description": "Real technical interview simulation - mimics how actual FAANG/tech company interviews are conducted",
@@ -780,7 +786,8 @@
         }
       },
       "detection_triggers": {
-        "primary_indicators": ["algorithm", "data structure", "optimize", "complexity", "efficient", "implement", "solve", "find", "given", "return", "write a function", "coding problem", "interview question"],
+        "primary_indicators": ["algorithm", "data structure", "optimize", "complexity", "efficient", "solve", "find", "given", "return", "coding problem", "interview question"],
+        "contextual_implementation_triggers": ["implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate", "write a function for sorting", "write a function for searching"],
         "platform_signals": ["leetcode", "hackerrank", "codechef", "codeforces", "technical interview", "coding challenge", "programming contest"],
         "problem_context_clues": ["time complexity", "space complexity", "O(n)", "O(log n)", "Big O", "optimize for", "most efficient", "best approach"],
         "data_structure_mentions": ["array", "string", "list", "matrix", "linked list", "tree", "graph", "stack", "queue", "heap", "hash", "set", "map", "trie", "segment tree", "fenwick tree", "union find", "disjoint set", "priority queue", "deque", "circular buffer"],
@@ -864,7 +871,7 @@
          "boost_multiplier": 25.0,
          "override_all_other_intents": true,
          "confidence_threshold": 0.8,
-         "real_interview_triggers": ["coding interview", "technical interview", "algorithm problem", "data structure problem", "solve this problem", "implement", "write a function", "given an array", "given a string", "find the", "return the", "optimize", "time complexity", "space complexity"]
+         "real_interview_triggers": ["coding interview", "technical interview", "algorithm problem", "data structure problem", "solve this problem", "given an array", "given a string", "find the", "return the", "optimize", "time complexity", "space complexity", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"]
        },
        "response_pattern": "technical_interview_candidate",
        "interview_approach": "real_world_problem_solving",
@@ -981,11 +988,11 @@
     "SQL_Query_CODING": {
       "keywords": ["query", "write a query", "give me a sql query"],
       "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions", "from.*table", "database.*query"],
-      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair", "implement", "write a function"],
+      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
       "absolute_exclusion_patterns": [".*largest.*contiguous.*", ".*maximum.*subarray.*", ".*contiguous.*sum.*", ".*largest.*sum.*", ".*maximum.*sum.*", ".*kadane.*", ".*subarray.*problem.*", ".*find.*the.*largest.*", ".*find.*the.*maximum.*", ".*contiguous.*pair.*"],
       "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0",
       "dsa_exclusion_rule": {
-        "mandatory_keywords": ["algorithm", "data structure", "implement", "write a function"],
+        "mandatory_keywords": ["algorithm", "data structure", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
         "enforcement": "ABSOLUTE - SQL blueprint MUST NOT activate if input contains ANY DSA keywords",
         "override_priority": "MAXIMUM - This rule overrides all other SQL blueprint activation logic",
         "validation_check": "Before SQL blueprint activation, scan input for DSA keywords and immediately reject with score 0 if found"
