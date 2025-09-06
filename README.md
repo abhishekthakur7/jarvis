@@ -125,32 +125,6 @@ Jarvis features an extensive keyboard shortcut system designed for efficient ope
 | **Scroll Response Down** | `Shift+Alt+2` | Manually scroll the AI response content down |
 | **Toggle Auto-Scroll** | `Shift+Alt+3` | Enable/disable automatic content scrolling |
 
-### 📚 Teleprompter & Reading
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Pause/Resume Reading** | `Shift+Alt+P` | Toggle teleprompter reading flow |
-| **Restart Current Section** | `Shift+Alt+R` | Restart reading from current section beginning |
-| **Skip to Next Key Block** | `Shift+Alt+S` | Jump to next important content block |
-| **Jump to Response End** | `Shift+Alt+E` | Navigate to end of current response |
-| **Adjust Reading Tempo** | `Shift+Alt+T` | Modify auto-scroll reading speed |
-
-### 🗺️ Content Navigation
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Cycle Code Blocks** | `Shift+Alt+C` | Navigate between code blocks in responses |
-| **Jump Between Diagrams** | `Shift+Alt+D` | Move focus between diagrams and visual content |
-| **Highlight Key Concepts** | `Shift+Alt+H` | Emphasize next key concept in content |
-| **Show Quick Summary** | `Shift+Alt+Q` | Display summary of current response |
-| **Adjust Line Spacing** | `Shift+Alt+L` | Modify text line spacing for readability |
-| **Toggle Key Information** | `Shift+Alt+K` | Emphasize important information elements |
-
-### ✍️ Text Input
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Send Message** | `Enter` | Send text message to AI assistant |
-| **New Line** | `Shift+Enter` | Add new line in text input field |
-| **Start Session** | `Ctrl+Enter` (Windows) / `Cmd+Enter` (macOS) | Initiate AI session from main view |
-
 > 💡 **Tip:** All shortcuts are managed through a centralized configuration system in `shortcutConfig.js` and can be customized in the Customize view to match your workflow preferences.
 
 ## 🎯 Supported Profiles & Use Cases
@@ -159,10 +133,6 @@ Jarvis comes with professionally crafted AI profiles, each optimized for specifi
 
 ### 💼 Professional Profiles
 *   **Job Interview Assistant** - Real-time coaching, answer suggestions, and confidence building during interviews
-*   **Sales Call Enhancement** - Conversation insights, objection handling, and persuasion techniques
-*   **Business Meeting Support** - Meeting facilitation, note-taking assistance, and action item tracking
-*   **Presentation Coach** - Speaking guidance, content suggestions, and audience engagement tips
-*   **Negotiation Advisor** - Strategic guidance, leverage identification, and outcome optimization
 
 ### 🎯 Custom Profile Creation
 *   **Personalized Prompts** - Create custom AI behavior instructions tailored to your specific needs
