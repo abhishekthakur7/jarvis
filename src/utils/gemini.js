@@ -762,7 +762,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
 
     isInitializingMicrophoneSession = true;
 
-    const systemPrompt = `You are a transcription jarvis. Your only job is to transcribe audio input accurately. Do not provide responses or commentary, only transcribe what you hear.`;
+    const systemPrompt = `You are a transcription assistant. Your only job is to transcribe audio input accurately. Do not provide responses or commentary, only transcribe what you hear.`;
 
     try {
         const session = await client.live.connect({
@@ -2334,10 +2334,303 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             .sort((a, b) => a.timestamp - b.timestamp);
     }
 
+    // Vision-based context extraction for coding problems
+    async function extractCodingProblemContext(session) {
+        try {
+            if (!session) {
+                throw new Error('No valid session available for context extraction');
+            }
+            
+            if (!global.latestScreenshotBase64) {
+                throw new Error('No screenshot available for context extraction');
+            }
+
+            const extractionPrompt = `
+                Analyze this screenshot and extract structured information about any coding problem, debugging scenario, or technical content visible.
+
+                Provide a JSON response with the following structure:
+                {
+                "problemType": "dsa|debugging|code_review|system_design|implementation|mcq|other",
+                "title": "Brief title of the problem/question",
+                "description": "Detailed description of what's shown",
+                "codeContent": "Any code visible in the screenshot",
+                "question": "The specific question being asked (if any)",
+                "constraints": "Any constraints, requirements, or specifications",
+                "context": "Additional context like error messages, test cases, etc.",
+                "keyElements": ["list", "of", "important", "elements"]
+                }
+
+                IMPORTANT:
+                - Extract ALL visible text, code, and questions
+                - If it's a multiple choice question, include all options
+                - For debugging scenarios, capture error messages and stack traces
+                - For algorithm problems, extract input/output examples
+                - Be comprehensive - this context will be used for follow-up questions
+                - If no coding content is visible, set problemType to "other" and describe what you see
+                `;
+
+            // Create a separate session for context extraction to avoid message handler conflicts
+            const currentApiKey = apiKeyManager.getCurrentApiKey();
+            if (!currentApiKey) {
+                throw new Error('No valid API keys available');
+            }
+  
+            const genAI = new GoogleGenerativeAI({ apiKey: currentApiKey });
+            const extractionSession = genAI.getGenerativeModel({
+                model: 'gemini-2.5-flash',
+                generationConfig: {
+                    temperature: 0.1,
+                    maxOutputTokens: 2048
+                }
+            }).startChat();
+
+            console.log("Started chat with 2.5 flash");
+            
+            // Wait for response and parse JSON
+             return new Promise(async (resolve, reject) => {
+                 try {
+                     const timeout = setTimeout(() => {
+                         reject(new Error('Context extraction timeout'));
+                     }, 10000);
+ 
+                     // Get the response from the chat session
+                     const result = await extractionSession.sendMessage(extractionPrompt);
+                     clearTimeout(timeout);
+                    
+                    const responseText = result.response.text();
+                    let responseBuffer = responseText;
+
+                    console.log("responseBuffer: " + responseBuffer);
+                    
+                    try {
+                        // Extract JSON from response
+                        const jsonMatch = responseBuffer.match(/\{[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const contextData = JSON.parse(jsonMatch[0]);
+                            // Enhance classification with validation and refinement
+                            const enhancedData = enhanceClassification(contextData);
+                            resolve(enhancedData);
+                        } else {
+                            // Fallback: create structured context from raw response
+                            resolve({
+                                problemType: 'other',
+                                title: 'Screen Content Analysis',
+                                description: responseBuffer.trim(),
+                                codeContent: '',
+                                question: '',
+                                constraints: '',
+                                context: responseBuffer.trim(),
+                                keyElements: []
+                            });
+                        }
+                    } catch (parseError) {
+                        console.warn('Failed to parse context extraction JSON:', parseError);
+                        resolve({
+                            problemType: 'other',
+                            title: 'Screen Content Analysis',
+                            description: responseBuffer.trim(),
+                            codeContent: '',
+                            question: '',
+                            constraints: '',
+                            context: responseBuffer.trim(),
+                            keyElements: []
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error in context extraction:', error);
+                    reject(error);
+                }
+            });
+
+        } catch (error) {
+            console.error('Error in extractCodingProblemContext:', error);
+            
+            // Enhanced fallback with error categorization
+            let fallbackReason = 'Unknown error';
+            if (error.message.includes('No screenshot')) {
+                fallbackReason = 'No screenshot available';
+            } else if (error.message.includes('timeout')) {
+                fallbackReason = 'Vision analysis timeout';
+            } else if (error.message.includes('session')) {
+                fallbackReason = 'Session connection error';
+            }
+            
+            console.warn(`🔄 [FALLBACK] Using fallback context due to: ${fallbackReason}`);
+            
+            // Return comprehensive fallback context
+            return {
+                problemType: 'other',
+                title: 'Screenshot Analysis',
+                description: 'Unable to extract detailed context from screenshot',
+                codeContent: '',
+                question: 'Please analyze the current screen content and provide assistance based on what you can see',
+                constraints: '',
+                context: `Screenshot context extraction failed: ${fallbackReason}`,
+                keyElements: [],
+                language: 'unknown',
+                difficulty: 'unknown',
+                errorMessages: '',
+                testCases: '',
+                tags: ['fallback']
+            };
+        }
+    }
+
+    // Enhanced classification with validation and refinement
+    function enhanceClassification(extractedData) {
+        // Validate problem type based on content analysis
+        const { codeContent = '', errorMessages = '', question = '', title = '', description = '' } = extractedData;
+        
+        // Auto-detect debugging scenarios
+        if (errorMessages && errorMessages.trim().length > 0) {
+            extractedData.problemType = "debugging";
+            if (!extractedData.tags) extractedData.tags = [];
+            if (!extractedData.tags.includes("debugging")) {
+                extractedData.tags.push("debugging");
+            }
+        }
+        
+        // Auto-detect algorithm problems
+        const algorithmKeywords = ['algorithm', 'complexity', 'optimize', 'efficient', 'time complexity', 'space complexity', 'leetcode', 'hackerrank', 'codechef', 'binary search', 'dynamic programming', 'recursion'];
+        const contentText = (question + title + description).toLowerCase();
+        const hasAlgorithmKeywords = algorithmKeywords.some(keyword => 
+            contentText.includes(keyword.toLowerCase())
+        );
+        
+        if (hasAlgorithmKeywords && extractedData.problemType === "other") {
+            extractedData.problemType = "algorithm";
+        }
+        
+        // Auto-detect system design
+        const systemDesignKeywords = ['architecture', 'scalability', 'database', 'microservices', 'load balancer', 'system design', 'distributed', 'api design'];
+        const hasSystemDesignKeywords = systemDesignKeywords.some(keyword => 
+            contentText.includes(keyword.toLowerCase())
+        );
+        
+        if (hasSystemDesignKeywords && extractedData.problemType === "other") {
+            extractedData.problemType = "system_design";
+        }
+        
+        // Auto-detect MCQ questions
+        const mcqPattern = /[A-D]\)|\([A-D]\)|option\s*[A-D]/i;
+        if (mcqPattern.test(contentText) && extractedData.problemType === "other") {
+            extractedData.problemType = "mcq";
+        }
+        
+        // Enhance tags based on content
+        if (!extractedData.tags) extractedData.tags = [];
+        const allContent = (question + title + description + codeContent).toLowerCase();
+        const topicTags = {
+            'array': ['array', 'list', '[]', 'arraylist'],
+            'string': ['string', 'char', 'text', 'substring'],
+            'tree': ['tree', 'binary tree', 'bst', 'node'],
+            'graph': ['graph', 'node', 'edge', 'vertex'],
+            'recursion': ['recursive', 'recursion', 'backtrack'],
+            'dynamic programming': ['dp', 'dynamic programming', 'memoization'],
+            'sorting': ['sort', 'merge', 'quick', 'bubble'],
+            'searching': ['search', 'binary search', 'find'],
+            'hash': ['hash', 'map', 'dictionary', 'hashmap'],
+            'stack': ['stack', 'push', 'pop'],
+            'queue': ['queue', 'dequeue', 'enqueue'],
+            'linked list': ['linked list', 'listnode', 'next'],
+            'two pointers': ['two pointer', 'left', 'right'],
+            'sliding window': ['sliding window', 'window'],
+            'greedy': ['greedy', 'optimal'],
+            'bit manipulation': ['bit', 'xor', 'and', 'or']
+        };
+        
+        Object.entries(topicTags).forEach(([tag, keywords]) => {
+            if (keywords.some(keyword => allContent.includes(keyword)) && !extractedData.tags.includes(tag)) {
+                extractedData.tags.push(tag);
+            }
+        });
+        
+        // Ensure all required fields exist with defaults
+        const defaults = {
+            language: 'unknown',
+            difficulty: 'unknown',
+            errorMessages: '',
+            testCases: '',
+            tags: []
+        };
+        
+        Object.entries(defaults).forEach(([key, defaultValue]) => {
+            if (!extractedData[key]) {
+                extractedData[key] = defaultValue;
+            }
+        });
+        
+        return extractedData;
+    }
+
+    // Format extracted context into a comprehensive prompt
+    function formatExtractedContext(contextData, audioTranscription = '') {
+        let formattedContext = '';
+
+        // Add audio context if available
+        if (audioTranscription && audioTranscription.trim().length > 0) {
+            formattedContext += `# RECENT CONVERSATION:\n${audioTranscription}\n\n`;
+        }
+
+        // Add structured problem context
+        formattedContext += `# EXTRACTED PROBLEM CONTEXT:\n`;
+        formattedContext += `**Problem Type:** ${contextData.problemType}\n`;
+        
+        if (contextData.title) {
+            formattedContext += `**Title:** ${contextData.title}\n`;
+        }
+        
+        if (contextData.description) {
+            formattedContext += `**Description:** ${contextData.description}\n`;
+        }
+        
+        if (contextData.question) {
+            formattedContext += `**Question:** ${contextData.question}\n`;
+        }
+        
+        if (contextData.codeContent) {
+            formattedContext += `**Code Content:**\n\`\`\`\n${contextData.codeContent}\n\`\`\`\n`;
+        }
+        
+        if (contextData.constraints) {
+            formattedContext += `**Constraints/Requirements:** ${contextData.constraints}\n`;
+        }
+        
+        if (contextData.context) {
+            formattedContext += `**Additional Context:** ${contextData.context}\n`;
+        }
+        
+        if (contextData.keyElements && contextData.keyElements.length > 0) {
+            formattedContext += `**Key Elements:** ${contextData.keyElements.join(', ')}\n`;
+        }
+
+        // Add persona and instructions based on problem type
+        formattedContext += `\n# RESPONSE INSTRUCTIONS:\n`;
+        
+        switch (contextData.problemType) {
+            case 'dsa':
+                formattedContext += `You are an expert software engineer in a technical interview. Provide a complete solution with:\n- Problem analysis and approach\n- Time and space complexity\n- Clean, well-commented code\n- Edge cases consideration\n`;
+                break;
+            case 'debugging':
+                formattedContext += `You are debugging expert. Help identify and fix the issue by:\n- Analyzing the error/problem\n- Explaining the root cause\n- Providing the corrected code\n- Suggesting prevention strategies\n`;
+                break;
+            case 'code_review':
+                formattedContext += `You are conducting a code review. Provide:\n- Code quality assessment\n- Suggestions for improvement\n- Best practices recommendations\n- Performance considerations\n`;
+                break;
+            case 'mcq':
+                formattedContext += `This is a multiple choice question. Provide:\n- The correct answer (A/B/C/D)\n- Brief explanation of why it's correct\n- Why other options are incorrect (1-2 sentences each)\n`;
+                break;
+            default:
+                formattedContext += `Analyze the content and provide helpful assistance based on what you can see. Be thorough and educational in your response.\n`;
+        }
+
+        return formattedContext;
+    }
+
     ipcMain.handle('process-context-with-screenshot', async (event) => {
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
-            let completeTranscription = '\n';
+            let audioTranscription = '';
 
             // Get recent transcriptions (last 1 minute only)
             const recentMicrophoneHistory = getRecentTranscriptions(60 * 1000, microphoneConversationHistory);
@@ -2403,26 +2696,26 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                     });
                 }
                 
-                // Build the final transcription string
+                // Build the audio transcription string
                 for (const group of groupedTranscriptions) {
-                    completeTranscription += `${group.speaker} says: ${group.text}\n`;
+                    audioTranscription += `${group.speaker} says: ${group.text}\n`;
                 }
-                completeTranscription += '\n';
             }
 
-            //Only ask for screenshot response
-            if (completeTranscription.trim().length === 0) {
-                completeTranscription = 
-                `
-                    No recent conversation context available. Please analyze the current screen content and provide assistance based on what you can see.
-                   # CONTEXT: You are Ab, a Java Developer in a job interview.
-                   # PERSONA: Act as an expert. Answer confidently, showcasing your full thought process from brute-force to optimized. **Prioritize simple, readable solutions using standard libraries over unnecessary custom implementations.**
-                   # TASK: The interviewer has asked a coding question based on the text on screen. Follow all instructions from MASTER_PROMPT precisely. But if it's a MCQ question - just select the right answer A/B/C/D and explain why other options are incorrect in 1-2 sentences - DO NOT follow below instructions for MCQ.
+            // Extract structured context from screenshot using vision analysis
+            console.log('🔍 [VISION_EXTRACTION] Starting vision-based context extraction...');
+            const extractedContext = await extractCodingProblemContext(geminiSessionRef.current);
+            console.log('📊 [VISION_EXTRACTION] Extracted context:', {
+                type: extractedContext.problemType,
+                title: extractedContext.title,
+                hasCode: !!extractedContext.codeContent,
+                hasQuestion: !!extractedContext.question
+            });
 
-                   # INSTRUCTIONS:
-                   # Focus on answering the most recent question from the interviewer (if asked, otherwise refer to screen content for the question).
-                `
-            }
+            // Format the complete context using extracted information
+            const completeTranscription = formatExtractedContext(extractedContext, audioTranscription.trim());
+            
+            console.log('📝 [ENHANCED_CONTEXT] Generated enhanced context with vision analysis');
 
             // Send new-response-starting event to ensure proper response counter
             // User-initiated context-with-screenshot should ALWAYS trigger a new response counter
