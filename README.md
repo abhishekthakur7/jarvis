@@ -1,10 +1,12 @@
 # Jarvis - AI-Powered Desktop Assistant
 
-**Version:** 0.1.0  
+**Version:** 0.1.1  
 **Platform:** Cross-platform Desktop Application (Windows, macOS, Linux)  
 **License:** GPL-3.0
 
 Jarvis is a sophisticated desktop AI assistant built with Electron, designed to provide contextual assistance using Google's Gemini AI. Originally conceived as an interview assistant, it has evolved into a comprehensive productivity tool that combines multi-modal input processing, real-time AI assistance, and specialized workflow optimization for professionals, job seekers, and anyone needing intelligent desktop assistance.
+
+**Latest Update:** Enhanced AI classification system with contextual blueprint selection, improved system design pattern recognition, and refined DSA problem-solving capabilities for more accurate and relevant responses.
 
 ## 🎯 Primary Use Cases
 
@@ -18,11 +20,13 @@ Jarvis is a sophisticated desktop AI assistant built with Electron, designed to 
 
 ### 🤖 Core AI Capabilities
 *   **Advanced AI Integration:** Powered by Google Gemini 2.5-Flash-Preview with support for Gemini Pro models
+*   **Intelligent Blueprint Classification:** Enhanced contextual AI response system that accurately routes queries to specialized blueprints (DSA Problem Solving, High-Level System Design, Code Implementation)
 *   **Multi-Modal Processing:** Seamlessly combines text, voice, and visual inputs for comprehensive contextual understanding
 *   **Real-Time Screen Analysis:** Automatic screenshot capture with configurable intervals and AI-powered visual context analysis
 *   **Intelligent Audio Processing:** Advanced microphone and system audio detection with multi-language transcription
 *   **Context-Aware Responses:** Maintains conversation history with smart context management and duplicate prevention
 *   **Streaming Response Handling:** Real-time AI response processing with corruption detection and buffer management
+*   **Contextual Pattern Recognition:** Advanced keyword analysis that distinguishes between algorithmic implementation ("implement binary search") and system design implementation ("implement rate limiter")
 
 ### 🎨 Interface & Layout
 *   **Adaptive Layout Modes:** Three distinct modes - Normal (feature-rich), Compact (minimal), and System Design (integrated)
@@ -121,32 +125,6 @@ Jarvis features an extensive keyboard shortcut system designed for efficient ope
 | **Scroll Response Down** | `Shift+Alt+2` | Manually scroll the AI response content down |
 | **Toggle Auto-Scroll** | `Shift+Alt+3` | Enable/disable automatic content scrolling |
 
-### 📚 Teleprompter & Reading
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Pause/Resume Reading** | `Shift+Alt+P` | Toggle teleprompter reading flow |
-| **Restart Current Section** | `Shift+Alt+R` | Restart reading from current section beginning |
-| **Skip to Next Key Block** | `Shift+Alt+S` | Jump to next important content block |
-| **Jump to Response End** | `Shift+Alt+E` | Navigate to end of current response |
-| **Adjust Reading Tempo** | `Shift+Alt+T` | Modify auto-scroll reading speed |
-
-### 🗺️ Content Navigation
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Cycle Code Blocks** | `Shift+Alt+C` | Navigate between code blocks in responses |
-| **Jump Between Diagrams** | `Shift+Alt+D` | Move focus between diagrams and visual content |
-| **Highlight Key Concepts** | `Shift+Alt+H` | Emphasize next key concept in content |
-| **Show Quick Summary** | `Shift+Alt+Q` | Display summary of current response |
-| **Adjust Line Spacing** | `Shift+Alt+L` | Modify text line spacing for readability |
-| **Toggle Key Information** | `Shift+Alt+K` | Emphasize important information elements |
-
-### ✍️ Text Input
-| Action | Shortcut | Description |
-|--------|----------|-------------|
-| **Send Message** | `Enter` | Send text message to AI assistant |
-| **New Line** | `Shift+Enter` | Add new line in text input field |
-| **Start Session** | `Ctrl+Enter` (Windows) / `Cmd+Enter` (macOS) | Initiate AI session from main view |
-
 > 💡 **Tip:** All shortcuts are managed through a centralized configuration system in `shortcutConfig.js` and can be customized in the Customize view to match your workflow preferences.
 
 ## 🎯 Supported Profiles & Use Cases
@@ -155,10 +133,6 @@ Jarvis comes with professionally crafted AI profiles, each optimized for specifi
 
 ### 💼 Professional Profiles
 *   **Job Interview Assistant** - Real-time coaching, answer suggestions, and confidence building during interviews
-*   **Sales Call Enhancement** - Conversation insights, objection handling, and persuasion techniques
-*   **Business Meeting Support** - Meeting facilitation, note-taking assistance, and action item tracking
-*   **Presentation Coach** - Speaking guidance, content suggestions, and audience engagement tips
-*   **Negotiation Advisor** - Strategic guidance, leverage identification, and outcome optimization
 
 ### 🎯 Custom Profile Creation
 *   **Personalized Prompts** - Create custom AI behavior instructions tailored to your specific needs
@@ -172,6 +146,8 @@ Each profile includes specialized prompt engineering, contextual awareness setti
 
 ### 🤖 AI-Powered Intelligence
 - **Dual Model Support**: Gemini 2.5-Flash-Preview for speed, Gemini Pro for complex reasoning
+- **Enhanced Blueprint System**: Intelligent classification system with specialized response patterns for DSA problems, system design, and code implementation
+- **Contextual Trigger Recognition**: Advanced pattern matching that distinguishes between different types of implementation requests
 - **Multi-Modal Processing**: Seamlessly processes text, voice, and visual inputs simultaneously
 - **Context Preservation**: Maintains up to 25 conversation turns with intelligent summarization
 - **Real-Time Streaming**: Live AI responses with buffer management and corruption detection
@@ -321,7 +297,7 @@ jarvis/
 ├── forge.config.js               # Electron Forge build and packaging configuration
 ├── package.json                  # Project dependencies, scripts, and metadata
 ├── package-lock.json             # Dependency lock file
-├── SystemPrompt.json             # AI system prompt configuration
+├── SystemPrompt_v2_Enhanced.json # Enhanced AI system prompt configuration with contextual blueprints
 └── README.md                     # Project documentation (this file)
 ```
 
@@ -521,7 +497,14 @@ The project exposes handy npm scripts:
 
 ## 📋 Changelog
 
-### v0.1.0 (Current)
+### v0.1.1 (Current)
+**Latest Enhancements:**
+* ✅ **Enhanced AI Classification System** - Contextual blueprint selection for more accurate responses
+* ✅ **Refined DSA Problem Recognition** - Improved algorithmic problem identification and routing
+* ✅ **Advanced System Design Patterns** - Enhanced recognition of distributed systems and architecture queries
+* ✅ **Contextual Implementation Triggers** - Smart differentiation between algorithmic and system-level implementation requests
+* ✅ **Improved Blueprint Validation** - Enhanced accuracy in routing queries to appropriate AI response patterns
+
 **Core Features Implemented:**
 * ✅ Multi-modal AI assistance with Gemini 2.5-Flash-Preview
 * ✅ Advanced audio processing with enhanced microphone management
@@ -551,6 +534,8 @@ The project exposes handy npm scripts:
 * ✅ **Teleprompter Testing** - Built-in testing utilities for reading assistance features
 
 ### Upcoming Features (Roadmap)
+* 🔄 **Advanced Context Learning** - AI system that learns from user interaction patterns
+* 🔄 **Dynamic Blueprint Adaptation** - Self-improving classification based on user feedback
 * 🔄 Voice command recognition and natural language interface
 * 🔄 Advanced Notion database querying and content synchronization
 * 🔄 Plugin system for custom AI profiles and integrations
@@ -564,7 +549,7 @@ The project provides comprehensive npm scripts for development and deployment:
 | Script | Command | Description |
 |--------|---------|-------------|
 | **Development** | `npm start` | Launch the application in development mode with hot-reload |
-| **Code Quality** | `npm run lint` | Run ESLint for code quality analysis (currently placeholder) |
+| **Code Quality** | `npm run lint` | Run ESLint for code quality analysis |
 | **Formatting** | `npm run format` | Auto-format source files with Prettier (when configured) |
 | **Packaging** | `npm run package` | Package the application without creating installers |
 | **Distribution** | `npm run make` | Build complete distributable packages for all platforms |

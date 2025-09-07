@@ -13,6 +13,14 @@ const contextBoundaryOptimizer = require('./contextBoundaryOptimizer');
 const audioQualityAssurance = require('./audioQualityAssurance');
 const performanceMonitor = require('./performanceMonitor');
 const enhancedFollowUpClassifier = require('./enhancedFollowUpClassifier');
+const { createVadIntegration, patchGeminiVadProcessing } = require('./vadIntegration');
+
+// Conditional logging based on DEBUG environment variable
+const debugLog = (...args) => {
+    if (process.env.DEBUG === 'true') {
+        console.log(...args);
+    }
+};
 
 // Conversation tracking variables
 let currentSessionId = null;
@@ -48,6 +56,10 @@ const INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay to wait for complete input
 // Enhanced debounce system for technical interview optimization
 let vadAdaptiveData = null; // VAD data from AudioWorklet
 let enhancedDebounceEnabled = true; // Feature flag for easy rollback
+
+// Hybrid VAD Strategy integration
+let vadIntegration = null; // Hybrid VAD strategy instance
+let hybridVadEnabled = true; // Feature flag to enable hybrid VAD processing
 
 // Context and question queue management variables
 let contextAccumulator = '';
@@ -122,7 +134,7 @@ const metricsLog = [];
 let lastAiRequestStart = null;
 function recordMetric(event, data = {}) {
     metricsLog.push({ event, ...data, timestamp: Date.now() });
-    console.log('📈 [Metrics collection]', event, data);
+    //console.log('📈 [Metrics collection]', event, data);
 }
 function computeQualityScore(responseText) {
     const len = responseText.trim().split(/\s+/).length;
@@ -250,7 +262,7 @@ async function processQuestionQueue(geminiSession) {
     });
     
     if (isDuplicateQuestion) {
-        console.log('🚫 [DUPLICATE_QUESTION] Skipping duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
+        debugLog('🚫 [DUPLICATE_QUESTION] Skipping duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
         questionQueue = []; // Clear the queue
         return;
     }
@@ -265,11 +277,11 @@ async function processQuestionQueue(geminiSession) {
 
 async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
     if (!geminiSession || !combinedText.trim()) {
-        console.log('⚠️ [AI_REQUEST] Invalid session or empty text, aborting request');
+        debugLog('⚠️ [AI_REQUEST] Invalid session or empty text, aborting request');
         return;
     }
     
-    console.log('🚀 [AI_REQUEST] Preparing to send new AI request with Smart Request Management');
+    debugLog('🚀 [AI_REQUEST] Preparing to send new AI request with Smart Request Management');
     
     // ENHANCED: Use Enhanced Follow-Up Classifier for intelligent context detection
     const followUpAnalysis = enhancedFollowUpClassifier.classifyFollowUp(
@@ -278,10 +290,10 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
         global.latestInterviewContext
     );
     
-    console.log(`🔗 [FOLLOW_UP_ANALYSIS] Is Follow-Up: ${followUpAnalysis.isFollowUp}, Confidence: ${followUpAnalysis.confidence.toFixed(2)}, Type: ${followUpAnalysis.followUpType}`);
+    debugLog(`🔗 [FOLLOW_UP_ANALYSIS] Is Follow-Up: ${followUpAnalysis.isFollowUp}, Confidence: ${followUpAnalysis.confidence.toFixed(2)}, Type: ${followUpAnalysis.followUpType}`);
     if (followUpAnalysis.isFollowUp) {
-        console.log(`🔗 [FOLLOW_UP_PATTERNS] Matched: ${followUpAnalysis.patterns.join(', ')}`);
-        console.log(`🔗 [FOLLOW_UP_TOPICS] Technical Topics: ${followUpAnalysis.technicalTopics.map(t => t.category).join(', ')}`);
+        debugLog(`🔗 [FOLLOW_UP_PATTERNS] Matched: ${followUpAnalysis.patterns.join(', ')}`);
+        debugLog(`🔗 [FOLLOW_UP_TOPICS] Technical Topics: ${followUpAnalysis.technicalTopics.map(t => t.category).join(', ')}`);
     }
     
     // ENHANCED: Use Smart Request Manager for intelligent processing
@@ -303,7 +315,7 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             conversationHistory
         );
                 
-        console.log(`🧠 [CONTEXT_OPTIMIZATION] Phase: ${contextOptimization.currentPhase}, Boundary: ${contextOptimization.boundaryDecision.createBoundary}, Topics: ${contextOptimization.activeTopics.length}`);
+        debugLog(`🧠 [CONTEXT_OPTIMIZATION] Phase: ${contextOptimization.currentPhase}, Boundary: ${contextOptimization.boundaryDecision.createBoundary}, Topics: ${contextOptimization.activeTopics.length}`);
                 
         // Include optimized context in request context
         requestContext.contextOptimization = contextOptimization;
@@ -338,10 +350,9 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             // Record request details
             requestStartTime = Date.now();
             const timestamp = new Date(requestStartTime).toISOString();
-            console.log('🔄 [SMART_REQUEST] Starting AI request with intelligent management');
-            console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
-            console.log('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini:');
-            console.log('📄 [TRANSCRIPT_CONTENT]', combinedText.trim());
+            //console.log('🔄 [SMART_REQUEST] Starting AI request with intelligent management');
+            //console.log('⏰ [TRANSCRIPT_SENT] Timestamp:', timestamp);
+            debugLog('📝 [TRANSCRIPT_SENT] Full transcript sent to Gemini: ' + combinedText.trim());
             
             // Save to conversation history immediately
             conversationHistory.push({
@@ -376,7 +387,8 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                 requestContext.contextOptimization?.inputAnalysis?.requiresContext) {
                 requestText = `${requestContext.optimizedContext}\n\nCurrent question: ${combinedText.trim()}`;
                 contextSources.push('boundary_optimizer');
-                console.log(`🧠 [CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
+                debugLog(`[CONTEXT_ENHANCED] optimizedContext: ${requestContext.optimizedContext}`);
+                debugLog(`[CONTEXT_ENHANCED] Added optimized context (${requestContext.optimizedContext.length} chars)`);
             }
             
             // ENHANCED: Include follow-up specific context when detected
@@ -394,15 +406,15 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                             : `${followUpContextText}\n\nCurrent question: ${combinedText.trim()}`;
                         
                         contextSources.push('follow_up_classifier');
-                        console.log(`🔗 [FOLLOW_UP_CONTEXT] Added ${followUpContext.contextType} context (${followUpContext.suggestedContext.content.length} chars, priority: ${followUpContext.priority})`);
-                        console.log(`🔗 [FOLLOW_UP_REASONING] ${followUpContext.reasoning.join(', ')}`);
+                        debugLog(`🔗 [FOLLOW_UP_CONTEXT] Added ${followUpContext.contextType} context (${followUpContext.suggestedContext.content.length} chars, priority: ${followUpContext.priority})`);
+                        debugLog(`🔗 [FOLLOW_UP_REASONING] ${followUpContext.reasoning.join(', ')}`);
                     } else {
-                        console.log(`🔗 [FOLLOW_UP_CONTEXT] Skipped - similar context already included`);
+                        debugLog(`🔗 [FOLLOW_UP_CONTEXT] Skipped - similar context already included`);
                     }
                 }
             }
             
-            console.log(`📝 [CONTEXT_SUMMARY] Total context sources: ${contextSources.join(', ') || 'none'}, Final request length: ${requestText.length} chars`);
+            debugLog(`📝 [CONTEXT_SUMMARY] Total context sources: ${contextSources.join(', ') || 'none'}, Final request length: ${requestText.length} chars`);
             
             return await sendInputWithRetry(geminiSession, { 
                 text: requestText, 
@@ -418,17 +430,17 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
             executeGeminiRequest
         );
         
-        console.log('✅ [SMART_REQUEST] Successfully processed request with intelligent management');
+        debugLog('✅ [SMART_REQUEST] Successfully processed request with intelligent management');
         
     } catch (error) {
         console.error('❌ [SMART_REQUEST_ERROR] Error in smart request processing:', error);
         
         // Fallback to original logic if Smart Request Manager fails
-        console.log('🔄 [FALLBACK] Falling back to original request processing');
+        debugLog('🔄 [FALLBACK] Falling back to original request processing');
         
         // Original fallback logic (preserving existing behavior)
         if (currentAbortController) {
-            console.log('🛑 [ABORT] Cancelling previous Gemini request');
+            debugLog('🛑 [ABORT] Cancelling previous Gemini request');
             currentAbortController.abort();
         }
         
@@ -474,7 +486,7 @@ async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
                 signal: currentAbortController.signal 
             });
             
-            console.log('✅ [FALLBACK] Successfully sent request using fallback logic');
+            debugLog('✅ [FALLBACK] Successfully sent request using fallback logic');
         } catch (fallbackError) {
             console.error('❌ [FALLBACK_ERROR] Fallback request also failed:', fallbackError);
             isAiResponding = false;
@@ -573,7 +585,7 @@ function saveResponseSegment(text) {
                 timestamp: Date.now(),
                 length: text.length
             });
-            console.log('💾 [SEGMENT_BACKUP] Saved clean segment:', text.length, 'characters');
+            debugLog('💾 [SEGMENT_BACKUP] Saved clean segment:', text.length, 'characters');
         }
     }
 }
@@ -702,7 +714,7 @@ function initializeNewSession() {
     currentSessionId = Date.now().toString();
     currentTranscription = '';
     conversationHistory = [];
-    console.log('New conversation session started:', currentSessionId);
+    debugLog('New conversation session started:', currentSessionId);
 }
 
 function saveConversationTurn(transcription, aiResponse, isSuppressed = false) {
@@ -757,21 +769,21 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
             model: 'gemini-live-2.5-flash-preview',
             callbacks: {
                 onopen: function () {
-                    console.log('Microphone transcription session connected');
+                    debugLog('Microphone transcription session connected');
                 },
                 onmessage: function (message) {
-                    console.log('🎤 Microphone session message received:', message);
+                    debugLog('🎤 Microphone session message received:', message);
                     // Handle transcription input for microphone
                     if (message.serverContent?.inputTranscription?.text) {
                         const transcriptionText = message.serverContent.inputTranscription.text;
-                        console.log('🗣️ Transcription text found:', JSON.stringify(transcriptionText));
+                        debugLog('🗣️ Transcription text found:', JSON.stringify(transcriptionText));
                         
                         // Sanitize the transcription text to remove corrupted characters
                         //const transcriptionText = sanitizeText(rawTranscriptionText);
                         
                         // Skip if sanitization resulted in empty text
                         if (!transcriptionText || transcriptionText.trim().length === 0) {
-                            console.log('⚠️ Empty transcription text, skipping');
+                            debugLog('⚠️ Empty transcription text, skipping');
                             return;
                         }
 
@@ -783,8 +795,8 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
 
                         if (!isDuplicate) {
                             microphoneTranscription += transcriptionText + ' ';
-                            console.log('✅ Added to microphoneTranscription:', JSON.stringify(transcriptionText));
-                            console.log('📝 Current microphoneTranscription length:', microphoneTranscription.length);
+                            debugLog('✅ Added to microphoneTranscription:', JSON.stringify(transcriptionText));
+                            debugLog('📝 Current microphoneTranscription length:', microphoneTranscription.length);
                             
                             // Count words and manage cleanup
                             const words = microphoneTranscription.trim().split(/\s+/);
@@ -806,7 +818,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                             });
 
                             // Send transcription update to renderer for progressive transcript display
-                            console.log('Sending transcription update to renderer:', transcriptionText);
+                            debugLog('Sending transcription update to renderer:', transcriptionText);
                             sendToRenderer('microphone-transcription-update', {
                                 text: transcriptionText,
                                 isFinal: false // Gemini sends partial transcriptions
@@ -815,14 +827,14 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                             //console.log(microphoneConversationHistory);
                         }
                     } else {
-                        console.log('No transcription text found in message');
+                        debugLog('No transcription text found in message');
                     }
                 },
                 onerror: function (e) {
                     console.error('Microphone session error:', e.message);
                 },
                 onclose: function (e) {
-                    console.log('Microphone session closed:', e.reason);
+                    debugLog('Microphone session closed:', e.reason);
                 },
             },
             config: {
@@ -873,13 +885,13 @@ function isMicrophoneCurrentlyActive() {
 
 // Speaker detection state management
 async function setSpeakerDetectionEnabled(enabled) {
-    console.log('Speaker detection toggle shortcut triggered');
+    debugLog('Speaker detection toggle shortcut triggered');
     
     // If speaker detection is being disabled, process any pending input immediately
     if (!enabled) {
         // Wait for any ongoing AI processing to complete before toggling
         if (isAiResponding) {
-            console.log('⏳ [SPEAKER_TOGGLE] Waiting for ongoing AI response to complete before toggling off...');
+            debugLog('⏳ [SPEAKER_TOGGLE] Waiting for ongoing AI response to complete before toggling off...');
             // Wait up to 10 seconds for AI response to complete
             let waitCount = 0;
             while (isAiResponding && waitCount < 100) {
@@ -887,9 +899,9 @@ async function setSpeakerDetectionEnabled(enabled) {
                 waitCount++;
             }
             if (isAiResponding) {
-                console.log('⚠️ [SPEAKER_TOGGLE] AI response still ongoing after 10 seconds, proceeding with toggle');
+                debugLog('⚠️ [SPEAKER_TOGGLE] AI response still ongoing after 10 seconds, proceeding with toggle');
             } else {
-                console.log('✅ [SPEAKER_TOGGLE] AI response completed, proceeding with toggle');
+                debugLog('✅ [SPEAKER_TOGGLE] AI response completed, proceeding with toggle');
             }
         }
         
@@ -914,17 +926,17 @@ async function setSpeakerDetectionEnabled(enabled) {
         const cutoffTime = Date.now() - 10000; // Keep only entries older than 10 seconds
         speakerConversationHistory = speakerConversationHistory.filter(entry => entry.timestamp < cutoffTime);
         
-        console.log('🔄 [SPEAKER_DETECTION_ON] Cleared stale audio state, transcription, and recent history to prevent duplication');
+        debugLog('🔄 [SPEAKER_DETECTION_ON] Cleared stale audio state, transcription, and recent history to prevent duplication');
     }
     
     // Set the speaker detection state after processing is complete
     isSpeakerDetectionEnabled = enabled;
-    console.log(`🎯 [SPEAKER_DETECTION] Speaker detection ${enabled ? 'enabled' : 'disabled'} successfully`);
+    debugLog(`🎯 [SPEAKER_DETECTION] Speaker detection ${enabled ? 'enabled' : 'disabled'} successfully`);
 }
 
 async function processPendingSpeakerInput() {
     if (pendingInput.trim()) {
-        console.log('🔄 [PENDING_INPUT_PROCESSING] Processing pending input on speaker detection toggle:', pendingInput.trim());
+        debugLog('🔄 [PENDING_INPUT_PROCESSING] Processing pending input on speaker detection toggle:', pendingInput.trim());
         
         // Clear existing debounce timer
         if (inputDebounceTimer) {
@@ -942,7 +954,7 @@ async function processPendingSpeakerInput() {
         });
         
         if (isDuplicateContent) {
-            console.log('🚫 [DUPLICATE_PREVENTION] Skipping duplicate pending input processing');
+            debugLog('🚫 [DUPLICATE_PREVENTION] Skipping duplicate pending input processing');
             pendingInput = '';
             return;
         }
@@ -968,16 +980,16 @@ async function processPendingSpeakerInput() {
                 
                 // Wait for AI response to complete before returning
                 if (isAiResponding) {
-                    console.log('⏳ [PENDING_INPUT] Waiting for AI response to complete...');
+                    debugLog('⏳ [PENDING_INPUT] Waiting for AI response to complete...');
                     let waitCount = 0;
                     while (isAiResponding && waitCount < 150) { // Wait up to 15 seconds
                         await new Promise(resolve => setTimeout(resolve, 100));
                         waitCount++;
                     }
                     if (isAiResponding) {
-                        console.log('⚠️ [PENDING_INPUT] AI response still ongoing after 15 seconds');
+                        debugLog('⚠️ [PENDING_INPUT] AI response still ongoing after 15 seconds');
                     } else {
-                        console.log('✅ [PENDING_INPUT] AI response completed successfully');
+                        debugLog('✅ [PENDING_INPUT] AI response completed successfully');
                     }
                 }
             }
@@ -1006,7 +1018,7 @@ async function processPendingSpeakerInput() {
             type: 'speaker'
         });
         
-        console.log('✅ [PENDING_INPUT_PROCESSED] Successfully processed and saved pending input');
+        debugLog('✅ [PENDING_INPUT_PROCESSED] Successfully processed and saved pending input');
         
         // Reset pending input
         pendingInput = '';
@@ -1034,7 +1046,7 @@ async function sendMicrophoneAudioToGemini(base64Data) {
 
 async function sendReconnectionContext() {
     if (!global.geminiSessionRef?.current || conversationHistory.length === 0) {
-        console.log('No session or conversation history available for reconnection context');
+        debugLog('No session or conversation history available for reconnection context');
         return;
     }
 
@@ -1045,7 +1057,7 @@ async function sendReconnectionContext() {
             .filter(transcription => transcription && transcription.trim().length > 0);
 
         if (transcriptions.length === 0) {
-            console.log('No valid transcriptions found for reconnection context');
+            debugLog('No valid transcriptions found for reconnection context');
             return;
         }
 
@@ -1057,7 +1069,7 @@ async function sendReconnectionContext() {
 
         // Create the context message
         const contextMessage = `Till now all these questions were asked in the interview, provide answer for the last question in this list:\n\n${transcriptions.join('\n')}`;
-        console.log('sendReconnectionContext contextMessage: ' + contextMessage);
+        debugLog('sendReconnectionContext contextMessage: ' + contextMessage);
         
         // Set the pending context transcription for proper conversation saving
         global.pendingContextTranscription = contextMessage;
@@ -1081,7 +1093,7 @@ async function sendReconnectionContext() {
         //     text: contextMessage,
         // });
         
-        console.log('Reconnection context sent successfully');
+        debugLog('Reconnection context sent successfully');
         
         // Reset processing flag after a delay
         setTimeout(() => {
@@ -1159,7 +1171,7 @@ async function attemptReconnection() {
     }
 
     try {
-        console.log('Trying to reconnect: lastSessionParams.customPrompt == ' + lastSessionParams.customPrompt);
+        debugLog('Trying to reconnect: lastSessionParams.customPrompt == ' + lastSessionParams.customPrompt);
         const session = await initializeGeminiSession(
             lastSessionParams.apiKey,
             lastSessionParams.customPrompt,
@@ -1227,7 +1239,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
         apiKey: currentApiKey,
     });
 
-    console.log(`🔑 Using API key: ${currentApiKey.substring(0, 8)}...`);
+    debugLog(`🔑 Using API key: ${currentApiKey.substring(0, 8)}...`);
 
     const enabledTools = await getEnabledTools();
     const googleSearchEnabled = enabledTools.some(tool => tool.googleSearch);
@@ -1320,7 +1332,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             );
                             
                             if (isDuplicateTranscription) {
-                                console.log('🚫 [DUPLICATE_PREVENTION] Skipping duplicate transcription:', transcriptionText.trim());
+                                debugLog('🚫 [DUPLICATE_PREVENTION] Skipping duplicate transcription:', transcriptionText.trim());
                                 return;
                             }
 
@@ -1334,13 +1346,13 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
 
                             // Check if this should interrupt current AI response
                             if (shouldInterrupt(transcriptionText)) {
-                                console.log('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
+                                debugLog('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
                                 
                                 // Validate and log current response buffer before interruption
                                 if (messageBuffer) {
                                     const integrity = validateResponseIntegrity(messageBuffer);
-                                    console.log('📊 [INTERRUPTION_ANALYSIS] Current response buffer length:', messageBuffer.length);
-                                    console.log('📊 [INTERRUPTION_ANALYSIS] Buffer integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                                    debugLog('📊 [INTERRUPTION_ANALYSIS] Current response buffer length:', messageBuffer.length);
+                                    debugLog('📊 [INTERRUPTION_ANALYSIS] Buffer integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
                                     if (!integrity.isValid) {
                                         console.warn('⚠️ [INTERRUPTION_ANALYSIS] Buffer issues:', integrity.issues);
                                     }
@@ -1351,10 +1363,10 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 
                                 // Add current context and new input to queue
                                 if (contextAccumulator.trim()) {
-                                    console.log('📝 [QUEUE_MANAGEMENT] Adding context to queue:', contextAccumulator.trim());
+                                    debugLog('📝 [QUEUE_MANAGEMENT] Adding context to queue:', contextAccumulator.trim());
                                     questionQueue.push(contextAccumulator.trim());
                                 }
-                                console.log('📝 [QUEUE_MANAGEMENT] Adding follow-up question to queue:', transcriptionText.trim());
+                                debugLog('📝 [QUEUE_MANAGEMENT] Adding follow-up question to queue:', transcriptionText.trim());
                                 questionQueue.push(transcriptionText.trim());
                                 
                                 // Reset context and process immediately
@@ -1362,7 +1374,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 pendingInput = '';
                                 isAiResponding = false;
                                 
-                                console.log('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
+                                debugLog('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
                                 // Process the combined questions immediately
                                 processQuestionQueue(session);
                                 return;
@@ -1384,7 +1396,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                         }
                                     );
                                     
-                                    console.log(`⚡ [ENHANCED_DEBOUNCE] Adaptive delay: ${adaptiveDelay}ms (vs fixed ${INPUT_DEBOUNCE_DELAY}ms)`);
+                                    debugLog(`⚡ [ENHANCED_DEBOUNCE] Adaptive delay: ${adaptiveDelay}ms (vs fixed ${INPUT_DEBOUNCE_DELAY}ms)`);
                                 } catch (error) {
                                     console.warn('⚠️ [ENHANCED_DEBOUNCE] Error calculating adaptive delay, using fallback:', error.message);
                                     adaptiveDelay = INPUT_DEBOUNCE_DELAY;
@@ -1393,18 +1405,18 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             
                             inputDebounceTimer = setTimeout(() => {
                                 if (pendingInput.trim()) {
-                                    console.log('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
+                                    debugLog('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
                                     
                                     // Double-check speaker detection is still enabled before processing
                                     if (!isSpeakerDetectionEnabled) {
-                                        console.log('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
+                                        debugLog('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
                                         pendingInput = '';
                                         return;
                                     }
                                     
                                     // CRITICAL FIX: Check if AI is currently responding to prevent duplicate processing
                                     if (isAiResponding) {
-                                        console.log('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
+                                        debugLog('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
                                         pendingInput = '';
                                         return;
                                     }
@@ -1419,7 +1431,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     });
                                     
                                     if (isDuplicateInDebounce) {
-                                        console.log('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
+                                        debugLog('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
                                         pendingInput = '';
                                         return;
                                     }
@@ -1434,14 +1446,14 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     });
                                     
                                     if (isRecentlyProcessed) {
-                                        console.log('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
+                                        debugLog('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
                                         pendingInput = '';
                                         return;
                                     }
                                     
                                     // Check if context should be reset
                                     if (shouldResetContext()) {
-                                        console.log('🔄 [CONTEXT_RESET] Resetting context due to timeout');
+                                        debugLog('🔄 [CONTEXT_RESET] Resetting context due to timeout');
                                         contextAccumulator = '';
                                         questionQueue = [];
                                     }
@@ -1451,7 +1463,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     
                                     // Check if this is a complete question
                                     if (isSemanticallyComplete(pendingInput.trim())) {
-                                        console.log('❓ [COMPLETE_QUESTION] Complete question detected:', pendingInput.trim());
+                                        debugLog('❓ [COMPLETE_QUESTION] Complete question detected:', pendingInput.trim());
                                         
                                         // Add to question queue
                                         questionQueue.push(contextAccumulator.trim());
@@ -1464,7 +1476,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                         // Reset context for next question
                                         contextAccumulator = '';
                                     } else {
-                                        console.log('📝 [INCOMPLETE_INPUT] Incomplete input, accumulating in context:', pendingInput.trim());
+                                        debugLog('📝 [INCOMPLETE_INPUT] Incomplete input, accumulating in context:', pendingInput.trim());
                                     }
                                     
                                     // Save to speaker transcription and conversation history
@@ -1494,7 +1506,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                         type: 'speaker'
                                     });
 
-                                    console.log('✅ [DEBOUNCE_SAVED] Saved complete transcription:', pendingInput.trim());
+                                    debugLog('✅ [DEBOUNCE_SAVED] Saved complete transcription:', pendingInput.trim());
                                     
                                     // Reset pending input
                                     pendingInput = '';
@@ -1514,7 +1526,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 if (messageBuffer === '') {
                                     isAiResponding = true; // Track that AI is now responding
                                     resetReconstructionState(); // Reset reconstruction state for new response
-                                    console.log('🤖 [AI_RESPONSE_START] First chunk of AI response received');
+                                    debugLog('🤖 [AI_RESPONSE_START] First chunk of AI response received');
                                     
                                     // CRITICAL FIX: Always send new-response-starting for new AI responses
                                     // This ensures proper response counter regardless of input path
@@ -1586,7 +1598,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                     }
 
                     if ((!isMicrophoneActive || isProcessingTextMessage) && message.serverContent?.generationComplete) {
-                        console.log('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
+                        debugLog('🏁 [AI_RESPONSE_COMPLETE] AI response generation completed');
                         const latencyMs = lastAiRequestStart ? (Date.now() - lastAiRequestStart) : null;
                         const quality = computeQualityScore(messageBuffer);
                         recordMetric('ai_response_complete', { latencyMs, responseLength: messageBuffer.length, quality });
@@ -1613,7 +1625,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                         //     }
                         // }
                         
-                        console.log('📊 [RESPONSE_COMPLETE] Response length:', messageBuffer.length, 'characters');
+                        debugLog('📊 [RESPONSE_COMPLETE] Response length:', messageBuffer.length, 'characters');
                         
                         // Create response object with timing data for final response
                         const responseWithTiming = {
@@ -1634,11 +1646,11 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                             if (isReconnectionContext) {
                                 // DO NOT save context messages to conversation history to prevent recursive loops
                                 // Context messages are internal reconnection messages and should not be persisted
-                                console.log('⏭️ [SAVE_SKIP] Skipping save of context message to prevent recursive loop');
+                                debugLog('⏭️ [SAVE_SKIP] Skipping save of context message to prevent recursive loop');
                             } else {
                                 // Save screenshot context messages and other text messages
                                 // Pass suppression flag to indicate if this response was suppressed from UI
-                                console.log('💾 [SAVE_CONVERSATION] Saving context message conversation turn');
+                                debugLog('💾 [SAVE_CONVERSATION] Saving context message conversation turn');
                                 saveConversationTurn(global.pendingContextTranscription, messageBuffer, isSuppressingRender);
                             }
                             global.pendingContextTranscription = null; // Reset after processing
@@ -1655,14 +1667,14 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 return (transcriptionSimilarity || responseSimilarity) && isRecent;
                             });
                             
-                            if (isDuplicateResponse) {
-                                console.log('🚫 [DUPLICATE_RESPONSE] Skipping save of duplicate response to conversation history');
-                            } else {
-                                // Save regular speaker-only transcription
-                                // Pass suppression flag to indicate if this response was suppressed from UI
-                                console.log('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
-                                saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
-                            }
+                            // if (isDuplicateResponse) {
+                            //     debugLog('🚫 [DUPLICATE_RESPONSE] Skipping save of duplicate response to conversation history');
+                            // } else {
+                            // Save regular speaker-only transcription
+                            // Pass suppression flag to indicate if this response was suppressed from UI
+                            debugLog('💾 [SAVE_CONVERSATION] Saving speaker conversation turn');
+                            saveConversationTurn(speakerCurrentTranscription, messageBuffer, isSuppressingRender);
+                            //}
                             speakerCurrentTranscription = ''; // Reset for next turn
                         }
 
@@ -1701,10 +1713,10 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                         
                         // Process any queued questions after response completion
                         if (questionQueue.length > 0) {
-                            console.log('📋 [QUEUE_PROCESSING] Processing', questionQueue.length, 'queued questions after response completion');
+                            debugLog('📋 [QUEUE_PROCESSING] Processing', questionQueue.length, 'queued questions after response completion');
                             setTimeout(() => processQuestionQueue(session), 100); // Small delay to ensure clean state
                         } else {
-                            console.log('✅ [QUEUE_EMPTY] No queued questions, ready for new input');
+                            debugLog('✅ [QUEUE_EMPTY] No queued questions, ready for new input');
                         }
                     }
 
@@ -1725,37 +1737,37 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                     isProcessingTextMessage = false;
                     isAiResponding = false; // Reset AI responding state on error
                     
-                    console.log('❌ [ERROR_RECOVERY] Starting error recovery process');
+                    debugLog('❌ [ERROR_RECOVERY] Starting error recovery process');
                     
                     // Validate and log current response buffer before cleanup
                     if (messageBuffer) {
                         const integrity = validateResponseIntegrity(messageBuffer);
-                        console.log('📊 [ERROR_ANALYSIS] Response buffer at error - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                        debugLog('📊 [ERROR_ANALYSIS] Response buffer at error - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
                         if (!integrity.isValid) {
-                            console.warn('⚠️ [ERROR_ANALYSIS] Buffer corruption detected during error:', integrity.issues);
+                            debugLog('⚠️ [ERROR_ANALYSIS] Buffer corruption detected during error:', integrity.issues);
                         }
                     }
                     
                     // Clear context and queue on error
                     if (contextAccumulator.trim()) {
-                        console.log('🧹 [ERROR_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
+                        debugLog('🧹 [ERROR_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
                     }
                     if (questionQueue.length > 0) {
-                        console.log('🧹 [ERROR_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
+                        debugLog('🧹 [ERROR_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
                     }
                     
                     contextAccumulator = '';
                     questionQueue = [];
                     resetReconstructionState(); // Reset reconstruction state on error
-                    console.log('✅ [ERROR_RECOVERY] Context, queue, and reconstruction state cleared due to error');
+                    debugLog('✅ [ERROR_RECOVERY] Context, queue, and reconstruction state cleared due to error');
 
                     // Save partial response if available before handling error
                     if (messageBuffer) {
                         if (global.pendingContextTranscription) {
-                            console.log('Skipping save of partial context response due to error to prevent recursive loop');
+                            debugLog('Skipping save of partial context response due to error to prevent recursive loop');
                             global.pendingContextTranscription = null;
                         } else if (speakerCurrentTranscription) {
-                            console.log('Saving partial response due to error:', messageBuffer);
+                            debugLog('Saving partial response due to error:', messageBuffer);
                             saveConversationTurn(speakerCurrentTranscription, messageBuffer + ' [INTERRUPTED]', isSuppressingRender);
                             speakerCurrentTranscription = '';
                         }
@@ -1791,37 +1803,37 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                     isProcessingTextMessage = false;
                     isAiResponding = false; // Reset AI responding state on session close
                     
-                    console.log('🔌 [SESSION_CLOSE] Starting session close cleanup process');
+                    debugLog('🔌 [SESSION_CLOSE] Starting session close cleanup process');
                     
                     // Validate and log current response buffer before cleanup
                     if (messageBuffer) {
                         const integrity = validateResponseIntegrity(messageBuffer);
-                        console.log('📊 [CLOSE_ANALYSIS] Response buffer at close - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
+                        debugLog('📊 [CLOSE_ANALYSIS] Response buffer at close - Length:', messageBuffer.length, 'Integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
                         if (!integrity.isValid) {
-                            console.warn('⚠️ [CLOSE_ANALYSIS] Buffer corruption detected during close:', integrity.issues);
+                            debugLog('⚠️ [CLOSE_ANALYSIS] Buffer corruption detected during close:', integrity.issues);
                         }
                     }
                     
                     // Clear context and queue on session close
                     if (contextAccumulator.trim()) {
-                        console.log('🧹 [CLOSE_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
+                        debugLog('🧹 [CLOSE_CLEANUP] Clearing context accumulator:', contextAccumulator.substring(0, 50) + '...');
                     }
                     if (questionQueue.length > 0) {
-                        console.log('🧹 [CLOSE_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
+                        debugLog('🧹 [CLOSE_CLEANUP] Clearing question queue with', questionQueue.length, 'items');
                     }
                     
                     contextAccumulator = '';
                     questionQueue = [];
                     resetReconstructionState(); // Reset reconstruction state on session close
-                    console.log('✅ [SESSION_CLOSE] Context, queue, and reconstruction state cleared due to session close');
+                    debugLog('✅ [SESSION_CLOSE] Context, queue, and reconstruction state cleared due to session close');
 
                     // Save partial response if available before handling close
                     if (messageBuffer) {
                         if (global.pendingContextTranscription) {
-                            console.log('Skipping save of partial context response due to session close to prevent recursive loop');
+                            debugLog('Skipping save of partial context response due to session close to prevent recursive loop');
                             global.pendingContextTranscription = null;
                         } else if (speakerCurrentTranscription) {
-                            console.log('Saving partial response due to session close:', messageBuffer);
+                            debugLog('Saving partial response due to session close:', messageBuffer);
                             saveConversationTurn(speakerCurrentTranscription, messageBuffer + ' [SESSION_CLOSED]', isSuppressingRender);
                             speakerCurrentTranscription = '';
                         }
@@ -1843,7 +1855,7 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                     }
                     
                     if (lastSessionParams && reconnectionAttempts < maxReconnectionAttempts) {
-                        console.log('Session closed.. Reconnecting...');
+                        debugLog('Session closed.. Reconnecting...');
                         attemptReconnection();
                     } else {
                         sendToRenderer('update-status', 'Session closed');
@@ -1864,21 +1876,46 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
 
         isInitializingSession = false;
         sendToRenderer('session-initializing', false);
+        
+        // Initialize hybrid VAD integration if enabled
+        if (hybridVadEnabled && !vadIntegration) {
+            try {
+                // Create context object with references to gemini.js variables and functions
+                const geminiContext = {
+                    contextAccumulator: { value: contextAccumulator },
+                    questionQueue: { value: questionQueue },
+                    processQuestionQueue: (session) => processQuestionQueue(session || session),
+                    pendingInput: { value: pendingInput },
+                    isAiResponding: { value: isAiResponding }
+                };
+                
+                vadIntegration = createVadIntegration(geminiContext);
+                debugLog('✅ Hybrid VAD strategy initialized successfully');
+                
+                // Patch the session to use hybrid VAD processing
+                patchGeminiVadProcessing(session, vadIntegration);
+                debugLog('✅ Session patched with hybrid VAD processing');
+            } catch (error) {
+                debugLog('❌ Failed to initialize hybrid VAD strategy:', error);
+                hybridVadEnabled = false; // Fallback to enhanced debounce
+            }
+        }
+        
         return session;
     } catch (error) {
-        console.error('Failed to initialize Gemini session:', error);
+        debugLog('Failed to initialize Gemini session:', error);
         
         // Try fallback API key if available
         if (apiKeyManager) {
             try {
                 const fallbackKey = await apiKeyManager.getNextApiKey();
                 if (fallbackKey) {
-                    console.log('🔄 Trying fallback API key...');
+                    debugLog('🔄 Trying fallback API key...');
                     isInitializingSession = false;
                     return await initializeGeminiSession(apiKeys, customPrompt, profile, language, isReconnection);
                 }
             } catch (fallbackError) {
-                console.error('Fallback API key also failed:', fallbackError);
+                debugLog('Fallback API key also failed:', fallbackError);
             }
         }
         
@@ -1932,7 +1969,7 @@ async function startMacOSAudioCapture(geminiSessionRef) {
     });
 
     if (!systemAudioProc.pid) {
-        console.error('Failed to start SystemAudioDump');
+        debugLog('Failed to start SystemAudioDump');
         return false;
     }
 
@@ -2277,7 +2314,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 type: 'user_request',
                 processed: true
             });
-            console.log('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
+            debugLog('💾 [CONVERSATION_SAVED] Saved request to conversation history to prevent duplication');
             
             isProcessingTextMessage = true; // Set flag to allow AI response even when microphone is active
             await performTextRequest(text.trim(), geminiSessionRef.current);
@@ -2470,7 +2507,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             global.latestScreenshotBase64 = null;
             return { success: true };
         } catch (error) {
-            console.error('Error closing Gemini Pro session:', error);
+            debugLog('Error closing Gemini Pro session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2480,7 +2517,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         try {
             return { success: true, data: getCurrentSessionData() };
         } catch (error) {
-            console.error('Error getting current session:', error);
+            debugLog('Error getting current session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2490,19 +2527,19 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             initializeNewSession();
             return { success: true, sessionId: currentSessionId };
         } catch (error) {
-            console.error('Error starting new session:', error);
+            debugLog('Error starting new session:', error);
             return { success: false, error: error.message };
         }
     });
 
     ipcMain.handle('update-google-search-setting', async (event, enabled) => {
         try {
-            console.log('Google Search setting updated to:', enabled);
+            debugLog('Google Search setting updated to:', enabled);
             // The setting is already saved in localStorage by the renderer
             // This is just for logging/confirmation
             return { success: true };
         } catch (error) {
-            console.error('Error updating Google Search setting:', error);
+            debugLog('Error updating Google Search setting:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2510,17 +2547,17 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
     // Microphone session IPC handlers
     ipcMain.handle('initialize-microphone-session', async (event, apiKey, profile = 'interview', language = 'en-IN') => {
         try {
-            console.log('IPC: Initializing microphone session with API key length:', apiKey ? apiKey.length : 'undefined');
+            debugLog('IPC: Initializing microphone session with API key length:', apiKey ? apiKey.length : 'undefined');
             const session = await initializeMicrophoneSession(apiKey, profile, language);
             if (session) {
                 microphoneSessionRef.current = session;
-                console.log('IPC: Microphone session initialized successfully and stored in ref');
+                debugLog('IPC: Microphone session initialized successfully and stored in ref');
                 return { success: true };
             }
-            console.error('IPC: Failed to initialize microphone session - session is null');
+            debugLog('IPC: Failed to initialize microphone session - session is null');
             return { success: false, error: 'Failed to initialize microphone session' };
         } catch (error) {
-            console.error('IPC: Error initializing microphone session:', error);
+            debugLog('IPC: Error initializing microphone session:', error);
              return { success: false, error: error.message };
          }
      });
@@ -2534,21 +2571,21 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             await sendMicrophoneAudioToGemini(base64Data);
             return { success: true };
         } catch (error) {
-            console.error('IPC: Error sending microphone audio:', error);
+            debugLog('IPC: Error sending microphone audio:', error);
              return { success: false, error: error.message };
          }
      });
 
     ipcMain.handle('get-microphone-transcription', async (event) => {
-        console.log('IPC handler: get-microphone-transcription called');
+        debugLog('IPC handler: get-microphone-transcription called');
         try {
             const transcription = getMicrophoneTranscription();
-            console.log('IPC handler: getMicrophoneTranscription returned:', JSON.stringify(transcription));
+            debugLog('IPC handler: getMicrophoneTranscription returned:', JSON.stringify(transcription));
             const result = { success: true, transcription: transcription };
-            console.log('IPC handler: returning result:', result);
+            debugLog('IPC handler: returning result:', result);
             return result;
         } catch (error) {
-            console.error('IPC handler: Error getting microphone transcription:', error);
+            debugLog('IPC handler: Error getting microphone transcription:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2558,7 +2595,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             clearMicrophoneTranscription();
             return { success: true };
         } catch (error) {
-            console.error('Error clearing microphone transcription:', error);
+            debugLog('Error clearing microphone transcription:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2568,7 +2605,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         try {
             return { success: true, transcription: getSpeakerTranscription() };
         } catch (error) {
-            console.error('Error getting speaker transcription:', error);
+            debugLog('Error getting speaker transcription:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2578,7 +2615,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             clearSpeakerTranscription();
             return { success: true };
         } catch (error) {
-            console.error('Error clearing speaker transcription:', error);
+            debugLog('Error clearing speaker transcription:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2589,7 +2626,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             setMicrophoneActive(active);
             return { success: true };
         } catch (error) {
-            console.error('Error setting microphone active state:', error);
+            debugLog('Error setting microphone active state:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2598,7 +2635,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         try {
             return { success: true, active: isMicrophoneCurrentlyActive() };
         } catch (error) {
-            console.error('Error getting microphone active state:', error);
+            debugLog('Error getting microphone active state:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2612,7 +2649,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             clearMicrophoneTranscription();
             return { success: true };
         } catch (error) {
-            console.error('Error closing microphone session:', error);
+            debugLog('Error closing microphone session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2663,7 +2700,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const metrics = getDebouncePerformanceMetrics();
             return { success: true, metrics };
         } catch (error) {
-            console.error('Error getting debounce performance metrics:', error);
+            debugLog('Error getting debounce performance metrics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2674,7 +2711,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const metrics = getSmartRequestMetrics();
             return { success: true, metrics };
         } catch (error) {
-            console.error('Error getting smart request metrics:', error);
+            debugLog('Error getting smart request metrics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2684,7 +2721,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             setSmartInterruptionEnabled(enabled);
             return { success: true };
         } catch (error) {
-            console.error('Error setting smart interruption state:', error);
+            debugLog('Error setting smart interruption state:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2694,7 +2731,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             updateSmartRequestManagerPhase();
             return { success: true, phase };
         } catch (error) {
-            console.error('Error updating interview phase:', error);
+            debugLog('Error updating interview phase:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2705,7 +2742,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             resetDebounceSession();
             return { success: true };
         } catch (error) {
-            console.error('Error resetting smart request session:', error);
+            debugLog('Error resetting smart request session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2716,7 +2753,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const metrics = getContextBoundaryMetrics();
             return { success: true, metrics };
         } catch (error) {
-            console.error('Error getting context boundary metrics:', error);
+            debugLog('Error getting context boundary metrics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2726,7 +2763,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             setInterviewPhase(phase);
             return { success: true, phase };
         } catch (error) {
-            console.error('Error setting interview phase:', error);
+            debugLog('Error setting interview phase:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2736,7 +2773,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const phase = getCurrentInterviewPhase();
             return { success: true, phase };
         } catch (error) {
-            console.error('Error getting current interview phase:', error);
+            debugLog('Error getting current interview phase:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2746,7 +2783,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const topics = getActiveTechnicalTopics();
             return { success: true, topics };
         } catch (error) {
-            console.error('Error getting active technical topics:', error);
+            debugLog('Error getting active technical topics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2758,7 +2795,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             resetDebounceSession();
             return { success: true };
         } catch (error) {
-            console.error('Error resetting context boundary session:', error);
+            debugLog('Error resetting context boundary session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2775,7 +2812,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 ...qualityResult
             };
         } catch (error) {
-            console.error('Error processing audio quality:', error);
+            debugLog('Error processing audio quality:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2785,7 +2822,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const metrics = getAudioQualityMetrics();
             return { success: true, metrics };
         } catch (error) {
-            console.error('Error getting audio quality metrics:', error);
+            debugLog('Error getting audio quality metrics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2795,7 +2832,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             setAudioQualityInterviewContext(context);
             return { success: true, context };
         } catch (error) {
-            console.error('Error setting audio quality interview context:', error);
+            debugLog('Error setting audio quality interview context:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2805,7 +2842,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             setAudioQualityStrictMode(enabled);
             return { success: true, enabled };
         } catch (error) {
-            console.error('Error setting audio quality strict mode:', error);
+            debugLog('Error setting audio quality strict mode:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2818,7 +2855,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             resetDebounceSession();
             return { success: true };
         } catch (error) {
-            console.error('Error resetting audio quality session:', error);
+            debugLog('Error resetting audio quality session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2829,7 +2866,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             startPerformanceMonitoring();
             return { success: true };
         } catch (error) {
-            console.error('Error starting performance monitoring:', error);
+            debugLog('Error starting performance monitoring:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2839,7 +2876,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             stopPerformanceMonitoring();
             return { success: true };
         } catch (error) {
-            console.error('Error stopping performance monitoring:', error);
+            debugLog('Error stopping performance monitoring:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2849,7 +2886,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const dashboardData = getPerformanceDashboardData();
             return { success: true, data: dashboardData };
         } catch (error) {
-            console.error('Error getting performance dashboard data:', error);
+            debugLog('Error getting performance dashboard data:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2859,7 +2896,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const historicalData = getPerformanceHistoricalData(timeRange);
             return { success: true, data: historicalData };
         } catch (error) {
-            console.error('Error getting performance historical data:', error);
+            debugLog('Error getting performance historical data:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2869,7 +2906,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             resetAllOptimizationSystems();
             return { success: true };
         } catch (error) {
-            console.error('Error resetting all optimization systems:', error);
+            debugLog('Error resetting all optimization systems:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2900,11 +2937,11 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             // Start performance monitoring
             startPerformanceMonitoring();
             
-            console.log('🎯 [INTERVIEW_SESSION] Initialized with config:', config);
+            debugLog('🎯 [INTERVIEW_SESSION] Initialized with config:', config);
             
             return { success: true, config };
         } catch (error) {
-            console.error('Error initializing interview session:', error);
+            debugLog('Error initializing interview session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2915,7 +2952,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             const metrics = getFollowUpClassifierMetrics();
             return { success: true, metrics };
         } catch (error) {
-            console.error('Error getting follow-up metrics:', error);
+            debugLog('Error getting follow-up metrics:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2932,7 +2969,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 classification
             };
         } catch (error) {
-            console.error('Error classifying follow-up:', error);
+            debugLog('Error classifying follow-up:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2942,7 +2979,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             provideFollowUpFeedback(feedback.wasAccurate, feedback.actualType);
             return { success: true };
         } catch (error) {
-            console.error('Error providing follow-up feedback:', error);
+            debugLog('Error providing follow-up feedback:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2952,7 +2989,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             resetFollowUpClassifierSession();
             return { success: true };
         } catch (error) {
-            console.error('Error resetting follow-up session:', error);
+            debugLog('Error resetting follow-up session:', error);
             return { success: false, error: error.message };
         }
     });
@@ -2964,7 +3001,7 @@ function updateVADAdaptiveData(vadData) {
     if (enhancedDebounceManager) {
         enhancedDebounceManager.updateVADData(vadData);
     }
-    console.log('📊 [VAD_DATA_UPDATE] Updated VAD adaptive data for enhanced debounce');
+    debugLog('📊 [VAD_DATA_UPDATE] Updated VAD adaptive data for enhanced debounce');
 }
 
 function setEnhancedDebounceEnabled(enabled) {
@@ -2972,7 +3009,7 @@ function setEnhancedDebounceEnabled(enabled) {
     if (enhancedDebounceManager) {
         enhancedDebounceManager.setInterviewMode(enabled);
     }
-    console.log(`⚡ [ENHANCED_DEBOUNCE] ${enabled ? 'Enabled' : 'Disabled'} adaptive debounce system`);
+    debugLog(`⚡ [ENHANCED_DEBOUNCE] ${enabled ? 'Enabled' : 'Disabled'} adaptive debounce system`);
 }
 
 function getDebouncePerformanceMetrics() {
@@ -2994,7 +3031,7 @@ function resetDebounceSession() {
     if (enhancedDebounceManager) {
         enhancedDebounceManager.resetSession();
     }
-    console.log('🔄 [DEBOUNCE_RESET] Reset debounce session for new interview');
+    debugLog('🔄 [DEBOUNCE_RESET] Reset debounce session for new interview');
 }
 
 // ENHANCED: Smart Request Manager integration functions
@@ -3036,14 +3073,14 @@ function resetSmartRequestSession() {
     if (smartRequestManager) {
         smartRequestManager.resetSession();
     }
-    console.log('🚀 [SMART_REQUEST_RESET] Reset Smart Request Manager for new interview');
+    //console.log('🚀 [SMART_REQUEST_RESET] Reset Smart Request Manager for new interview');
 }
 
 function setSmartInterruptionEnabled(enabled) {
     if (smartRequestManager) {
         smartRequestManager.setInterruptionEnabled(enabled);
     }
-    console.log(`🎯 [SMART_INTERRUPTION] ${enabled ? 'Enabled' : 'Disabled'} intelligent interruption`);
+    debugLog(`🎯 [SMART_INTERRUPTION] ${enabled ? 'Enabled' : 'Disabled'} intelligent interruption`);
 }
 
 // ENHANCED: Context Boundary Optimizer integration functions
@@ -3071,14 +3108,14 @@ function setInterviewPhase(phase) {
         smartRequestManager.updateInterviewPhase(phase);
     }
     
-    console.log(`🎯 [INTERVIEW_PHASE] Set to ${phase} across all optimization systems`);
+    debugLog(`🎯 [INTERVIEW_PHASE] Set to ${phase} across all optimization systems`);
 }
 
 function resetContextBoundarySession() {
     if (contextBoundaryOptimizer) {
         contextBoundaryOptimizer.resetSession();
     }
-    console.log('🧠 [CONTEXT_RESET] Reset Context Boundary Optimizer for new interview');
+    debugLog('🧠 [CONTEXT_RESET] Reset Context Boundary Optimizer for new interview');
 }
 
 function getCurrentInterviewPhase() {
@@ -3132,21 +3169,21 @@ function setAudioQualityInterviewContext(context) {
     if (audioQualityAssurance) {
         audioQualityAssurance.setInterviewContext(context);
     }
-    console.log(`🔊 [AUDIO_QUALITY] Updated interview context: ${JSON.stringify(context)}`);
+    debugLog(`🔊 [AUDIO_QUALITY] Updated interview context: ${JSON.stringify(context)}`);
 }
 
 function resetAudioQualitySession() {
     if (audioQualityAssurance) {
         audioQualityAssurance.resetSession();
     }
-    console.log('🔊 [AUDIO_QUALITY_RESET] Reset Audio Quality Assurance for new interview');
+    debugLog('🔊 [AUDIO_QUALITY_RESET] Reset Audio Quality Assurance for new interview');
 }
 
 function setAudioQualityStrictMode(enabled) {
     if (audioQualityAssurance) {
         audioQualityAssurance.setStrictMode(enabled);
     }
-    console.log(`🔊 [STRICT_MODE] ${enabled ? 'Enabled' : 'Disabled'} strict audio quality mode`);
+    debugLog(`🔊 [STRICT_MODE] ${enabled ? 'Enabled' : 'Disabled'} strict audio quality mode`);
 }
 
 // ENHANCED: Performance Monitor integration functions
@@ -3154,14 +3191,14 @@ function startPerformanceMonitoring() {
     if (performanceMonitor) {
         performanceMonitor.startMonitoring();
     }
-    console.log('📈 [PERFORMANCE_MONITOR] Started performance monitoring for interview session');
+    debugLog('📈 [PERFORMANCE_MONITOR] Started performance monitoring for interview session');
 }
 
 function stopPerformanceMonitoring() {
     if (performanceMonitor) {
         performanceMonitor.stopMonitoring();
     }
-    console.log('📈 [PERFORMANCE_MONITOR] Stopped performance monitoring');
+    debugLog('📈 [PERFORMANCE_MONITOR] Stopped performance monitoring');
 }
 
 function getPerformanceDashboardData() {
@@ -3193,7 +3230,7 @@ function resetPerformanceMonitorSession() {
     if (performanceMonitor) {
         performanceMonitor.resetSession();
     }
-    console.log('📈 [PERFORMANCE_RESET] Reset Performance Monitor for new interview session');
+    debugLog('📈 [PERFORMANCE_RESET] Reset Performance Monitor for new interview session');
 }
 
 // Enhanced session reset that coordinates all optimization systems
@@ -3205,7 +3242,7 @@ function resetAllOptimizationSystems() {
     resetPerformanceMonitorSession();
     resetFollowUpClassifierSession();
     
-    console.log('🚀 [FULL_RESET] All optimization systems reset for new interview session');
+    debugLog('🚀 [FULL_RESET] All optimization systems reset for new interview session');
 }
 
 // ENHANCED: Enhanced Follow-Up Classifier integration functions
@@ -3247,14 +3284,14 @@ function provideFollowUpFeedback(wasAccurate, actualType = null) {
     if (enhancedFollowUpClassifier) {
         enhancedFollowUpClassifier.provideFeedback(wasAccurate, actualType);
     }
-    console.log(`🔗 [FOLLOW_UP_FEEDBACK] Provided feedback: accurate=${wasAccurate}, type=${actualType}`);
+    debugLog(`🔗 [FOLLOW_UP_FEEDBACK] Provided feedback: accurate=${wasAccurate}, type=${actualType}`);
 }
 
 function resetFollowUpClassifierSession() {
     if (enhancedFollowUpClassifier) {
         enhancedFollowUpClassifier.resetSession();
     }
-    console.log('🔗 [FOLLOW_UP_RESET] Reset Enhanced Follow-Up Classifier for new interview session');
+    debugLog('🔗 [FOLLOW_UP_RESET] Reset Enhanced Follow-Up Classifier for new interview session');
 }
 
 module.exports = {
@@ -3307,5 +3344,10 @@ module.exports = {
     classifyFollowUpQuestion,
     provideFollowUpFeedback,
     resetFollowUpClassifierSession,
+    // Hybrid VAD Strategy Controls
+    setHybridVadEnabled: (enabled) => { hybridVadEnabled = enabled; },
+    getHybridVadEnabled: () => hybridVadEnabled,
+    getVadIntegrationMetrics: () => vadIntegration ? vadIntegration.getMetrics() : null,
+    resetVadIntegrationSession: () => vadIntegration ? vadIntegration.resetSession() : null,
 };
 
