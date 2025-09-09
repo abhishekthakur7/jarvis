@@ -859,7 +859,33 @@
         },
         "technique_selection_priority": "When presenting the OPTIMIZED solution, use the MOST COMMONLY USED and WIDELY ACCEPTED technique for the problem type - avoid exotic or overly complex solutions. This does NOT override the mandatory step-by-step approach discussion structure.",
         "standard_data_structure_enforcement": "Use industry-standard data structures: HashMap, HashSet, ArrayList, LinkedList, Stack, Queue, PriorityQueue, TreeMap, TreeSet",
-        "approach_discussion_enforcement": "MANDATORY: MUST follow the step_2_approach_discussion structure exactly. Only discuss brute force when there are genuinely multiple approaches with meaningful differences. For problems with only one optimal approach or where brute force would be trivial/obvious, directly present the optimal solution."
+        "approach_discussion_enforcement": "MANDATORY: MUST follow the step_2_approach_discussion structure exactly. Only discuss brute force when there are genuinely multiple approaches with meaningful differences. For problems with only one optimal approach or where brute force would be trivial/obvious, directly present the optimal solution.",
+        "algorithm_technique_naming_mandatory": {
+          "explicit_technique_identification": "ALWAYS explicitly name the algorithmic technique being used (e.g., 'Two Pointer Technique', 'Sliding Window', 'Binary Search', 'DFS/BFS', 'Dynamic Programming', 'Heap/Priority Queue', 'Recursion with Memoization')",
+          "pattern_declaration_required": "Before explaining the solution, clearly state the pattern: 'This problem follows the [TECHNIQUE NAME] pattern'",
+          "technique_vocabulary_enforcement": "Use proper algorithmic terminology for all optimization techniques - never assume candidate knows the pattern without explicit naming",
+          "initialization_details_mandatory": {
+            "variable_setup_explicit": "ALWAYS explicitly state ALL variable initialization with purpose explanation (e.g., 'Initialize left = 0 (start pointer)', 'Set maxLen = 0 (tracks longest palindrome found)', 'Create visited = new boolean[n] (marks explored nodes)')",
+            "data_structure_initialization": "Explicitly mention how data structures are initialized with their purpose (e.g., 'Create minHeap = new PriorityQueue<>() (maintains smallest elements)', 'Initialize dp = new int[n][m] (stores subproblem results)')",
+            "loop_bounds_clear": "Clearly state loop initialization and termination conditions with reasoning",
+            "parameter_explanation": "For recursive functions, explain each parameter's role (e.g., 'dfs(node, visited, path) where node=current position, visited=explored nodes, path=current route')"
+          },
+          "dry_run_variable_explanation": {
+            "mandatory_variable_annotation": "During DRY RUN, EVERY variable used must be explained: what it represents, its current value, and why it's being updated",
+            "state_tracking_explicit": "For each step, explain: 'At this point, left=2 (current start position), right=5 (current end position), maxLen=3 (longest palindrome so far)'",
+            "decision_reasoning": "Explain WHY each decision is made: 'Since arr[left] < arr[right], we move left pointer to find larger sum'",
+            "algorithm_state_narration": "Continuously narrate the algorithm's state and progress through the problem space"
+          },
+          "technique_specific_mechanics": {
+            "two_pointer_variations": "For Two Pointer: explain initialization (opposite ends vs same position), movement logic, and termination",
+            "sliding_window": "For Sliding Window: explain window boundaries, expansion/contraction logic, and validity conditions",
+            "binary_search_variations": "For Binary Search: explain search space, mid calculation, and boundary updates",
+            "graph_traversal": "For DFS/BFS: explain visited tracking, neighbor exploration, and backtracking logic",
+            "dynamic_programming": "For DP: explain state definition, transition relation, and base cases",
+            "heap_operations": "For Heap: explain insertion/extraction logic and heap property maintenance",
+            "recursion_patterns": "For Recursion: explain recursive relation, base cases, and memoization strategy"
+          }
+        }
       },
       "blueprint_activation_enforcement": {
         "mandatory_override": "DSA blueprint MUST override ALL other blueprints when algorithm/data structure keywords detected",

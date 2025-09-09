@@ -1707,6 +1707,11 @@ export class AssistantView extends LitElement {
             console.log(` System design mode - systemDesignAnimateResponse localStorage: '${systemDesignAnimateResponse}', shouldAnimateResponse set to: ${this.shouldAnimateResponse}`);
         }
         
+        // Load and apply font size for current layout
+        const currentFontSize = this.getCurrentFontSize();
+        this.updateFontSizeForCurrentLayout(currentFontSize);
+        console.log(` Applied font size for ${layoutMode}: ${currentFontSize}px`);
+        
         console.log(` Loaded settings for ${layoutMode} - autoScroll: ${this.autoScrollEnabled}, animateResponse: ${this.shouldAnimateResponse}`);
     }
 
