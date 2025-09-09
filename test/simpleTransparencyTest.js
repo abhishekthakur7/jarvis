@@ -9,7 +9,9 @@
  * 3. No hardcoded fallbacks are used
  */
 
-console.log('🔍 Simple Transparency Bug Fix Validation\n');
+if (process.env.DEBUG_APP === 'true') {
+    console.log('🔍 Simple Transparency Bug Fix Validation\n');
+}
 
 // Mock the LayoutSettingsManager defaults (representing the fixed state)
 const LAYOUT_SETTINGS_MANAGER_DEFAULTS = {
@@ -48,7 +50,9 @@ function applyLayoutSpecificSettingsFixed(layoutMode, storage) {
         ? parseFloat(savedTransparency) 
         : defaultTransparency;
     
-    console.log(`   ${layoutMode}: saved="${savedTransparency}" → using=${transparency}`);
+    if (process.env.DEBUG_APP === 'true') {
+         console.log(`   ${layoutMode}: saved="${savedTransparency}" → using=${transparency}`);
+     }
     return transparency;
 }
 
@@ -77,19 +81,25 @@ function applyLayoutSpecificSettingsOld(layoutMode, storage) {
 }
 
 function runTest(testName, testFunc) {
-    console.log(`\n📋 ${testName}`);
-    console.log('─'.repeat(60));
+    if (process.env.DEBUG_APP === 'true') {
+        console.log(`\n📋 ${testName}`);
+        console.log('─'.repeat(60));
+    }
     
     try {
         const result = testFunc();
-        if (result.passed) {
-            console.log(`✅ PASS: ${result.message}`);
-        } else {
-            console.log(`❌ FAIL: ${result.message}`);
+        if (process.env.DEBUG_APP === 'true') {
+            if (result.passed) {
+                console.log(`✅ PASS: ${result.message}`);
+            } else {
+                console.log(`❌ FAIL: ${result.message}`);
+            }
         }
         return result.passed;
     } catch (error) {
-        console.log(`❌ ERROR: ${error.message}`);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log(`❌ ERROR: ${error.message}`);
+        }
         return false;
     }
 }
@@ -98,7 +108,9 @@ function runTest(testName, testFunc) {
 function testDefaultValues() {
     mockStorage.clear();
     
-    console.log('Testing default transparency values (no custom settings)...');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('Testing default transparency values (no custom settings)...');
+    }
     
     const normalFixed = applyLayoutSpecificSettingsFixed('normal', mockStorage);
     const compactFixed = applyLayoutSpecificSettingsFixed('compact', mockStorage);
@@ -129,7 +141,9 @@ function testCustomValues() {
     mockStorage.setItem('compactTransparency', '0.95');
     mockStorage.setItem('systemDesignTransparency', '0.50');
     
-    console.log('Testing custom transparency values preservation...');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('Testing custom transparency values preservation...');
+    }
     
     const normalFixed = applyLayoutSpecificSettingsFixed('normal', mockStorage);
     const compactFixed = applyLayoutSpecificSettingsFixed('compact', mockStorage);
@@ -154,11 +168,15 @@ function testSystemDesignBugFix() {
     mockStorage.clear();
     // Only system-design has no custom value - should use LayoutSettingsManager default
     
-    console.log('Demonstrating system-design bug fix...');
-    console.log('OLD CODE (with bug):');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('Demonstrating system-design bug fix...');
+        console.log('OLD CODE (with bug):');
+    }
     const systemDesignOld = applyLayoutSpecificSettingsOld('system-design', mockStorage);
     
-    console.log('NEW CODE (fixed):');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('NEW CODE (fixed):');
+    }
     const systemDesignFixed = applyLayoutSpecificSettingsFixed('system-design', mockStorage);
     
     const bugFixed = systemDesignFixed === 0.85 && systemDesignOld === 0.40;
@@ -177,10 +195,12 @@ function testUserScenario() {
     mockStorage.setItem('layoutMode', 'system-design');
     mockStorage.setItem('systemDesignTransparency', '0.60');
     
-    console.log('Simulating user scenario: system-design with custom transparency 0.60...');
-    console.log('1. User sets transparency to 0.60 in CustomizeView');
-    console.log('2. User navigates away from CustomizeView');
-    console.log('3. AssistantApp.applyLayoutSpecificSettings() is called');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('Simulating user scenario: system-design with custom transparency 0.60...');
+        console.log('1. User sets transparency to 0.60 in CustomizeView');
+        console.log('2. User navigates away from CustomizeView');
+        console.log('3. AssistantApp.applyLayoutSpecificSettings() is called');
+    }
     
     const result = applyLayoutSpecificSettingsFixed('system-design', mockStorage);
     
@@ -195,8 +215,10 @@ function testUserScenario() {
 }
 
 // Run all tests
-console.log('This test validates the transparency bug fix in AssistantApp.js');
-console.log('The fix ensures LayoutSettingsManager.DEFAULT_SETTINGS are used instead of hardcoded values.\n');
+if (process.env.DEBUG_APP === 'true') {
+    console.log('This test validates the transparency bug fix in AssistantApp.js');
+    console.log('The fix ensures LayoutSettingsManager.DEFAULT_SETTINGS are used instead of hardcoded values.\n');
+}
 
 let allTestsPassed = true;
 
@@ -206,32 +228,38 @@ allTestsPassed &= runTest('Test 3: System Design Bug Fix', testSystemDesignBugFi
 allTestsPassed &= runTest('Test 4: User Scenario Simulation', testUserScenario);
 
 // Final summary
-console.log('\n' + '═'.repeat(60));
-console.log('🎯 TRANSPARENCY BUG FIX VALIDATION SUMMARY');
-console.log('═'.repeat(60));
-
-if (allTestsPassed) {
-    console.log('✅ ALL TESTS PASSED!');
-    console.log('✅ The transparency bug has been successfully fixed!');
-    console.log('✅ System-design layout now uses 0.85 default (not 0.40)');
-    console.log('✅ Custom transparency settings are preserved correctly');
-    console.log('✅ User-reported scenario is resolved');
-    
-    console.log('\n🚀 READY FOR PRODUCTION:');
-    console.log('   • The fix in AssistantApp.js is working correctly');
-    console.log('   • Settings will persist across view changes');
-    console.log('   • No more transparency reverting to wrong defaults');
-    
-} else {
-    console.log('❌ SOME TESTS FAILED!');
-    console.log('❌ The transparency bug fix may not be working correctly');
-    console.log('⚠️  Please check the AssistantApp.js implementation');
-    
-    console.log('\n🔧 TROUBLESHOOTING:');
-    console.log('   • Ensure LayoutSettingsManager is properly imported');
-    console.log('   • Verify default values use LayoutSettingsManager.DEFAULT_SETTINGS');
-    console.log('   • Check that no hardcoded 0.40 remains in system-design logic');
+if (process.env.DEBUG_APP === 'true') {
+    console.log('\n' + '═'.repeat(60));
+    console.log('🎯 TRANSPARENCY BUG FIX VALIDATION SUMMARY');
+    console.log('═'.repeat(60));
 }
 
-console.log('\n🎉 Validation Complete!');
+if (process.env.DEBUG_APP === 'true') {
+    if (allTestsPassed) {
+        console.log('✅ ALL TESTS PASSED!');
+        console.log('✅ The transparency bug has been successfully fixed!');
+        console.log('✅ System-design layout now uses 0.85 default (not 0.40)');
+        console.log('✅ Custom transparency settings are preserved correctly');
+        console.log('✅ User-reported scenario is resolved');
+        
+        console.log('\n🚀 READY FOR PRODUCTION:');
+        console.log('   • The fix in AssistantApp.js is working correctly');
+        console.log('   • Settings will persist across view changes');
+        console.log('   • No more transparency reverting to wrong defaults');
+        
+    } else {
+        console.log('❌ SOME TESTS FAILED!');
+        console.log('❌ The transparency bug fix may not be working correctly');
+        console.log('⚠️  Please check the AssistantApp.js implementation');
+        
+        console.log('\n🔧 TROUBLESHOOTING:');
+        console.log('   • Ensure LayoutSettingsManager is properly imported');
+        console.log('   • Verify default values use LayoutSettingsManager.DEFAULT_SETTINGS');
+        console.log('   • Check that no hardcoded 0.40 remains in system-design logic');
+    }
+}
+
+if (process.env.DEBUG_APP === 'true') {
+    console.log('\n🎉 Validation Complete!');
+}
 process.exit(allTestsPassed ? 0 : 1);

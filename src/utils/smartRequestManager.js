@@ -116,7 +116,7 @@ class SmartRequestManager {
         const requestAnalysis = this.analyzeRequest(input, context);
         const priority = requestAnalysis.priority;
         
-        console.log(`📋 [SMART_REQUEST] Analyzed request - Priority: ${priority}, Type: ${requestAnalysis.type}`);
+        //console.log(`📋 [SMART_REQUEST] Analyzed request - Priority: ${priority}, Type: ${requestAnalysis.type}`);
         
         // Update metrics
         this.performanceMetrics.totalRequests++;
@@ -146,7 +146,7 @@ class SmartRequestManager {
             
             this.updatePerformanceMetrics(responseTime, requestAnalysis, true);
             
-            console.log(`✅ [SMART_REQUEST] Completed ${priority} priority request in ${responseTime}ms`);
+            //console.log(`✅ [SMART_REQUEST] Completed ${priority} priority request in ${responseTime}ms`);
             
             return result;
             

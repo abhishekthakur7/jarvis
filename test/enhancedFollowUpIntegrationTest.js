@@ -79,8 +79,10 @@ const testScenarios = [
  * Run all integration tests
  */
 function runIntegrationTests() {
-    console.log('🧪 [INTEGRATION_TEST] Starting Enhanced Follow-Up Question Handling Tests');
-    console.log('================================================================================');
+    if (process.env.DEBUG_APP === 'true') {
+        console.log('🧪 [INTEGRATION_TEST] Starting Enhanced Follow-Up Question Handling Tests');
+        console.log('================================================================================');
+    }
     
     let passedTests = 0;
     let totalTests = testScenarios.length;
@@ -90,8 +92,10 @@ function runIntegrationTests() {
     enhancedFollowUpClassifier.resetSession();
     
     for (const scenario of testScenarios) {
-        console.log(`\\n🔍 [TEST] ${scenario.name}`);
-        console.log(`📝 [INPUT] "${scenario.input}"`);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log(`\n🔍 [TEST] ${scenario.name}`);
+            console.log(`📝 [INPUT] "${scenario.input}"`);
+        }
         
         try {
             // Run classification
@@ -107,21 +111,29 @@ function runIntegrationTests() {
             
             if (testResult.passed) {
                 passedTests++;
-                console.log(`✅ [PASS] ${scenario.name}`);
+                if (process.env.DEBUG_APP === 'true') {
+                    console.log(`✅ [PASS] ${scenario.name}`);
+                }
             } else {
-                console.log(`❌ [FAIL] ${scenario.name}: ${testResult.reason}`);
+                if (process.env.DEBUG_APP === 'true') {
+                    console.log(`❌ [FAIL] ${scenario.name}: ${testResult.reason}`);
+                }
             }
             
             // Log detailed results
-            console.log(`   📊 Follow-Up: ${result.isFollowUp}, Type: ${result.followUpType}, Confidence: ${result.confidence.toFixed(3)}`);
-            if (result.contextRecommendation) {
-                console.log(`   🧠 Context Type: ${result.contextRecommendation.contextType}, Priority: ${result.contextRecommendation.priority}`);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log(`   📊 Follow-Up: ${result.isFollowUp}, Type: ${result.followUpType}, Confidence: ${result.confidence.toFixed(3)}`);
+                if (result.contextRecommendation) {
+                    console.log(`   🧠 Context Type: ${result.contextRecommendation.contextType}, Priority: ${result.contextRecommendation.priority}`);
+                }
+                console.log(`   🏷️ Patterns: ${result.patterns.join(', ') || 'none'}`);
+                console.log(`   🔬 Topics: ${result.technicalTopics.map(t => t.category).join(', ') || 'none'}`);
             }
-            console.log(`   🏷️ Patterns: ${result.patterns.join(', ') || 'none'}`);
-            console.log(`   🔬 Topics: ${result.technicalTopics.map(t => t.category).join(', ') || 'none'}`);
             
         } catch (error) {
-            console.log(`💥 [ERROR] ${scenario.name}: ${error.message}`);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log(`💥 [ERROR] ${scenario.name}: ${error.message}`);
+            }
             results.push({ scenario: scenario.name, passed: false, reason: `Error: ${error.message}` });
         }
     }

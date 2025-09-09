@@ -80,7 +80,8 @@ export class AssistantView extends LitElement {
         .response-container h3 {
             font-weight: 600;
             color: rgb(244 76 76);
-            margin: 3px;
+            margin: 0.5px;
+            font-size: 1.13em;
         }
         .response-container h4 {
             font-weight: 600;
@@ -259,7 +260,7 @@ export class AssistantView extends LitElement {
         .response-container hr {
             border: none;
             border-top: 1px solid var(--border-color);
-            margin: 2em 0;
+            margin: 0.2em 0;
         }
 
         .response-container table {
@@ -317,7 +318,7 @@ export class AssistantView extends LitElement {
         .response-container strong {
             font-weight: 600;
             color: #80bfff;
-            font-size: 1.1em;
+            font-size: 1.2em;
         } /* Emphasis: Vibrant blue */
         
         .response-container .filler {
@@ -899,7 +900,7 @@ export class AssistantView extends LitElement {
         }
 
         :host(.compact-mode) .response-container p {
-            line-height: 1.8;
+            line-height: 1.4;
             margin: 0.8em 0;
         }
 

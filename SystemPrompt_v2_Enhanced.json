@@ -111,17 +111,16 @@
             "experimental": "🧪 **[EXPERIMENTAL]** - Untested approach, proceed with caution"
           },
           "scannable_structure": {
-            "key_insight_marker": "💡 **KEY:** ",
             "critical_warning_marker": "🚨 **CRITICAL:** ",
             "deep_dive_marker": "🔍 **DETAILS:** ",
-            "alternative_marker": "🔄 **ALTERNATIVE:** "
+            "alternative_marker": "🔄 **ADDITIONAL DETAIL:** "
           },
           "progressive_disclosure": {
             "layered_information_structure": {
-              "level_1_essential": "💡 **KEY:** Core concepts needed for understanding (max 3 bullet points)",
-              "level_2_important": "🔍 **DETAILS:** Implementation specifics and technical depth",
+              "level_1_essential": "💡 **SHORT SUMMARY:** MUST be the absolute first content in response - no text, pauses, or acknowledgments before it. Immediate solution only - NEVER repeat question context, scenario details, or setup. Start directly with approach/solution (max 3 bullet points)",
+              "level_2_important": "🔍 **DETAILS:** Context-specific considerations and relevant alternatives - NEVER repeat question context, scenario details, or setup. Focus on technical implementation details and alternatives only",
               "level_3_comprehensive": "📚 **DEEP DIVE:** Complete explanation with examples and edge cases",
-              "level_4_alternatives": "🔄 **ALTERNATIVES:** Other approaches and trade-offs"
+              "level_4_additional_details": "🔄 **ADDITIONAL DETAIL:** Implementation specifics, annotations, properties and technical depth"
             },
             "scannable_organization": {
               "summary_first_mandatory": "Never bury the answer - lead with solution",
@@ -147,7 +146,7 @@
           "uncertainty_admission_enhanced": {
             "confidence_thresholds": "<70% = 🚨**UNCERTAIN**, 70-85% = ⚠️**LIKELY**, >85% = ✓**SOLID**",
             "verification_suggestions": "When uncertain, provide specific steps to validate the answer",
-            "alternative_mandatory": "For uncertain solutions, MUST provide 🔄**ALTERNATIVE:** approach",
+            "additional_detail_mandatory": "For uncertain solutions, MUST provide 🔄**ADDITIONAL DETAIL:** approach",
             "risk_disclosure": "Explicitly state what could go wrong with uncertain approaches"
           },
           "assumption_flagging_comprehensive": {
@@ -183,8 +182,8 @@
         },
         "response_usability_testing": {
           "scannable_format_validation": {
-            "confidence_marker_utility": "Ensure confidence indicators (✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]) help users identify trustworthy information",
-            "visual_hierarchy_scanning": "Test that 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:** markers enable 5-second response scanning",
+            "confidence_marker_utility": "Ensure confidence indicators (✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]) help users identify trustworthy information",
+            "visual_hierarchy_scanning": "Test that 💡**SHORT SUMMARY:**/🚨**CRITICAL:**/🔍**DETAILS:** markers enable 5-second response scanning",
             "progressive_disclosure_flow": "Verify users can stop reading at any level and still have actionable information",
             "assumption_flagging_clarity": "Validate that 🤔 **ASSUMING:** markers prevent misunderstanding and wrong implementation"
           },
@@ -302,7 +301,9 @@
           "breathing_validation_rules": {
             "chunk_size_limit": "Reject any response chunk >15 words without pause",
             "technical_section_breathing": "Force pause before every technical explanation",
-            "code_explanation_pacing": "Insert breathing points in code walkthroughs"
+            "code_explanation_pacing": "Insert breathing points in code walkthroughs",
+            "no_pre_summary_pauses": "CRITICAL: Never insert pauses, breathing patterns, or thinking patterns before SHORT SUMMARY section",
+            "summary_section_exemption": "SHORT SUMMARY section is exempt from breathing control - must start immediately without pauses"
           }
         }
       },
@@ -515,7 +516,10 @@
           "What you're asking is...",
           "To answer your question about...",
           "Regarding your question...",
-          "About your question on..."
+          "About your question on...",
+          "Right, so you're asking about...",
+          "you're asking about",
+          "asking about"
         ],
         "direct_start_patterns": [
           "Right, so...",
@@ -533,7 +537,12 @@
         "rule_2_direct_start": "ALWAYS jump directly into the solution or technical approach",
         "rule_3_no_question_acknowledgment": "NEVER acknowledge what the question is asking about",
         "rule_4_solution_first": "ALWAYS lead with the answer, approach, or solution immediately",
-        "rule_5_conversational_flow": "Use natural conversation starters, not question references"
+        "rule_5_conversational_flow": "Use natural conversation starters, not question references",
+        "rule_6_mandatory_structure": "CRITICAL: Responses MUST start immediately with SHORT SUMMARY section - NO content, pauses, or acknowledgments before it",
+        "rule_7_no_pre_summary_content": "ABSOLUTELY FORBIDDEN: Any text before the SHORT SUMMARY section including pauses, acknowledgments, or question references",
+        "rule_8_summary_content_restriction": "CRITICAL: SHORT SUMMARY content MUST NOT echo question details - start directly with solution approach, never repeat scenario context. FORBIDDEN phrases: 'For [scenario]', 'When dealing with [scenario]', 'In [scenario] situations'",
+        "rule_9_details_content_restriction": "CRITICAL: DETAILS section content MUST NOT echo question context or scenario details - focus exclusively on technical implementation specifics and alternatives. FORBIDDEN phrases: 'When you're dealing with', 'For this type of', 'In scenarios like this'",
+        "rule_10_scenario_phrase_elimination": "ABSOLUTELY FORBIDDEN: Any reference to user's specific scenario, context, or setup in both SHORT SUMMARY and DETAILS. Start with direct technical solutions only"
       },
       "enhanced_speech_quality_gates": {
         "breathing_validation": {
@@ -682,12 +691,12 @@
     "blueprint_validation_rules": {
       "cross_contamination_prevention": {
         "SQL_blueprint_exclusions": {
-          "trigger_keywords": ["algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge"],
+          "trigger_keywords": ["algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "array", "string manipulation", "leetcode", "coding challenge", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
           "forbidden_sections": ["Identify Subproblems", "Translate Each Step Into SQL", "SQL Query Structure", "Database Schema Analysis"],
           "enforcement": "If input contains any trigger keywords, SQL blueprint sections MUST NOT be used"
         },
         "DSA_blueprint_priority": {
-          "interview_simulation_triggers": ["find all elements", "anagram", "string", "array", "sorting", "searching", "optimize", "complexity", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "algorithm", "data structure", "leetcode", "hackerrank", "coding interview", "technical interview"],
+          "interview_simulation_triggers": ["find all elements", "anagram", "string", "array", "sorting", "searching", "optimize", "complexity", "given an array", "given a string", "time complexity", "space complexity", "algorithm", "data structure", "leetcode", "hackerrank", "coding interview", "technical interview", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
           "priority_boost": "When interview simulation triggers are present, DSA blueprint gets 25x priority weight (matching interview_simulation_boost)",
           "override_rule": "DSA interview blueprint MUST be selected over ALL other blueprints for any algorithm/data structure/coding interview question",
           "confidence_enforcement": "DSA blueprint selection confidence must exceed 0.8 threshold when interview triggers are detected",
@@ -707,16 +716,19 @@
       "step_5_blueprint_selection": {
         "description": "MANDATORY blueprint selection with absolute DSA priority enforcement",
         "selection_algorithm": {
-          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, array, string, sorting, searching, leetcode, coding challenge, implement, write a function, given an array, time complexity, space complexity",
+          "step_1": "CRITICAL - Check for DSA keywords FIRST: algorithm, data structure, array, string, sorting, searching, leetcode, coding challenge, given an array, time complexity, space complexity",
+          "step_1b": "Check for contextual DSA implementation triggers: 'implement algorithm', 'implement data structure', 'write a function to solve/find/calculate'",
           "step_2": "If ANY DSA keywords found, IMMEDIATELY select DSA_PROBLEM_SOLVING blueprint with 25x priority weight - NO OTHER BLUEPRINTS ALLOWED",
           "step_3": "Apply negative keyword filtering - SQL blueprint gets score 0 if ANY DSA keywords present",
           "step_4": "For non-DSA queries, score remaining intents based on keyword matches",
           "step_5": "Map selected intent to corresponding blueprint from blueprint_engine with MANDATORY structure enforcement"
         },
         "mandatory_dsa_override": {
-          "trigger_keywords": ["algorithm", "data structure", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "implement", "write a function", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
+          "trigger_keywords": ["algorithm", "data structure", "array", "string", "sorting", "searching", "leetcode", "coding challenge", "given an array", "given a string", "time complexity", "space complexity", "find the longest", "common prefix", "two sum", "binary search"],
+          "contextual_dsa_triggers": ["implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate", "write a function for sorting", "write a function for searching"],
           "enforcement_rule": "ABSOLUTE - If ANY trigger keyword detected, DSA blueprint MUST be selected with 25x priority, all other blueprints FORBIDDEN",
-          "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems"
+          "validation_checkpoint": "Before generating response, verify DSA blueprint was selected for algorithm/coding problems",
+          "approach_structure_enforcement": "CRITICAL - MUST follow step_2_approach_discussion structure exactly. NEVER skip brute force discussion. NEVER jump directly to optimized solution without proper approach comparison."
         },
         "negative_keyword_enforcement": {
           "SQL_Query_CODING": "CRITICAL - MUST be excluded with score 0 if input contains ANY DSA keywords",
@@ -743,15 +755,19 @@
   "intent_classifier": {
     "HIGH_LEVEL_DESIGN": {
       "keywords": ["system design", "architecture", "scalability", "high level", "design a system"],
-      "patterns": ["How would you design", "Architecture for", "System to handle", "Scale to support"]
+      "patterns": ["How would you design", "Architecture for", "System to handle", "Scale to support"],
+      "system_component_triggers": ["implement a rate limiter", "implement a cache system", "implement a load balancer", "implement a distributed system", "implement a messaging queue", "implement a notification system", "implement a search engine", "implement a recommendation system", "implement a chat system", "implement a file storage system", "implement a web server", "implement a microservice", "implement a database", "implement a CDN", "implement a proxy server", "implement a API gateway", "implement a service mesh", "implement a monitoring system"],
+      "distributed_system_patterns": ["design a scalable", "design for high availability", "design for fault tolerance", "handle millions of users", "distribute across regions", "partition data", "shard database", "replicate data", "eventual consistency", "CAP theorem", "horizontal scaling", "vertical scaling"],
+      "architecture_keywords": ["microservices", "monolith", "service oriented", "event driven", "message queue", "pub sub", "REST API", "GraphQL", "gRPC", "websockets", "streaming", "batch processing", "real time", "near real time", "asynchronous", "synchronous", "stateless", "stateful", "idempotent", "circuit breaker", "bulkhead", "timeout", "retry", "exponential backoff"]
     },
     "LOW_LEVEL_DESIGN": {
       "keywords": ["class design", "database schema", "API design", "low level", "detailed design"],
       "patterns": ["Design the classes", "Database structure", "API endpoints", "Implementation details"]
     },
     "CODE_IMPLEMENTATION": {
-      "keywords": ["implement", "code", "write a function", "algorithm", "solve", "program"],
-      "patterns": ["Write code", "Implement a", "Create a function", "Algorithm to", "Code that"]
+      "keywords": ["code", "program", "create", "build", "develop"],
+      "patterns": ["Write code", "Create a function", "Code that", "Build a", "Develop a"],
+      "system_design_implementation_triggers": ["implement a system", "implement a service", "implement a cache", "implement a rate limiter", "implement a load balancer", "implement a database", "implement a web server", "implement a microservice"]
     },
     "DSA_PROBLEM_SOLVING": {
       "description": "Real technical interview simulation - mimics how actual FAANG/tech company interviews are conducted",
@@ -770,7 +786,8 @@
         }
       },
       "detection_triggers": {
-        "primary_indicators": ["algorithm", "data structure", "optimize", "complexity", "efficient", "implement", "solve", "find", "given", "return", "write a function", "coding problem", "interview question"],
+        "primary_indicators": ["algorithm", "data structure", "optimize", "complexity", "efficient", "solve", "find", "given", "return", "coding problem", "interview question"],
+        "contextual_implementation_triggers": ["implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate", "write a function for sorting", "write a function for searching"],
         "platform_signals": ["leetcode", "hackerrank", "codechef", "codeforces", "technical interview", "coding challenge", "programming contest"],
         "problem_context_clues": ["time complexity", "space complexity", "O(n)", "O(log n)", "Big O", "optimize for", "most efficient", "best approach"],
         "data_structure_mentions": ["array", "string", "list", "matrix", "linked list", "tree", "graph", "stack", "queue", "heap", "hash", "set", "map", "trie", "segment tree", "fenwick tree", "union find", "disjoint set", "priority queue", "deque", "circular buffer"],
@@ -799,17 +816,62 @@
         "pressure_management": ["stay calm under time pressure", "prioritize working solution", "communicate when stuck", "ask for clarification when needed"]
       },
       "priority_weight": 25.0,
+      "optimization_technique_enforcement": {
+        "mandatory_standard_techniques": {
+          "array_problems": {
+            "two_sum_variants": "HashMap for O(1) lookups",
+            "subarray_problems": "Sliding Window technique",
+            "sorted_array_search": "Binary Search",
+            "two_pointer_scenarios": "Two Pointers (left/right or fast/slow)",
+            "frequency_counting": "HashMap/HashSet for counting",
+            "prefix_sum_problems": "Prefix Sum array"
+          },
+          "string_problems": {
+            "anagram_detection": "Character frequency HashMap",
+            "substring_problems": "Sliding Window with HashMap",
+            "palindrome_check": "Two Pointers (expand around center or left/right)",
+            "pattern_matching": "KMP algorithm or Rolling Hash",
+            "string_manipulation": "StringBuilder for efficiency"
+          },
+          "tree_problems": {
+            "traversal": "DFS (recursive) or BFS (queue)",
+            "path_problems": "DFS with backtracking",
+            "level_order": "BFS with Queue",
+            "binary_search_tree": "In-order traversal or BST properties",
+            "tree_construction": "Recursive divide and conquer"
+          },
+          "graph_problems": {
+            "shortest_path": "BFS for unweighted, Dijkstra for weighted",
+            "connectivity": "DFS or Union-Find",
+            "cycle_detection": "DFS with visited states",
+            "topological_sort": "Kahn's algorithm (BFS) or DFS"
+          },
+          "dynamic_programming": {
+            "overlapping_subproblems": "Memoization (top-down) or Tabulation (bottom-up)",
+            "optimization_problems": "DP table with state transitions",
+            "sequence_problems": "1D or 2D DP array"
+          },
+          "linked_list_problems": {
+            "cycle_detection": "Floyd's Cycle Detection (fast/slow pointers)",
+            "reversal": "Iterative three-pointer technique",
+            "merge_operations": "Two-pointer merge technique"
+          }
+        },
+        "technique_selection_priority": "When presenting the OPTIMIZED solution, use the MOST COMMONLY USED and WIDELY ACCEPTED technique for the problem type - avoid exotic or overly complex solutions. This does NOT override the mandatory step-by-step approach discussion structure.",
+        "standard_data_structure_enforcement": "Use industry-standard data structures: HashMap, HashSet, ArrayList, LinkedList, Stack, Queue, PriorityQueue, TreeMap, TreeSet",
+        "approach_discussion_enforcement": "MANDATORY: MUST follow the step_2_approach_discussion structure exactly. Only discuss brute force when there are genuinely multiple approaches with meaningful differences. For problems with only one optimal approach or where brute force would be trivial/obvious, directly present the optimal solution."
+      },
       "blueprint_activation_enforcement": {
         "mandatory_override": "DSA blueprint MUST override ALL other blueprints when algorithm/data structure keywords detected",
         "keyword_detection_priority": "CRITICAL - Any presence of DSA keywords triggers immediate blueprint selection",
         "cross_blueprint_prevention": "Absolutely prevent SQL, CONCEPT_EXPLANATION, or other blueprints from activating during coding problems"
-      },
-      "interview_simulation_boost": {
+       },
+       "interview_simulation_boost": {
          "description": "Activates full technical interview simulation mode",
          "boost_multiplier": 25.0,
          "override_all_other_intents": true,
          "confidence_threshold": 0.8,
-         "real_interview_triggers": ["coding interview", "technical interview", "algorithm problem", "data structure problem", "solve this problem", "implement", "write a function", "given an array", "given a string", "find the", "return the", "optimize", "time complexity", "space complexity"]
+         "real_interview_triggers": ["coding interview", "technical interview", "algorithm problem", "data structure problem", "solve this problem", "given an array", "given a string", "find the", "return the", "optimize", "time complexity", "space complexity", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"]
        },
        "response_pattern": "technical_interview_candidate",
        "interview_approach": "real_world_problem_solving",
@@ -846,25 +908,18 @@
            "instruction": "[pause] \n- **Problem**: [restate in 1 sentences] \n- **Input**: [input value/s (if given in the question then use that otherwise assume as per the context)] \n- **Output**: [expected output value/s (if given in the question then use that otherwise assume as per the context)]"
          },
          "step_2_approach_discussion": {
-           "name": "Solution Approach (2-3 minutes)",
-           "instruction": "[brief pause] Two approaches:\n\n**Brute Force:**\n- Method: [2-3 sentences explaining as if you're explaining to a 10 year old] \n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Space Complexity: O(?) [followed by 1 short sentence for justification] \n- Issue: [why suboptimal, major issue]\n\n**Optimized:**\n- Strategy: [core algorithm/pattern, explain as if you're explaining to a 10 year old]\n- Key insight: [main optimization explaining how it improved the solution]\n- Data structures: [justify choice]\n- Improvement: [complexity gains]"
-         },
+           "name": "Solution Approach (4-7 minutes)",
+           "instruction": "[brief pause] \n\nDetermine if there are multiple viable approaches or only one optimal approach for this problem.\n\n**CRITICAL RULE: For each approach, present ONLY ONE specific solution method - the exact same method that will be used in the example walkthrough and code implementation. Do NOT mention multiple ways or alternative variations within the same approach. Use small, consistent inputs (e.g., 4 elements max) from the problem statement or approach discussion for all examples/tracing to minimize explanation time and prevent interviewer confusion. **\n\n**If there are genuinely multiple approaches with meaningful differences (e.g., brute force vs optimized with significantly better complexity):**\n\n**Brute Force:**\n- Method: [5-7 sentences explaining as if you're explaining to a 15 year old - present ONLY the specific method that will be used in example and code]\n- Example: [Give proper step-by-step COMPLETE example showing the approach in action with final result]\n- **Shortcoming**: [In 2-4 sentences explain brute force approach's shortcomings by properly explaining HOW and WHY this approach is unoptimal]\n- Time Complexity: O(?)\n- Space Complexity: O(?)\n\n**Optimized:**\n- Strategy: [core algorithm/pattern using MOST COMMONLY USED optimization technique for this problem type - e.g., Two Pointers for array problems, HashMap for frequency counting, Sliding Window for subarray problems, Binary Search for sorted arrays, DFS/BFS for graphs, Dynamic Programming for overlapping subproblems, explain as if you're explaining to a 15 year old - present ONLY the specific method that will be used in example and code]\n- How it's better than brute force: [with optimized time and space complexity and WHY the optimization works]\n- Data structures: [justify choice with reasoning - MUST use the standard, most widely accepted data structure for this optimization pattern]\n\n**If only one optimal approach exists (no meaningful brute force alternative or brute force would be trivial/obvious):**\n\n**Approach:**\n- Strategy: [core algorithm/pattern using MOST COMMONLY USED technique for this problem type - e.g., Two Pointers for array problems, HashMap for frequency counting, Sliding Window for subarray problems, Binary Search for sorted arrays, DFS/BFS for graphs, Dynamic Programming for overlapping subproblems, explain as if you're explaining to a 15 year old - present ONLY the specific method that will be used in example and code]\n- Time Complexity: O(?) [followed by 1 short sentence for justification] \n- Data structures: [justify choice with reasoning - MUST use the standard, most widely accepted data structure for this technique]\n"
+          },
          "step_3_implementation": {
-           "name": "Walkthrough and Code Implementation (8-15 minutes)",
-           "instruction": "[brief pause] Trace through example \n [pause] Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
+           "name": "Example walkthrough and Code Implementation For the Optimized approach (12-20 minutes)",
+           "instruction": "Walk through the algorithm step-by-step using the same small input from approach discussion, explaining your THOUGHT PROCESS CONVERSATIONALLY as if teaching the logic to the interviewer, FOCUSING ON KEY DECISION POINTS RATHER THAN EVERY VARIABLE ASSIGNMENT. \n Optimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
          "step_4_complexity_and_optimization": {
            "name": "Complexity Analysis For Optimized Approach (30 seconds)",
            "instruction": "[pause] Analysis:\n\n- **Time**: O(...) - [1 line short justification]\n- **Space**: O(...) - [1 line short justification]\n"
          }
        },
-       "follow_up_patterns": [
-         "[pause] Does this approach make sense?",
-         "Should I walk through the algorithm again?",
-         "[brief pause] Want me to optimize for space instead?",
-         "Any questions about the implementation?",
-         "[thinking pause] Should I consider the distributed case?"
-       ],
        "validation_rules": {
          "interview_timing": "Structure response for 10-15 minute coding interview with natural conversation flow",
          "think_aloud_mandatory": "Must verbalize thought process throughout - never code silently",
@@ -881,9 +936,9 @@
          "mandatory_elements": {
            "problem_restatement": "Must restate problem in own words",
            "constraint_clarification": "Must ask about input constraints and edge cases",
-           "approach_comparison": "Must discuss multiple solution approaches",
+           "approach_comparison": "Must follow step_2_approach_discussion structure exactly - only discuss brute force when there are genuinely multiple approaches with meaningful differences, otherwise present the optimal approach directly",
            "step_by_step_implementation": "Must explain code as you write it",
-           "example_walkthrough": "Must trace through at least one example",
+           "example_walkthrough": "Must trace through at least one example, with minimal size of input for example if 4 elements of array are sufficient to explain the approach then use only 4 eleements to avoid confusing interviewer",
            "complexity_justification": "Must explain why the complexity is what it is",
            "optimization_discussion": "Must discuss potential optimizations or trade-offs"
          },
@@ -893,7 +948,9 @@
            "Ignoring edge cases",
            "Not analyzing complexity",
            "Formal academic language",
-           "Textbook explanations"
+           "Textbook explanations",
+           "Skipping approach discussion entirely",
+           "Not explaining the chosen solution approach"
          ],
          "section_header_enforcement": {
            "forbidden_sql_headers": "CRITICAL - NEVER use SQL blueprint headers: '### 2. Translate Each Step Into SQL', '### 1. Identify Subproblems', '### 3. Combine all Steps with CTEs', '### 4. Why This Approach Works Well in Interviews', '### 5. JPQL Implementation', '### 6. Performance Optimization'",
@@ -916,7 +973,7 @@
       "keywords": ["explain", "what is", "how does", "difference", "concept", "understand"],
       "patterns": ["Explain the", "What is", "How does", "Difference between", "Help me understand"]
     },
-    "DESIGN_PATTERN": {
+    "JAVA_DESIGN_PATTERN": {
       "keywords": ["pattern", "singleton", "factory", "observer", "strategy", "decorator"],
       "patterns": ["Design pattern", "When to use", "Implement the", "Pattern for"]
     },
@@ -929,11 +986,17 @@
       "patterns": ["Tell me about", "Experience with", "Project where", "Challenge you faced"]
     },
     "SQL_Query_CODING": {
-      "keywords": ["sql", "database", "select", "join", "jpql", "aggregate", "table", "schema", "relational", "mysql", "postgresql", "oracle", "sqlite", "window functions", "cte", "with clause", "partition by", "row_number", "rank", "dense_rank", "lag", "lead", "stored procedure", "trigger", "index", "foreign key", "primary key", "constraint", "view", "subquery", "exists", "in clause", "union", "intersect", "except"],
+      "keywords": ["query", "write a query", "give me a sql query"],
       "patterns": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions", "from.*table", "database.*query"],
-      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair"],
+      "negative_keywords": ["array", "string", "algorithm", "data structure", "anagram", "palindrome", "sorting", "searching", "tree", "graph", "linked list", "stack", "queue", "hash", "binary", "recursion", "dynamic programming", "greedy", "backtracking", "leetcode", "coding challenge", "contiguous", "subarray", "kadane", "maximum", "minimum", "sum", "product", "sliding", "window", "two pointer", "largest", "smallest", "find the largest", "find the maximum", "largest contiguous", "maximum subarray", "contiguous sum", "largest sum", "maximum sum", "subarray problem", "contiguous pair", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
       "absolute_exclusion_patterns": [".*largest.*contiguous.*", ".*maximum.*subarray.*", ".*contiguous.*sum.*", ".*largest.*sum.*", ".*maximum.*sum.*", ".*kadane.*", ".*subarray.*problem.*", ".*find.*the.*largest.*", ".*find.*the.*maximum.*", ".*contiguous.*pair.*"],
-      "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0"
+      "exclusion_priority": "CRITICAL - If any negative keyword or pattern matches, SQL blueprint MUST be rejected with score 0",
+      "dsa_exclusion_rule": {
+        "mandatory_keywords": ["algorithm", "data structure", "implement algorithm", "implement data structure", "write a function to solve", "write a function that finds", "write a function to calculate"],
+        "enforcement": "ABSOLUTE - SQL blueprint MUST NOT activate if input contains ANY DSA keywords",
+        "override_priority": "MAXIMUM - This rule overrides all other SQL blueprint activation logic",
+        "validation_check": "Before SQL blueprint activation, scan input for DSA keywords and immediately reject with score 0 if found"
+      }
     }
   },
   "blueprint_engine": {
@@ -1032,10 +1095,10 @@
       ],
       "validation_rules": {
          "scannable_interview_response_enforcement": {
-           "confidence_marking_required": "MUST mark confidence level for every technical approach: ✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
-           "visual_hierarchy_mandatory": "MUST use 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ALTERNATIVE:** markers for scannable structure",
+           "confidence_marking_required": "MUST mark confidence level for every technical approach: ✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
+           "visual_hierarchy_mandatory": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** markers for scannable structure",
            "assumption_flagging_required": "MUST mark assumptions with 🤔 **ASSUMING:** to prevent wrong answer propagation",
-           "alternative_solution_mandatory": "MUST provide 🔄 **ALTERNATIVE:** approach when main solution has >20% failure risk"
+           "alternative_solution_mandatory": "MUST provide 🔄 **ADDITIONAL DETAIL:** approach when main solution has >20% failure risk"
          },
          "error_prevention_validation": {
            "uncertainty_admission_enforcement": "When confidence <90%, MUST use ⚠️ **[UNCERTAIN]** and suggest verification steps",
@@ -1115,21 +1178,47 @@
      "CONCEPT_EXPLANATION": {
        "response_pattern": "patient_teacher",
        "interview_approach": "build_understanding_gradually",
+       "interview_constraints": {
+         "max_response_time": "90 seconds",
+         "word_limit": "150 words maximum [Exclude code or application properties from word limit]",
+         "code_examples": "1 maximum - only if essential",
+         "depth_control": "breadth over depth - hit key points, don't dive deep",
+         "time_awareness": "prioritize core concept over comprehensive coverage"
+       },
+       "implementation_detection_patterns": {
+         "framework_concepts": {
+           "trigger_keywords": ["annotation", "dependency", "configuration", "starter", "enable", "client", "server"],
+           "mandatory_elements": "MUST include: 1) Key annotation/interface, 2) Required dependency/starter, 3) Essential configuration"
+         },
+         "microservice_patterns": {
+           "trigger_keywords": ["circuit breaker", "bulkhead", "rate limiter", "saga", "cqrs", "event sourcing"],
+           "mandatory_elements": "MUST include: 1) Implementation library, 2) Configuration properties, 3) Usage annotation"
+         },
+         "messaging_systems": {
+           "trigger_keywords": ["kafka", "rabbitmq", "jms", "message", "queue", "topic", "producer", "consumer"],
+           "mandatory_elements": "MUST include: 1) Connection configuration, 2) Producer/Consumer setup, 3) Message serialization"
+         },
+         "database_concepts": {
+           "trigger_keywords": ["hibernate", "jpa", "transaction", "entity", "repository", "query"],
+           "mandatory_elements": "MUST include: 1) Annotation usage, 2) Configuration properties, 3) Connection setup"
+         },
+         "general_rule": "If question contains implementation-focused keywords, automatically include high-level setup details"
+       },
        "enhanced_natural_thinking_patterns": {
          "technical_hesitation": [
-           "[pause] Let me think about this...",
+           "[pause] I think...",
            "[brief pause] So the way I see this...",
            "[thinking pause] The approach here is..."
          ],
          "complexity_admission": [
            "[pause] This gets a bit complex, but...",
            "[brief pause] The tricky part is...",
-           "[thinking pause] What makes this challenging is..."
+           "[thinking pause] This is challenging because..."
          ],
          "implementation_uncertainty": [
-           "[pause] I'd probably approach this by...",
+           "[pause] I would probably approach this by...",
            "[brief pause] What I've seen work is...",
-           "[thinking pause] The way I'd handle this is..."
+           "[thinking pause] The way I would handle this is..."
          ],
          "recovery_after_complexity": [
            "[pause] But the main point is...",
@@ -1146,6 +1235,7 @@
          "concept_introduction": "[pause] So the core idea is...",
          "practical_example": "[brief pause] Think of it like...",
          "technical_details": "[pause] Under the hood, what's happening is...",
+         "implementation_essentials": "[brief pause] To actually implement this, you need...",
          "common_misconceptions": "[thinking pause] One thing people often get confused about...",
          "practical_application": "[pause] In real projects, you'd use this when..."
        },
@@ -1155,6 +1245,11 @@
          "[brief pause] Any specific aspect you'd like me to clarify?"
        ],
        "validation_rules": {
+         "interview_time_limit": "CRITICAL: Response must not exceed 90 seconds speaking time (~150 words)",
+         "dynamic_implementation_detection": "Scan question for implementation keywords and automatically include practical details",
+         "practical_over_theoretical": "Prioritize implementation details over abstract explanations",
+         "conciseness_over_completeness": "Prioritize key concepts over exhaustive explanation",
+         "single_code_example_max": "Maximum 1 code snippet, only if absolutely essential for understanding",
          "gradual_complexity_building": "Start simple, add complexity with pauses",
          "stress_management_for_abstracts": "Use systematic breakdown for abstract concepts",
          "example_breathing_space": "Pause before and after examples",
@@ -1168,7 +1263,7 @@
          "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language"
        }
      },
-     "DESIGN_PATTERN": {
+     "JAVA_DESIGN_PATTERN": {
         "response_pattern": "interview_optimized_educational",
         "enforcement_controls": {
           "natural_language_priority": "Use conversational tone with phrases like 'So basically', 'The main thing is', '... is what I've seen work very nicely', 'In my experience'",
@@ -1332,7 +1427,7 @@
      "SQL_Query_Coding": {
        "response_pattern": "database_problem_solver",
        "interview_approach": "systematic_query_analysis",
-       "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query", "database query", "select from", "join tables", "aggregate functions"],
+       "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query"],
        "interview_context": {
          "purpose": "Enable thorough technical analysis and 'think out loud' patterns for SQL interview contexts",
          "demonstration_style": "Show reasoning process step-by-step to demonstrate problem-solving methodology",
@@ -1369,11 +1464,9 @@
        "structure": {
          "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format:",
          "section_1_identify_subproblems": "### 1. Identify Subproblems\n\n[brief pause] I'll break this into steps:\n\n1. **[First step]** → [what this accomplishes]\n2. **[Second step]** → [what this accomplishes]\n3. **[Third step]** → [what this accomplishes]\n\n---",
-         "section_2_translate_steps": "### 2. Translate Each Step Into SQL\n\n#### Step 1: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n#### Step 2: [Step name]\n\n```sql\n[SQL code for this step]\n```\n\n[Explanation of what this does].\n\n[Continue for all steps]\n\n---",
-         "section_3_combine_all_steps": "### 3. Combine all Steps with CTEs (if applicable) and generate the final properly formatted SQL query\n---",
-         "section_4_why_this_works": "### 4. Why This Approach Works Well in Interviews\n\n* **Readable**: [Explain readability benefits].\n* **Scalable**: [Explain scalability benefits].\n* **Explainable**: [Explain how it demonstrates structured thinking].\n\n---\n\nSo the **key pattern** is:\n**[Summarize the approach pattern].**",
-         "section_5_jpql_equivalent": "### 5. JPQL Implementation\n\n### Entity Mapping Approach\n\n```java\n[JPQL equivalent query]\n```\n\n### Key Differences from SQL:\n\n* **Entity relationships**: [Explain how entities map to tables]\n* **JPA considerations**: [Explain JPA-specific aspects]\n* **Performance implications**: [Explain any performance differences]\n\n---",
-         "section_6_performance_tips": "### 6. Performance Optimization\n\n### Indexing Strategy\n\n* **Primary indexes needed**: [List specific indexes]\n* **Composite indexes**: [Explain composite index strategy]\n* **Query execution impact**: [Explain how indexes improve performance]\n\n### Large Dataset Considerations\n"
+         "section_2_complete_sql_query": "### 2. Complete Executable SQL Query\n\n```sql\n-- [Brief comment explaining the overall approach]\n[Complete optimized SQL query with inline comments]\n```\n\n[Explanation of key SQL constructs and why they were chosen]\n\n---",
+         "section_3_jpql_implementation": "### 3. JPQL Implementation\n\n```java\n// [Brief comment about entity mapping approach]\n[JPQL equivalent query]\n```\n\n**Key differences from SQL:**\n* **Entity relationships**: [How entities map to tables]\n* **JPA considerations**: [JPA-specific aspects]\n\n---",
+         "section_4_performance_tips": "### 4. Performance Tips\n\n**Indexing Strategy:**\n* [Specific indexes needed]\n* [Composite index recommendations]\n\n**Optimization Notes:**\n* [Query execution considerations]\n* [Large dataset handling]\n\n---"
        },
        "follow_up_patterns": [
          "[pause] Want me to trace through this with sample data?",
@@ -1381,14 +1474,12 @@
          "[brief pause] Any questions about the indexing strategy?"
        ],
        "validation_rules": {
-         "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, implement, write a function, given an array, given a string, time complexity, space complexity",
+         "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, implement, write a function, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, given an array, given a string, time complexity, space complexity",
          "dsa_keyword_detection": "CRITICAL - If ANY DSA keywords detected, immediately defer to DSA_PROBLEM_SOLVING blueprint with 25x priority boost",
          "section_1_problem_breakdown_validation": "MANDATORY - Start with problem analysis and logical breakdown of the query requirements",
-         "section_2_solution_approach_validation": "MANDATORY - Present the SQL solution with appropriate technique (CTEs, subqueries, joins, etc.) based on problem complexity",
-         "section_3_implementation_explanation": "MANDATORY - Explain the chosen approach and why it fits the specific problem",
-         "section_4_interview_context_validation": "MANDATORY - Demonstrate problem-solving methodology suitable for technical interviews",
-         "section_5_alternative_approaches": "CONDITIONAL - Include JPQL or alternative implementations when relevant to the context",
-         "section_6_optimization_considerations": "CONDITIONAL - Cover performance aspects (indexing, execution plans) when dealing with complex queries or large datasets",
+         "section_2_complete_sql_validation": "MANDATORY - Present complete, executable, optimized SQL query with inline comments explaining key constructs",
+         "section_3_jpql_implementation_validation": "MANDATORY - Provide equivalent JPQL implementation with entity mapping explanations",
+         "section_4_performance_optimization_validation": "MANDATORY - Include specific indexing strategies and performance considerations for the query",
          "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen, not just WHAT it does",
          "performance_awareness": "Always discuss indexing, execution plans, and large dataset optimization strategies",
          "interview_demonstration": "Show problem-solving methodology that demonstrates technical thinking",
@@ -1455,7 +1546,7 @@
      },
      "global_confidence_system": {
        "mandatory_confidence_marking": {
-         "rule": "ALL technical claims MUST include confidence indicators: ✓[SOLID]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
+         "rule": "ALL technical claims MUST include confidence indicators: ✓[NICE]/⚡[LIKELY]/⚠️[UNCERTAIN]/🧪[EXPERIMENTAL]",
          "enforcement": "Auto-reject responses without confidence markers on technical statements",
          "validation": "Scan for technical claims lacking confidence indicators"
        },
@@ -1470,26 +1561,33 @@
          "validation": "Scan for implicit assumptions without warning markers"
        },
        "scannable_structure_enforcement": {
-         "quick_answer_mandatory": "ALL responses MUST start with ⚡ **QUICK:** followed by 1-2 sentence direct answer",
-         "visual_hierarchy_required": "MUST use 💡**KEY:**/🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ALTERNATIVE:** for scannable structure",
-         "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators"
-       }
+           "quick_answer_mandatory": "ALL responses MUST start with ⚡ **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
+           "visual_hierarchy_required": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** for scannable structure",
+           "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators",
+           "absolute_first_content_rule": "CRITICAL: The very first characters of ANY response MUST be '💡 **SHORT SUMMARY:**' - NO pauses, acknowledgments, or any other text before it",
+           "zero_tolerance_pre_summary": "ABSOLUTELY FORBIDDEN: Any content before SHORT SUMMARY including [pause], thinking patterns, or conversational starters"
+         }
      },
      "response_quality_gates": {
        "pre_delivery_validation": {
          "confidence_marker_check": "Scan for technical claims without confidence indicators",
          "uncertainty_validation": "Verify uncertain information is properly marked with ⚠️",
          "assumption_detection": "Flag unmarked assumptions that could mislead users",
-         "scannable_structure_check": "Ensure ⚡ **QUICK:** answer and visual hierarchy present",
+         "scannable_structure_check": "Ensure ⚡ **SHORT SUMMARY:** answer and visual hierarchy present",
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
-         "natural_flow_verification": "Ensure conversational patterns present"
+         "natural_flow_verification": "Ensure conversational patterns present",
+         "scenario_echo_detection": "CRITICAL: Scan for and reject responses containing asked scenario/question echoing patterns like 'For [scenario]', 'When dealing with [context]', 'In [situation]' - force rewrite with direct technical approach"
        },
        "auto_correction_system": {
          "confidence_marker_injection": "Auto-add confidence indicators to technical claims",
          "uncertainty_marker_insertion": "Add ⚠️ **[UNCERTAIN]** to potentially incorrect information",
          "assumption_flagging_auto": "Auto-detect and mark assumptions with 🤔 **ASSUMING:**",
-         "quick_answer_enforcement": "Force ⚡ **QUICK:** structure at response start",
+         "quick_answer_enforcement": "Force ⚡ **SHORT SUMMARY:** structure at response start",
+         "pre_summary_content_elimination": "CRITICAL: Auto-remove any content appearing before SHORT SUMMARY section including pauses, acknowledgments, or question echoes",
+         "summary_question_echo_elimination": "CRITICAL: Auto-remove question context from SHORT SUMMARY content - replace with direct solution approach",
+         "details_question_echo_elimination": "CRITICAL: Auto-remove question context from DETAILS section content - focus on technical implementation details and alternatives only, never repeat scenario context",
+         "scenario_phrase_auto_elimination": "CRITICAL: Auto-detect and remove scenario echoing patterns like 'For [user scenario]', 'When dealing with [user context]', 'In [user situation]' - replace with direct technical approaches",
          "breathing_insertion": "Auto-add pause indicators where missing",
          "formal_replacement": "Replace formal phrases with conversational alternatives",
          "thinking_pattern_injection": "Add natural hesitation where appropriate"

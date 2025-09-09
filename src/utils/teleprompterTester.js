@@ -31,8 +31,10 @@ export class TeleprompterTester {
             naturalnesScore: 0
         };
 
-        console.log('🧪 Starting Reading Naturalness Test');
-        console.log('Content length:', testContent.length, 'characters');
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('🧪 Starting Reading Naturalness Test');
+            console.log('Content length:', testContent.length, 'characters');
+        }
         
         // Monitor eye movement patterns (simulated)
         this._simulateEyeMovementTracking();
@@ -53,8 +55,10 @@ export class TeleprompterTester {
             readingTime: 0
         };
 
-        console.log('🧠 Starting Information Retention Test');
-        console.log('Key points to remember:', keyPoints.length);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('🧠 Starting Information Retention Test');
+            console.log('Key points to remember:', keyPoints.length);
+        }
         
         return this.testSession;
     }
@@ -79,8 +83,10 @@ export class TeleprompterTester {
             efficiency: 0
         };
 
-        console.log('⌨️ Starting Keyboard Navigation Test');
-        console.log('Testing shortcuts:', this.testSession.shortcuts.join(', '));
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('⌨️ Starting Keyboard Navigation Test');
+            console.log('Testing shortcuts:', this.testSession.shortcuts.join(', '));
+        }
         
         // Set up keyboard event monitoring
         this._setupKeyboardMonitoring();
@@ -103,8 +109,10 @@ export class TeleprompterTester {
             overallPerformance: 0
         };
 
-        console.log('🎯 Starting Technical Interview Simulation');
-        console.log('Scenario:', scenario);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('🎯 Starting Technical Interview Simulation');
+            console.log('Scenario:', scenario);
+        }
         
         return this.testSession;
     }
@@ -119,7 +127,9 @@ export class TeleprompterTester {
             mode: this._getCurrentTeleprompterMode()
         });
         
-        console.log(`📊 Reading speed recorded: ${wordsPerMinute} WPM`);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log(`📊 Reading speed recorded: ${wordsPerMinute} WPM`);
+        }
     }
 
     /**
@@ -133,7 +143,9 @@ export class TeleprompterTester {
             const efficiency = responseTime < 1000 ? 'excellent' : 
                               responseTime < 2000 ? 'good' : 'needs_improvement';
             
-            console.log(`⌨️ Shortcut ${shortcut}: ${responseTime}ms (${efficiency})`);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log(`⌨️ Shortcut ${shortcut}: ${responseTime}ms (${efficiency})`);
+            }
         }
     }
 
@@ -150,7 +162,9 @@ export class TeleprompterTester {
             detected: detectedBoundaries.length
         });
         
-        console.log(`✅ Completion accuracy: ${accuracy.toFixed(2)}%`);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log(`✅ Completion accuracy: ${accuracy.toFixed(2)}%`);
+        }
     }
 
     /**
@@ -171,7 +185,9 @@ export class TeleprompterTester {
             behaviors: observedBehaviors
         });
         
-        console.log(`🎭 Naturalness score: ${naturalnessScore}/100`);
+        if (process.env.DEBUG_APP === 'true') {
+            console.log(`🎭 Naturalness score: ${naturalnessScore}/100`);
+        }
         return naturalnessScore;
     }
 
@@ -191,11 +207,13 @@ export class TeleprompterTester {
             recommendations: this._generateRecommendations()
         };
 
-        console.log('📋 Test Report Generated:');
-        console.log('Average Reading Speed:', report.metrics.averageReadingSpeed, 'WPM');
-        console.log('Keyboard Efficiency:', report.metrics.keyboardEfficiency);
-        console.log('Completion Accuracy:', report.metrics.completionAccuracy.toFixed(2) + '%');
-        console.log('Naturalness Score:', report.metrics.naturalnessScore.toFixed(2) + '/100');
+        if (process.env.DEBUG_APP === 'true') {
+            console.log('📋 Test Report Generated:');
+            console.log('Average Reading Speed:', report.metrics.averageReadingSpeed, 'WPM');
+            console.log('Keyboard Efficiency:', report.metrics.keyboardEfficiency);
+            console.log('Completion Accuracy:', report.metrics.completionAccuracy.toFixed(2) + '%');
+            console.log('Naturalness Score:', report.metrics.naturalnessScore.toFixed(2) + '/100');
+        }
         
         return report;
     }
@@ -209,7 +227,9 @@ export class TeleprompterTester {
             this.testSession.duration = this.testSession.endTime - this.testSession.startTime;
             
             this.testResults.push({ ...this.testSession });
-            console.log(`✅ Test session completed: ${this.testSession.type} (${this.testSession.duration}ms)`);
+            if (process.env.DEBUG_APP === 'true') {
+                console.log(`✅ Test session completed: ${this.testSession.type} (${this.testSession.duration}ms)`);
+            }
             
             const result = { ...this.testSession };
             this.testSession = null;
