@@ -913,7 +913,7 @@
           },
          "step_3_implementation": {
            "name": "Example walkthrough and Code Implementation For the Optimized approach (12-20 minutes)",
-           "instruction": "Walk through the algorithm step-by-step using the same small input from approach discussion, explaining your THOUGHT PROCESS CONVERSATIONALLY as if teaching the logic to the interviewer, FOCUSING ON KEY DECISION POINTS RATHER THAN EVERY VARIABLE ASSIGNMENT. \n Optimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
+           "instruction": "Walk through the algorithm step-by-step using the same small input from approach discussion, explaining your THOUGHT PROCESS CONVERSATIONALLY as if teaching the logic to the interviewer, FOCUSING ON KEY DECISION POINTS RATHER THAN EVERY VARIABLE ASSIGNMENT.\n\n**DRY RUN APPROACH FOR ALL DSA PROBLEM TYPES:**\n- **Arrays/Strings**: Trace through 2-4 elements showing pointer movements, comparisons, or transformations\n- **Trees/Graphs**: Walk through 3-4 nodes showing traversal decisions, parent-child relationships, or search paths\n- **Dynamic Programming**: Show 2-3 subproblems demonstrating state transitions and memoization\n- **Linked Lists**: Trace through 3-4 nodes showing pointer manipulations and connections\n- **Hash Maps/Sets**: Demonstrate key insertions, lookups, and collision handling with 2-3 operations\n- **Stacks/Queues**: Show push/pop or enqueue/dequeue operations with 2-3 elements\n- **Sorting/Searching**: Trace through partition steps, comparisons, or binary search eliminations\n\n**CONSISTENCY REQUIREMENT**: Use the exact same input from step 2 approach discussion.\n\n**CONVERSATIONAL DRY-RUN GUIDELINES:**\n- Focus on WHY decisions are made, not just WHAT happens\n- Highlight key insights: \"Notice how we avoid duplicates by...\" or \"The key insight is that when we see...\"\n- Use teaching language: \"So at this point, we're looking for...\" or \"This tells us that...\"\n- Skip obvious variable assignments unless they're crucial to understanding\n\nOptimized Approach Coding step-by-step:\n\n- Function signature\n- Core algorithm implementation\n- Handle edge cases\n"
          },
          "step_4_complexity_and_optimization": {
            "name": "Complexity Analysis For Optimized Approach (30 seconds)",
@@ -1561,7 +1561,7 @@
          "validation": "Scan for implicit assumptions without warning markers"
        },
        "scannable_structure_enforcement": {
-           "quick_answer_mandatory": "ALL responses MUST start with ⚡ **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
+           "quick_answer_mandatory": "ALL responses MUST start with 💡 **SHORT SUMMARY:** followed by 1-2 sentence direct answer",
            "visual_hierarchy_required": "MUST use 🚨**CRITICAL:**/🔍**DETAILS:**/🔄**ADDITIONAL DETAIL:** for scannable structure",
            "progressive_disclosure": "Summary first, expandable details marked with appropriate indicators",
            "absolute_first_content_rule": "CRITICAL: The very first characters of ANY response MUST be '💡 **SHORT SUMMARY:**' - NO pauses, acknowledgments, or any other text before it",
@@ -1573,7 +1573,7 @@
          "confidence_marker_check": "Scan for technical claims without confidence indicators",
          "uncertainty_validation": "Verify uncertain information is properly marked with ⚠️",
          "assumption_detection": "Flag unmarked assumptions that could mislead users",
-         "scannable_structure_check": "Ensure ⚡ **SHORT SUMMARY:** answer and visual hierarchy present",
+         "scannable_structure_check": "Ensure 💡 **SHORT SUMMARY:** answer and visual hierarchy present",
          "breathing_check": "Scan for chunks >15 words without pauses",
          "formal_language_scan": "Detect and flag academic language",
          "natural_flow_verification": "Ensure conversational patterns present",
@@ -1583,7 +1583,7 @@
          "confidence_marker_injection": "Auto-add confidence indicators to technical claims",
          "uncertainty_marker_insertion": "Add ⚠️ **[UNCERTAIN]** to potentially incorrect information",
          "assumption_flagging_auto": "Auto-detect and mark assumptions with 🤔 **ASSUMING:**",
-         "quick_answer_enforcement": "Force ⚡ **SHORT SUMMARY:** structure at response start",
+         "quick_answer_enforcement": "Force 💡 **SHORT SUMMARY:** structure at response start",
          "pre_summary_content_elimination": "CRITICAL: Auto-remove any content appearing before SHORT SUMMARY section including pauses, acknowledgments, or question echoes",
          "summary_question_echo_elimination": "CRITICAL: Auto-remove question context from SHORT SUMMARY content - replace with direct solution approach",
          "details_question_echo_elimination": "CRITICAL: Auto-remove question context from DETAILS section content - focus on technical implementation details and alternatives only, never repeat scenario context",
