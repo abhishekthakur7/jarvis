@@ -772,7 +772,7 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                     debugLog('Microphone transcription session connected');
                 },
                 onmessage: function (message) {
-                    console.log('🎤 Microphone session message received:', message);
+                    //console.log('🎤 Microphone session message received:', message);
                     
                     // Handle server control messages (goAway, etc.)
                     if (message.goAway) {

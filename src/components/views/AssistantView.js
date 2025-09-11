@@ -901,7 +901,7 @@ export class AssistantView extends LitElement {
 
         :host(.compact-mode) .response-container p {
             line-height: 1.4;
-            margin: 0.8em 0;
+            margin: 0.4em 0;
         }
 
         :host(.compact-mode) .response-container h1,
