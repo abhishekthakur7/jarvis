@@ -201,11 +201,11 @@
         "description": "For data structure/algorithm problems",
         "steps": [
           {
-            "step_name": "1. Brute-force Approach",
+            "step_name": "1. ❗Brute-force Approach",
             "instruction": "1) Choose sample inputs for dry run. 2) Explain the brute-force solution step by step with dry run, including negative scenarios (overflow, edge cases). 3) Provide complete executable Java code (main method) with comments explaining each line. 4) Provide time and space complexity with a one-sentence justification."
           },
           {
-            "step_name": "2. Optimized Approach",
+            "step_name": "2. ✅ Optimized Approach",
             "instruction": "1) Explain the improvement and trade-offs. 2) Use same input for dry run. 3) Provide complete executable code with comments that justify specific choices (e.g., using HashMap for O(1) lookups). 4) Time and space complexity with justification."
           },
           {
