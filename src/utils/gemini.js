@@ -2157,7 +2157,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 let currentGroup={type:null,transcriptions:[],speaker:''};
                 const grouped=[];
                 for (const conv of allConversations){
-                    const speaker = conv.type==='microphone'? 'Interviewee/User':'Interviewer';
+                    const speaker = conv.type==='microphone'? 'Candidate':'Interviewer';
                     if(currentGroup.type!==conv.type){
                         if(currentGroup.transcriptions.length){grouped.push({speaker:currentGroup.speaker,text:currentGroup.transcriptions.join(' ').trim()});}
                         currentGroup={type:conv.type,transcriptions:[conv.transcription],speaker};
@@ -2371,7 +2371,7 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 };
                 
                 for (const conversation of allConversations) {
-                    const speaker = conversation.type === 'microphone' ? 'Interviewee/User' : 'Interviewer';
+                    const speaker = conversation.type === 'microphone' ? 'Candidate' : 'Interviewer';
                     
                     // If this is a new speaker type or first conversation, start a new group
                     if (currentGroup.type !== conversation.type) {

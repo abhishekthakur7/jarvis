@@ -922,7 +922,7 @@ export class AssistantApp extends LitElement {
                 console.log('Microphone transcription content:', JSON.stringify(transcriptionResult.transcription));
                 console.log('Microphone transcription trimmed length:', transcriptionResult.transcription ? transcriptionResult.transcription.trim().length : 0);
                 if (transcriptionResult.success && transcriptionResult.transcription && transcriptionResult.transcription.trim()) {
-                    microphoneText = `Interviewee/User says: "${transcriptionResult.transcription.trim()}"`;
+                    microphoneText = `Candidate says: "${transcriptionResult.transcription.trim()}"`;
                     console.log('Microphone text to send:', microphoneText);
                 } else {
                     console.log('No microphone transcription available or empty - success:', transcriptionResult.success, 'transcription:', transcriptionResult.transcription);
