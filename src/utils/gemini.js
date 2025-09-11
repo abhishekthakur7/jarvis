@@ -772,7 +772,61 @@ async function initializeMicrophoneSession(apiKey, profile = 'interview', langua
                     debugLog('Microphone transcription session connected');
                 },
                 onmessage: function (message) {
-                    debugLog('🎤 Microphone session message received:', message);
+                    console.log('🎤 Microphone session message received:', message);
+                    
+                    // Handle server control messages (goAway, etc.)
+                    if (message.goAway) {
+                        console.log('🔄 Server requesting connection closure, attempting reconnection:', message.goAway);
+                        debugLog('Server goAway message received, reconnecting microphone session');
+                        
+                        // Clean up current session
+                        if (microphoneSessionRef.current) {
+                            try {
+                                microphoneSessionRef.current.close();
+                            } catch (error) {
+                                console.error('Error closing microphone session:', error);
+                            }
+                            microphoneSessionRef.current = null;
+                        }
+                        
+                        // Reset state temporarily
+                        const wasActive = isMicrophoneActive;
+                        isMicrophoneActive = false;
+                        isInitializingMicrophoneSession = false;
+                        
+                        // Attempt reconnection after a brief delay
+                        setTimeout(async () => {
+                            try {
+                                console.log('🔄 Attempting microphone session reconnection...');
+                                const newSession = await initializeMicrophoneSession(apiKey, profile, language);
+                                if (newSession) {
+                                    microphoneSessionRef.current = newSession;
+                                    isMicrophoneActive = wasActive; // Restore previous state
+                                    console.log('✅ Microphone session reconnected successfully');
+                                    
+                                    // Notify renderer about successful reconnection
+                                    sendToRenderer('microphone-session-reconnected', {
+                                        reason: 'server_goaway_reconnect',
+                                        timeLeft: message.goAway.timeLeft
+                                    });
+                                } else {
+                                    console.error('❌ Failed to reconnect microphone session');
+                                    sendToRenderer('microphone-session-failed', {
+                                        reason: 'reconnection_failed'
+                                    });
+                                }
+                            } catch (error) {
+                                console.error('❌ Error during microphone session reconnection:', error);
+                                sendToRenderer('microphone-session-failed', {
+                                    reason: 'reconnection_error',
+                                    error: error.message
+                                });
+                            }
+                        }, 1000); // 1 second delay before reconnection
+                        
+                        return;
+                    }
+                    
                     // Handle transcription input for microphone
                     if (message.serverContent?.inputTranscription?.text) {
                         const transcriptionText = message.serverContent.inputTranscription.text;

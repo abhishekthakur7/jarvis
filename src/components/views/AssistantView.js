@@ -922,12 +922,10 @@ export class AssistantView extends LitElement {
         :host(.compact-mode) .response-container ul,
         :host(.compact-mode) .response-container ol {
             line-height: 1.8;
-            margin: 1em 0;
         }
 
         :host(.compact-mode) .response-container li {
             margin: 0.05em 0;
-            line-height: 1.8;
         }
 
         /* Enhanced readability for very small fonts */
