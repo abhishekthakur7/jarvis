@@ -715,6 +715,7 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
             }
 
             const [startWidth, startHeight] = mainWindow.getSize();
+            const [startX, startY] = mainWindow.getPosition();
 
             // If already at target size, no need to animate
             if (startWidth === targetWidth && startHeight === targetHeight) {
@@ -755,12 +756,8 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
                 }
                 mainWindow.setSize(currentWidth, currentHeight);
 
-                // Re-center the window during animation
-                const primaryDisplay = screen.getPrimaryDisplay();
-                const { width: screenWidth } = primaryDisplay.workAreaSize;
-                const x = Math.floor((screenWidth - currentWidth) / 2);
-                const y = 0;
-                mainWindow.setPosition(x, y);
+                // Preserve both X and Y position during animation
+                mainWindow.setPosition(startX, startY);
 
                 if (currentFrame >= totalFrames) {
                     clearInterval(resizeAnimation);
@@ -773,8 +770,7 @@ function setupWindowIpcHandlers(mainWindow, sendToRenderer, geminiSessionRef) {
 
                         // Ensure final size is exact
                         mainWindow.setSize(targetWidth, targetHeight);
-                        const finalX = Math.floor((screenWidth - targetWidth) / 2);
-                        mainWindow.setPosition(finalX, 0);
+                        mainWindow.setPosition(startX, startY);
                     }
 
                     if (process.env.DEBUG_APP === 'true') {

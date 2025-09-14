@@ -1006,9 +1006,7 @@
          "clean_code_standards": "Code must be readable with meaningful variable names and comments",
          "interactive_engagement": "Ask clarifying questions and check understanding throughout",
          "real_world_connection": "Connect solution to practical applications when relevant",
-         "breathing_control": "Insert natural pauses for interviewer interaction",
-         "stress_management": "Show calm problem-solving under pressure",
-         "adaptive_communication": "Adjust explanation depth based on interviewer feedback",
+         "breathing_control": "Insert natural pauses for interviewer interaction",         "adaptive_communication": "Adjust explanation depth based on interviewer feedback",
          "mandatory_elements": {
            "problem_restatement": "Must restate problem in own words",
            "constraint_clarification": "Must ask about input constraints and edge cases",
@@ -1346,9 +1344,9 @@
         "constraint_clarification_enforcement": {
           "mandatory_clarification": "CRITICAL - MUST ask for requirement clarification BEFORE producing any stream solution",
           "required_questions": [
-            "• Should the solution handle null values in any specific way?",
-            "• Are there any performance requirements (e.g., large datasets, parallel processing)?",
-            "• Are there any specific collection types expected for input/output?"
+            "• Can there be duplicates ? If yes, how to handle them?",
+            "• Can there be more than 1 outputs, if yes, do we want first matching result or list of all matches?",
+            "• Any other edge case or type of input we want me to handle?"
           ],
           "clarification_pattern": "[pause] Before I write the stream pipeline, I need to clarify a few requirements: [list relevant questions based on the problem]",
           "no_assumptions": "NEVER assume requirements - always ask for clarification first",
