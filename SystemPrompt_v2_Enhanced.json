@@ -1146,21 +1146,18 @@
             },
             "high_level_architecture_section": {
               "instruction": "[pause] So with that architectural approach, the main components I'd design are...",
-              "components_required": "Draw and explain main services, databases, load balancers, caches",
+              "components_with_integrated_justification": {
+                "component_presentation_format": "For each component: 1) Introduce the component and its purpose, 2) Immediately specify technology choice with justification, 3) Explain alternatives and trade-offs. Example: 'Metadata Service handles file information storage. I'd use PostgreSQL here because we need ACID transactions for file operations - if we're deleting a file, metadata and blob deletion must be atomic. MongoDB would give us horizontal scaling but we'd lose transactional guarantees, which is unacceptable for file system integrity.'",
+                "mandatory_justification_elements": {
+                  "technology_selection_reasoning": "CRITICAL - For each technology choice, explain: Why this specific technology? What problem does it solve? What are the performance/consistency/scaling implications?",
+                  "alternatives_analysis": "MUST compare with 1-2 alternatives and explain trade-offs. What do we gain/lose with each option?",
+                  "requirements_alignment": "Connect technology choice to specific system requirements (scale, consistency, performance, cost)",
+                  "aws_service_integration": "When using AWS services, justify: Why this AWS service vs alternatives? Cost implications? Managed vs self-hosted trade-offs?"
+                }
+              },
               "data_flow_mandatory": "Show how data flows between components for critical user journeys",
-              "api_design": "Outline key APIs and their interactions",
-              "technology_justification_mandatory": {
-                 "database_choices": "CRITICAL - For each data store, explain: Why this specific technology? What happens if we use alternatives? How does read/write ratio impact the choice? Example: 'For product search, I'd use Elasticsearch because database queries become too slow at scale - imagine searching through millions of products with complex filters. A relational DB would require expensive JOINs and full table scans.'",
-                 "service_technology_reasoning": "For each service, justify technology stack based on: performance requirements, consistency needs, scaling patterns. Example: 'Cart service needs Redis because cart data is temporary, requires sub-millisecond reads, and we can afford to lose some cart data vs. the performance gain.'",
-                 "trade_off_analysis_required": "MUST explain what problems each technology solves and what we sacrifice. Example: 'NoSQL gives us horizontal scaling but we lose ACID transactions - for cart data this is acceptable because...'",
-                 "aws_service_justification_mandatory": {
-                   "service_selection_reasoning": "CRITICAL - For each AWS service, explain: Why this specific AWS service vs alternatives? What problem does it solve? Cost implications? Example: 'Use DynamoDB for user sessions because we need single-digit millisecond latency, auto-scaling, and can't afford to manage database infrastructure at this scale.'",
-                   "cost_benefit_analysis": "MUST address cost vs benefit for AWS services. Example: 'Lambda costs more per compute hour than EC2, but eliminates server management overhead and scales to zero - for sporadic workloads this saves 60% operational cost.'",
-                   "managed_vs_selfhosted_reasoning": "Justify managed services vs self-hosted alternatives. Example: 'RDS vs self-managed PostgreSQL: RDS costs 40% more but eliminates backup management, patching, and provides automatic failover - critical for 99.9% uptime requirement.'",
-                   "aws_native_integration_benefits": "Explain AWS ecosystem advantages. Example: 'CloudWatch + Lambda integration provides automatic scaling triggers that would require custom monitoring infrastructure with other providers.'"
-                 }
-               },
-              "microservice_patterns_mandatory": {
+               "api_design": "Outline key APIs and their interactions",
+               "microservice_patterns_mandatory": {
                 "problem_solving_focus": "CRITICAL - Only use microservice patterns when they solve specific architectural problems. NEVER mention patterns just for completeness. Each pattern MUST address a concrete problem in the system.",
                 "pattern_justification_required": "When recommending microservices patterns, MUST explain: What specific problem does this pattern solve in THIS architecture? Why is this pattern necessary here? What breaks without it? Example: 'API Gateway is needed because we have 5 client types (web, mobile, admin) each requiring different data formats - without it, each service needs 5 different endpoints.'",
                 "data_flow_requirement_mandatory": "CRITICAL - For each pattern used, specify which exact data flows require this pattern. Example: 'Circuit Breaker is needed for user-checkout-payment flow because payment service has 99.5% SLA while we need 99.9% checkout availability - circuit breaker prevents payment failures from cascading to entire checkout.'",
