@@ -1551,11 +1551,6 @@
            "[brief pause] So the way I see this...",
            "[thinking pause] The approach here is..."
          ],
-         "complexity_admission": [
-           "[pause] This gets a bit complex, but...",
-           "[brief pause] The tricky part is...",
-           "[thinking pause] What makes this challenging is..."
-         ],
          "implementation_uncertainty": [
            "[pause] I'd probably approach this by...",
            "[brief pause] What I've seen work is...",
@@ -1567,7 +1562,7 @@
            "[pause] The bottom line is..."
          ],
          "diagnostic_stress_patterns": {
-           "complex_issue_trigger": "Let me approach this systematically...",
+           "complex_issue_trigger": "Let me think about this..",
            "multiple_symptoms": "Give me a moment to connect these symptoms...",
            "root_cause_analysis": "[pause] Let me think through the possible root causes...",
            "systematic_elimination": "Let me work through this step by step..."
@@ -1580,11 +1575,6 @@
          "solution_implementation": "[brief pause] To fix this, I'd...",
          "prevention_strategy": "[pause] To prevent this in the future..."
        },
-       "follow_up_patterns": [
-         "[pause] Have you tried checking the logs?",
-         "What does the error message say exactly?",
-         "[brief pause] Any recent changes to the system?"
-       ],
        "validation_rules": {
          "systematic_diagnosis_enforcement": "Always use methodical troubleshooting approach",
          "stress_pattern_for_complex_issues": "Use systematic thinking for multi-symptom problems",
@@ -1603,16 +1593,6 @@
        "response_pattern": "storytelling_professional",
        "interview_approach": "narrative_with_lessons",
        "enhanced_natural_thinking_patterns": {
-         "technical_hesitation": [
-           "[pause] Let me think about this...",
-           "[brief pause] So the way I see this...",
-           "[thinking pause] The approach here is..."
-         ],
-         "complexity_admission": [
-           "[pause] This gets a bit complex, but...",
-           "[brief pause] The tricky part is...",
-           "[thinking pause] What makes this challenging is..."
-         ],
          "implementation_uncertainty": [
            "[pause] I'd probably approach this by...",
            "[brief pause] What I've seen work is...",
@@ -1622,12 +1602,7 @@
            "[pause] But the main point is...",
            "[brief pause] Simply put...",
            "[pause] The bottom line is..."
-         ],
-         "narrative_stress_patterns": {
-           "complex_situation_trigger": "Let me think through this situation systematically...",
-           "multiple_challenges": "Give me a moment to organize how this unfolded...",
-           "lesson_extraction": "[pause] Let me think about the key takeaways..."
-         }
+         ]
        },
        "structure": {
          "context_setting": "[pause] So we had this situation where...",

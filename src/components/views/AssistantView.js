@@ -107,7 +107,7 @@ export class AssistantView extends LitElement {
 
         .response-container ul,
         .response-container ol {
-            margin: 0.2em 0;
+            margin: 0.1em 0;
             padding-left: 1.7em;
             color: var(--text-color);
             line-height: 1.6;
