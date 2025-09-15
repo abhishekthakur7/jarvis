@@ -1327,7 +1327,7 @@ export class AssistantApp extends LitElement {
     }
 
     handleLayoutModeCycle() {
-        const modes = ['normal', 'compact', 'system-design'];
+        const modes = ['normal', 'compact']; // 'system-design' commented out
         const currentIndex = modes.indexOf(this.layoutMode);
         const nextIndex = (currentIndex + 1) % modes.length;
         this.handleLayoutModeChange(modes[nextIndex]);
