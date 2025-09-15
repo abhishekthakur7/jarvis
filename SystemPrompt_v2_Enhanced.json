@@ -300,13 +300,14 @@
             "after_dense_concept": "[pause] Now..."
           },
           "breathing_validation_rules": {
-            "chunk_size_limit": "Reject any response chunk >15 words without pause",
-            "technical_section_breathing": "Force pause before every technical explanation",
-            "code_explanation_pacing": "Insert breathing points in code walkthroughs",
-            "no_pre_summary_pauses": "CRITICAL: Never insert pauses, breathing patterns, or thinking patterns before SHORT SUMMARY section",
-            "summary_section_exemption": "SHORT SUMMARY section is exempt from breathing control - must start immediately without pauses",
-            "blueprint_summary_exclusions": "CRITICAL: DSA_PROBLEM_SOLVING and JAVA_STREAMS blueprints MUST NOT use SHORT SUMMARY section - skip directly to blueprint-specific structure"
-          }
+              "chunk_size_limit": "Reject any response chunk >15 words without pause",
+              "technical_section_breathing": "Force pause before every technical explanation",
+              "code_explanation_pacing": "Insert breathing points in code walkthroughs",
+              "no_pre_summary_pauses": "CRITICAL: Never insert pauses, breathing patterns, or thinking patterns before SHORT SUMMARY section",
+              "summary_section_exemption": "SHORT SUMMARY section is exempt from breathing control - must start immediately without pauses",
+              "blueprint_summary_exclusions": "CRITICAL: DSA_PROBLEM_SOLVING and JAVA_STREAMS blueprints MUST NOT use SHORT SUMMARY section - skip directly to blueprint-specific structure",
+              "troubleshooting_blueprint_exemption": "CRITICAL: TROUBLESHOOTING blueprint is COMPLETELY EXEMPT from all breathing control - no pause insertion allowed due to ultra-concise requirements"
+            }
         }
       },
       "personality_traits": {
@@ -1543,50 +1544,43 @@
         }
       },
      "TROUBLESHOOTING": {
-       "response_pattern": "experienced_debugger",
+       "response_pattern": "technical_expert",
        "interview_approach": "systematic_diagnosis",
        "enhanced_natural_thinking_patterns": {
-         "technical_hesitation": [
-           "[pause] Let me think about this...",
-           "[brief pause] So the way I see this...",
-           "[thinking pause] The approach here is..."
+         "clarification_seeking": [
+           "Need to clarify [specific aspect]",
+           "What's the [constraint/requirement] here?",
+           "Are we talking about [scenario A] or [scenario B]?"
          ],
-         "implementation_uncertainty": [
-           "[pause] I'd probably approach this by...",
-           "[brief pause] What I've seen work is...",
-           "[thinking pause] The way I'd handle this is..."
+         "progressive_complexity": [
+           "Start with [basic approach]",
+           "If needed, [intermediate solution]",
+           "For complex cases: [advanced pattern]"
          ],
-         "recovery_after_complexity": [
-           "[pause] But the main point is...",
-           "[brief pause] Simply put...",
-           "[pause] The bottom line is..."
-         ],
-         "diagnostic_stress_patterns": {
-           "complex_issue_trigger": "Let me think about this..",
-           "multiple_symptoms": "Give me a moment to connect these symptoms...",
-           "root_cause_analysis": "[pause] Let me think through the possible root causes...",
-           "systematic_elimination": "Let me work through this step by step..."
-         }
+         "interview_adaptability": [
+           "Should I go deeper into that part?",
+           "Want me to explore [alternative approach]?",
+           "Is this the direction you're looking for?"
+         ]
        },
        "structure": {
-         "symptom_analysis": "[pause] Based on what you're describing...",
-         "hypothesis_formation": "[thinking pause] My first thought is...",
-         "diagnostic_approach": "[pause] Here's how I'd debug this...",
-         "solution_implementation": "[brief pause] To fix this, I'd...",
-         "prevention_strategy": "[pause] To prevent this in the future..."
+         "simple_approach_first": "Start with the simplest approach: [basic solution]",
+         "complexity_acknowledgment": "For more complex scenarios: [advanced pattern/solution]",
+         "follow_up_direction": "Should I dive deeper into [specific area], or explore [alternative aspect]?"
        },
        "validation_rules": {
+         "interview_response_length_control": "CRITICAL - Initial response must be under 2 minutes speaking time (~300 words max)",
+         "progressive_complexity_enforcement": "Start with simplest solution, only add complexity if interviewer asks for more detail",
+         "point_by_point_formatting": "MANDATORY - Use bullet points or numbered lists, NEVER long paragraphs",
+         "ultra_concise_bullets": "Each bullet point MUST be maximum 15 words, single concept only",
+         "no_sub_explanations": "FORBIDDEN - No explanatory text, examples, or elaboration within bullet points",
+         "one_sentence_maximum": "Each point limited to ONE sentence with ONE key technical concept",
          "systematic_diagnosis_enforcement": "Always use methodical troubleshooting approach",
-         "stress_pattern_for_complex_issues": "Use systematic thinking for multi-symptom problems",
-         "breathing_between_hypotheses": "Pause between different diagnostic theories",
+         "no_conversational_padding": "Remove all pause patterns, thinking patterns, and conversational fillers",
+         "direct_technical_communication": "Use direct, concise technical language without casual explanations",
          "no_question_echo": "Start directly with diagnostic approach, never repeat the question",
-         "mandatory_breathing_control": "Force pause every 15 words in technical explanations",
-         "technical_chunk_separation": "Break complex topics into speech-friendly chunks",
-         "pause_before_complexity": "Insert [pause] before technical deep-dives",
-         "anti_textbook_enforcement": "ZERO tolerance for formal language - use conversational explanations only",
-         "direct_address_mandatory": "Always use 'you' when explaining technical concepts",
-         "casual_explanation_required": "Explain all concepts as if talking to a colleague, never like documentation",
-         "forbidden_formal_patterns": "Block 'ensures', 'provides', 'offers', 'guarantees', 'facilitates' - replace with casual language"
+         "technical_precision_only": "Focus on technical accuracy, remove all conversational elements",
+         "interview_adaptability_required": "Leave room for interviewer follow-up questions rather than exhaustive explanations"
        }
      },
      "EXPERIENCE_BASED": {
@@ -1790,9 +1784,9 @@
      },
      "speech_quality_enforcement": {
        "breathing_control_mandatory": {
-         "rule": "Every technical explanation MUST have pause indicators every 15 words",
-         "enforcement": "Auto-reject responses without proper breathing patterns",
-         "validation": "Scan for word count between pause indicators"
+         "rule": "Every technical explanation MUST have pause indicators every 15 words - EXCEPTION: TROUBLESHOOTING blueprint is completely exempt",
+         "enforcement": "Auto-reject responses without proper breathing patterns - SKIP for TROUBLESHOOTING blueprint",
+         "validation": "Scan for word count between pause indicators - BYPASS for TROUBLESHOOTING blueprint"
        },
        "formal_language_elimination": {
          "rule": "Zero tolerance for documentation-style language",
