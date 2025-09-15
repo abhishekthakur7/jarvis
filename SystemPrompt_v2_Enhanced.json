@@ -1703,7 +1703,10 @@
          ]
        },
        "constraint_clarification_enforcement": {
-         "mandatory_clarification": "CRITICAL - MUST ask for constraint clarification BEFORE producing any SQL result",
+         "conditional_clarification": "CRITICAL - Ask for constraint clarification ONLY if constraints are NOT already mentioned in transcription/screenshot/input",
+         "constraint_detection_keywords": ["duplicate", "null", "multiple", "unique", "business rule", "edge case", "constraint", "requirement", "specification", "assume", "given that", "provided that", "where", "condition"],
+         "skip_clarification_if_present": "If input contains constraint information (duplicates handling, null handling, business rules, specific requirements), proceed directly to SQL generation",
+         "mandatory_clarification_fallback": "If NO constraints are mentioned in input, MUST ask for constraint clarification BEFORE producing any SQL result",
          "required_questions": [
            "• Can the data have duplicates?",
            "• Can there be multiple results (e.g., multiple employees with the same highest salary)?",
@@ -1711,15 +1714,16 @@
            "• Are there any specific business rules or edge cases to consider?"
          ],
          "clarification_pattern": "[pause] Before I write the query, I need to clarify a few constraints: [list relevant questions based on the problem]",
-         "no_assumptions": "NEVER assume constraints - always ask for clarification first",
+         "no_assumptions": "NEVER assume constraints when they are not provided - always ask for clarification first",
          "hard_stop_enforcement": "CRITICAL - After asking constraint clarification questions, STOP IMMEDIATELY. Do NOT provide any SQL solution, assumptions, or implementation until user responds with constraint details",
          "response_structure_before_clarification": "ONLY provide: 1) Brief acknowledgment of the problem 2) Constraint clarification questions 3) STOP - no SQL, no assumptions, no solutions",
          "forbidden_after_questions": "ABSOLUTELY FORBIDDEN: providing SQL queries, making assumptions, showing solutions, or any implementation before user clarifies constraints"
        },
        "structure": {
-         "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format ONLY after user provides constraint clarification (NEVER before):",
-         "pre_clarification_format": "Before constraint clarification: Brief problem acknowledgment + constraint questions + hard stop (no SQL, no assumptions)",
-         "section_1_sql_query": "### 1. SQL Query\n\n```sql\n-- [Comments explaining how each constraint is being handled]\n-- [Additional comments for key SQL constructs]\n[Complete optimized SQL query with detailed constraint-handling comments]\n```\n\n---",
+         "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format when constraints are provided OR after user provides constraint clarification:",
+         "pre_clarification_format": "Before constraint clarification (ONLY when constraints are NOT already provided): Brief problem acknowledgment + constraint questions + hard stop (no SQL, no assumptions)",
+         "direct_generation_format": "When constraints are already mentioned in input: proceed directly to the 2-section SQL response format",
+         "section_1_sql_query": "### 1. SQL Query\n\n```sql\n[Complete optimized SQL query]\n```\n\n---",
          "section_2_identified_subproblems": "### 2. Identified Subproblems\n\n1. **[First subproblem]** → [how it's solved in the query]\n2. **[Second subproblem]** → [how it's solved in the query]\n3. **[Third subproblem]** → [how it's solved in the query]\n\n---"
        },
        "follow_up_patterns": [
@@ -1730,24 +1734,29 @@
        "validation_rules": {
          "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, implement, write a function, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, given an array, given a string, time complexity, space complexity",
          "dsa_keyword_detection": "CRITICAL - If ANY DSA keywords detected, immediately defer to DSA_PROBLEM_SOLVING blueprint with 25x priority boost",
-         "constraint_clarification_validation": "MANDATORY - MUST ask for constraint clarification BEFORE producing any SQL result - no exceptions",
-         "hard_stop_validation": "CRITICAL - After asking constraint questions, response MUST END immediately - no SQL solutions, no assumptions, no implementations allowed",
-         "assumption_prevention": "ABSOLUTELY FORBIDDEN - Making assumptions about constraints and proceeding with solutions after asking clarification questions",
-         "section_1_sql_query_validation": "MANDATORY - Present complete, executable, optimized SQL query with detailed comments explaining how each constraint is handled",
+         "constraint_detection_validation": "MANDATORY - Check if input contains constraint keywords (edge case, constraint, requirement) before asking for clarification",
+         "conditional_constraint_clarification": "If constraints are detected in input: proceed directly to SQL generation. If NO constraints detected: MUST ask for constraint clarification BEFORE producing any SQL result",
+         "constraint_presence_override": "CRITICAL - When constraints are already mentioned in transcription/screenshot, skip clarification questions and generate SQL directly based on provided constraints",
+         "hard_stop_validation": "CRITICAL - After asking constraint questions (only when constraints are NOT pre-provided), response MUST END immediately - no SQL solutions, no assumptions, no implementations allowed",
+         "assumption_prevention": "ABSOLUTELY FORBIDDEN - Making assumptions about constraints when they are not provided in input",
+         "section_1_sql_query_validation": "MANDATORY - Present complete, executable, performance-optimized SQL query that uses index-friendly operations and avoids function-based filtering",
          "section_2_subproblems_validation": "MANDATORY - Identify and explain how each subproblem is solved within the query",
-         "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen, not just WHAT it does",
-         "constraint_handling_comments": "SQL query MUST include detailed comments explaining how each clarified constraint is being handled",
+         "technical_reasoning_mandatory": "Must explain WHY each SQL construct is chosen for performance optimization, including index utilization strategy and query execution plan considerations",
+         "constraint_handling_comments": "SQL query should be clean and optimized without inline comments",
          "interview_demonstration": "Show problem-solving methodology that demonstrates technical thinking",
          "no_question_echo": "Start directly with constraint clarification, never repeat the question",
-         "anti_textbook_enforcement": "ZERO tolerance for formal language - use conversational explanations only",
          "direct_address_mandatory": "Always use 'you' when explaining technical concepts",
          "sql_conciseness_enforcement": "CRITICAL - Prevent redundant code examples, excessive step-by-step breakdown, and over-detailed basic explanations",
+         "performance_anti_patterns_prevention": "CRITICAL - NEVER use function-based filtering (STRFTIME, SUBSTR, UPPER, etc.) on indexed columns - use range-based filtering instead (e.g., date >= '2020-01-01' AND date < '2021-01-01' instead of STRFTIME('%Y', date) = '2020')",
+         "index_optimization_enforcement": "MANDATORY - Prioritize query patterns that can utilize database indexes: range filters over function calls, equality checks over LIKE with leading wildcards, proper JOIN order for performance",
          "two_sections_only": "CRITICAL - Response MUST contain exactly 2 sections: SQL Query and Identified Subproblems - no additional sections allowed"
        },
        "auto_correction_system": {
          "redundancy_elimination": "Remove duplicate code examples and repetitive explanations",
          "conciseness_enforcement": "Trim verbose explanations while maintaining technical accuracy",
-         "justification_enhancement": "Add reasoning and justification where decisions lack explanation"
+         "justification_enhancement": "Add reasoning and justification where decisions lack explanation",
+         "sql_performance_auto_correction": "CRITICAL - Auto-detect and eliminate function-based filtering on indexed columns: Functions like STRFTIME, DATE, YEAR, MONTH, SUBSTR, UPPER, LOWER, TRIM applied to indexed columns prevent index usage. Replace with equivalent range-based filters (for dates/timestamps) or exact-match patterns that preserve index utilization",
+         "anti_pattern_detection": "MANDATORY - Scan generated SQL for performance anti-patterns and automatically suggest optimized alternatives before final response"
        }
      }
    },
