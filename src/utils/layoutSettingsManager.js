@@ -46,8 +46,8 @@ export class LayoutSettingsManager {
             autoScroll: false,
             animateResponse: false,
             scrollSpeed: 3,
-            width: 280,
-            height: 260
+            width: 220,
+            height: 200
         },
         'system-design': {
             transparency: 0.90,
