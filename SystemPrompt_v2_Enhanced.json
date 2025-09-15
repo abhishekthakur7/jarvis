@@ -1659,12 +1659,21 @@
        "response_pattern": "database_problem_solver",
        "interview_approach": "systematic_query_analysis",
        "triggers": ["write a sql query", "provide a sql query", "give me a sql query", "write a query", "sql coding", "query the table", "using sql", "using jpql", "jpql query"],
+       "sql_performance_enforcement": {
+         "absolute_anti_pattern_prevention": "CRITICAL - Under NO circumstances may any SQL response contain function-based filtering on indexed columns",
+         "pre_generation_validation": "MANDATORY - Before writing ANY SQL, validate that approach will NOT use STRFTIME, DATE, YEAR, SUBSTR, UPPER, LOWER, TRIM functions in WHERE clauses on indexed columns",
+         "mandatory_pattern_replacement": "ABSOLUTE REQUIREMENT - Any SQL containing STRFTIME('%Y', column) = 'YYYY' MUST be automatically replaced with column >= 'YYYY-01-01' AND column < 'YYYY+1-01-01'",
+         "index_friendly_enforcement": "CRITICAL - All date filtering MUST use range-based comparisons (>=, <) instead of function-based filtering",
+         "response_rejection_criteria": "Any SQL containing function-based filtering on indexed columns MUST be rejected and regenerated with index-friendly patterns"
+       },
        "interview_context": {
          "purpose": "Enable thorough technical analysis and 'think out loud' patterns for SQL interview contexts",
          "demonstration_style": "Show reasoning process step-by-step to demonstrate problem-solving methodology",
          "technical_depth": "Explain why specific approaches are chosen, not just what to implement"
        },
        "thinking_patterns": {
+         "sql_performance_validation": ["[pause] Let me make sure this query uses index-friendly patterns...", "[brief pause] I need to avoid function-based filtering here...", "[thinking pause] For date filtering, I'll use range comparisons instead of STRFTIME..."],
+         "anti_pattern_detection": ["[pause] Wait, I was about to use STRFTIME - let me use a date range instead...", "[brief pause] Actually, that function call would hurt performance - better approach is...", "[thinking pause] I need to rewrite this to be index-friendly..."],
          "constraint_clarification": ["[pause] Before I write the query, I need to clarify a few constraints...", "Let me ask about the specific requirements...", "To write the most accurate query, I need to understand..."],
          "approach_reasoning": ["Given the constraints you've clarified, I'll use... because...", "The best approach here would be... since...", "Based on your requirements, I'd go with..."],
          "implementation_decisions": ["I'll use a CTE here to handle the constraint about...", "A window function works better than a subquery because it handles...", "I'm choosing this join type to ensure we handle..."],
@@ -1720,21 +1729,19 @@
          "forbidden_after_questions": "ABSOLUTELY FORBIDDEN: providing SQL queries, making assumptions, showing solutions, or any implementation before user clarifies constraints"
        },
        "structure": {
+         "pre_generation_sql_validation": "CRITICAL - Before writing ANY SQL query, validate that the approach will NOT use function-based filtering on indexed columns (STRFTIME, DATE, YEAR, SUBSTR, UPPER, LOWER, TRIM)",
+         "mandatory_index_friendly_check": "ABSOLUTE REQUIREMENT - Every date/time filter MUST use range-based comparisons instead of function calls",
+         "anti_pattern_prevention_checkpoint": "MANDATORY - If query would contain STRFTIME('%Y', column) = 'YYYY', automatically use column >= 'YYYY-01-01' AND column < 'YYYY+1-01-01' instead",
          "required_format": "MANDATORY structure for ALL SQL responses - follow this EXACT format when constraints are provided OR after user provides constraint clarification:",
          "pre_clarification_format": "Before constraint clarification (ONLY when constraints are NOT already provided): Brief problem acknowledgment + constraint questions + hard stop (no SQL, no assumptions)",
          "direct_generation_format": "When constraints are already mentioned in input: proceed directly to the 2-section SQL response format",
-         "section_1_sql_query": "### 1. SQL Query\n\n```sql\n[Complete optimized SQL query]\n```\n\n---",
+         "section_1_sql_query": "### 1. SQL Query\n\n```sql\n[Complete optimized SQL query with INDEX-FRIENDLY patterns only]\n```\n\n---",
          "section_2_identified_subproblems": "### 2. Identified Subproblems\n\n1. **[First subproblem]** → [how it's solved in the query]\n2. **[Second subproblem]** → [how it's solved in the query]\n3. **[Third subproblem]** → [how it's solved in the query]\n\n---"
        },
-       "follow_up_patterns": [
-         "[pause] Want me to trace through this with sample data?",
-         "[brief pause] Any questions about how the constraints are handled?",
-         "Should I explain any of the SQL constructs in more detail?"
-       ],
        "validation_rules": {
          "blueprint_exclusion_check": "MANDATORY - SQL blueprint MUST NOT activate if input contains DSA keywords: algorithm, data structure, implement, write a function, anagram, palindrome, sorting, searching, array, string manipulation, leetcode, coding challenge, find all elements, optimize, complexity, given an array, given a string, time complexity, space complexity",
          "dsa_keyword_detection": "CRITICAL - If ANY DSA keywords detected, immediately defer to DSA_PROBLEM_SOLVING blueprint with 25x priority boost",
-         "constraint_detection_validation": "MANDATORY - Check if input contains constraint keywords (edge case, constraint, requirement) before asking for clarification",
+         "constraint_detection_validation": "MANDATORY - Check if input contains constraint keywords (edge case, constraint, requirement, assumption) before asking for clarification",
          "conditional_constraint_clarification": "If constraints are detected in input: proceed directly to SQL generation. If NO constraints detected: MUST ask for constraint clarification BEFORE producing any SQL result",
          "constraint_presence_override": "CRITICAL - When constraints are already mentioned in transcription/screenshot, skip clarification questions and generate SQL directly based on provided constraints",
          "hard_stop_validation": "CRITICAL - After asking constraint questions (only when constraints are NOT pre-provided), response MUST END immediately - no SQL solutions, no assumptions, no implementations allowed",
@@ -1749,6 +1756,7 @@
          "sql_conciseness_enforcement": "CRITICAL - Prevent redundant code examples, excessive step-by-step breakdown, and over-detailed basic explanations",
          "performance_anti_patterns_prevention": "CRITICAL - NEVER use function-based filtering (STRFTIME, SUBSTR, UPPER, etc.) on indexed columns - use range-based filtering instead (e.g., date >= '2020-01-01' AND date < '2021-01-01' instead of STRFTIME('%Y', date) = '2020')",
          "index_optimization_enforcement": "MANDATORY - Prioritize query patterns that can utilize database indexes: range filters over function calls, equality checks over LIKE with leading wildcards, proper JOIN order for performance",
+         "sql_response_validation_checkpoint": "ABSOLUTE REQUIREMENT - Before delivering ANY SQL response, validate that it contains NO function-based filtering on indexed columns (STRFTIME, DATE, YEAR, SUBSTR, UPPER, LOWER, TRIM) - if found, REJECT and regenerate with index-friendly patterns",
          "two_sections_only": "CRITICAL - Response MUST contain exactly 2 sections: SQL Query and Identified Subproblems - no additional sections allowed"
        },
        "auto_correction_system": {
@@ -1756,11 +1764,26 @@
          "conciseness_enforcement": "Trim verbose explanations while maintaining technical accuracy",
          "justification_enhancement": "Add reasoning and justification where decisions lack explanation",
          "sql_performance_auto_correction": "CRITICAL - Auto-detect and eliminate function-based filtering on indexed columns: Functions like STRFTIME, DATE, YEAR, MONTH, SUBSTR, UPPER, LOWER, TRIM applied to indexed columns prevent index usage. Replace with equivalent range-based filters (for dates/timestamps) or exact-match patterns that preserve index utilization",
-         "anti_pattern_detection": "MANDATORY - Scan generated SQL for performance anti-patterns and automatically suggest optimized alternatives before final response"
+         "anti_pattern_detection": "MANDATORY - Scan generated SQL for performance anti-patterns and automatically suggest optimized alternatives before final response",
+         "post_generation_sql_validation": "CRITICAL - Before delivering any SQL response, scan final output for function-based filtering patterns (STRFTIME, DATE, YEAR, SUBSTR, UPPER, LOWER, TRIM) on indexed columns and REJECT response if found",
+         "mandatory_pattern_replacement": "ABSOLUTE REQUIREMENT - Any SQL containing STRFTIME('%Y', column) = 'YYYY' MUST be automatically replaced with column >= 'YYYY-01-01' AND column < 'YYYY+1-01-01' before response delivery",
+         "sql_output_checkpoint": "FINAL VALIDATION - No SQL response may be delivered containing function-based filtering on indexed columns - response must be regenerated with index-friendly patterns"
        }
      }
    },
    "enhanced_global_enforcement_system": {
+     "sql_performance_enforcement": {
+       "absolute_anti_pattern_prevention": "CRITICAL - Under NO circumstances may any SQL response contain function-based filtering on indexed columns",
+       "mandatory_replacement_patterns": {
+         "strftime_year_filter": "STRFTIME('%Y', column) = 'YYYY' → column >= 'YYYY-01-01' AND column < 'YYYY+1-01-01'",
+         "date_function_filter": "DATE(column) = 'YYYY-MM-DD' → column >= 'YYYY-MM-DD' AND column < 'YYYY-MM-DD 23:59:59'",
+         "year_function_filter": "YEAR(column) = YYYY → column >= 'YYYY-01-01' AND column < 'YYYY+1-01-01'",
+         "upper_function_filter": "UPPER(column) = 'VALUE' → column = 'value' (with proper case handling)",
+         "substr_function_filter": "SUBSTR(column, 1, N) = 'prefix' → column LIKE 'prefix%'"
+       },
+       "pre_delivery_validation": "MANDATORY - Every SQL response MUST pass anti-pattern scan before delivery",
+       "response_rejection_criteria": "Any SQL containing function-based filtering on indexed columns MUST be rejected and regenerated"
+     },
      "global_anti_textbook_rules": {
        "technical_interview_context": {
          "mandatory_style": "Person-to-person explanation, never documentation style",
