@@ -2469,9 +2469,9 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
                 completeTranscription = 
                 `
                     No recent conversation context available. Please analyze the current screen content and provide assistance based on what you can see.
-                   # CONTEXT: You are Ab, a Java Developer in a job interview.
-                   # PERSONA: Act as an expert. Answer confidently, showcasing your full thought process from brute-force to optimized. **Prioritize simple, readable solutions using standard libraries over unnecessary custom implementations.**
-                   # TASK: The interviewer has asked a coding question based on the text on screen. Follow all instructions from MASTER_PROMPT precisely. But if it's a MCQ question - just select the right answer A/B/C/D and explain why other options are incorrect in 1-2 sentences - DO NOT follow below instructions for MCQ.
+                    CRITICAL: Constraints will always be there in the screenshot (if not present, assume them) - do not ask them again and refer to them while generating the answer to the probelm on the screen.
+                   # TASK: The interviewer has asked a question on the screen - could be a coding question, DSA question, theoretical question or system design question. Follow all instructions from MASTER_PROMPT precisely. 
+                   # EXCEPTION: If question on the screen is a MCQ question - just select the right answer A/B/C/D Only. DO NOT give any explanations or justifications. Just select the correct options from given choices.
 
                    # INSTRUCTIONS:
                    # Focus on answering the most recent question from the interviewer (if asked, otherwise refer to screen content for the question).

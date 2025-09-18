@@ -22,7 +22,7 @@ export class AssistantView extends LitElement {
             overflow-x: hidden;
             overflow-y: auto;
             border-radius: 8px;
-            font-size: var(--response-font-size, 18px);
+            font-size: 13px;
             line-height: 1.3;
             background: var(--main-content-background);
             padding: 3px;
@@ -76,6 +76,8 @@ export class AssistantView extends LitElement {
             font-size: 1.1em;
             font-weight: 650;
             color: #f0f0f0;
+            margin: 0;
+            padding: 0.2em 0 0.2em 0;
         }
         .response-container h3 {
             font-weight: 600;
@@ -101,7 +103,7 @@ export class AssistantView extends LitElement {
         .response-container p {
             margin: 0.05em 0;
             color: var(--text-color);
-            line-height: 1.6;
+            line-height: 1.3;
             letter-spacing: 0.005em;
         }
 
@@ -115,7 +117,7 @@ export class AssistantView extends LitElement {
 
         .response-container li {
             margin: 0.05em 0;
-            line-height: 1.6;
+            line-height: 1.3;
             letter-spacing: 0.005em;
         }
 
@@ -936,7 +938,7 @@ export class AssistantView extends LitElement {
             }
             
             .response-container p {
-                line-height: 1.5;
+                line-height: 1.3;
             }
         }
 

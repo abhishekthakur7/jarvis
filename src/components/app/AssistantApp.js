@@ -75,7 +75,7 @@ export class AssistantApp extends LitElement {
                 opacity 0.15s ease-out,
                 transform 0.15s ease-out;
             height: 100%;
-            font-size: var(--response-font-size, 16px);
+            font-size: 13px;
         }
 
         .view-container.entering {
