@@ -22,7 +22,7 @@ export class AssistantView extends LitElement {
             overflow-x: hidden;
             overflow-y: auto;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px !important;
             line-height: 1.3;
             background: var(--main-content-background);
             padding: 3px;
@@ -30,6 +30,14 @@ export class AssistantView extends LitElement {
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            container-type: inline-size;
+        }
+
+        /* Use media query as fallback since container queries might not be working */
+        @media (min-width: 300px) {
+            .response-container {
+                font-size: 15px !important;
+            }
         }
 
         /* Animated word-by-word reveal */
@@ -119,6 +127,41 @@ export class AssistantView extends LitElement {
             margin: 0.05em 0;
             line-height: 1.3;
             letter-spacing: 0.005em;
+        }
+
+        /* Constrain text content width but keep code blocks full width */
+        /* Default: full width for narrow containers */
+        .response-container p,
+        .response-container h1,
+        .response-container h2,
+        .response-container h3,
+        .response-container h4,
+        .response-container h5,
+        .response-container h6,
+        .response-container ul,
+        .response-container ol,
+        .response-container blockquote,
+        .response-container div:not(.code-block):not([class*="code"]) {
+            max-width: 100%;
+        }
+
+        /* Only constrain to 75% when container is wider than 300px */
+        @container (min-width: 300px) {
+            .response-container p,
+            .response-container h1,
+            .response-container h2,
+            .response-container h3,
+            .response-container h4,
+            .response-container h5,
+            .response-container h6,
+            .response-container ul,
+            .response-container ol,
+            .response-container blockquote,
+            .response-container div:not(.code-block):not([class*="code"]) {
+                max-width: 75%;
+                margin-left: auto;
+                margin-right: auto;
+            }
         }
 
         .response-container ul li::marker {
@@ -305,7 +348,7 @@ export class AssistantView extends LitElement {
         /* Enhanced text formatting styles for dark theme */
         .response-container p,
         .response-container li {
-            line-height: 1.6;
+            line-height: 1.4;
             font-family: var(--font-family, Arial, sans-serif);
         }
 
@@ -785,6 +828,7 @@ export class AssistantView extends LitElement {
         
         /* Reading rhythm indicators */
         .rhythm-marker {
+            display: none;
             position: absolute;
             left: -20px;
             top: 50%;
@@ -797,11 +841,13 @@ export class AssistantView extends LitElement {
         }
         
         .rhythm-marker.fast {
+            display: none;
             animation-duration: 0.8s;
             background: rgba(255, 165, 0, 0.6);
         }
         
         .rhythm-marker.slow {
+            display: none;
             animation-duration: 1.5s;
             background: rgba(0, 255, 127, 0.6);
         }
@@ -952,7 +998,6 @@ export class AssistantView extends LitElement {
         }
         
         .priority-primary {
-            font-size: 1.125em; /* 18px relative to 16px base */
             line-height: 1.3;
             letter-spacing: 0.02em;
             color: var(--primary-text-color, #ffffff);
@@ -975,7 +1020,6 @@ export class AssistantView extends LitElement {
         }
         
         .priority-tertiary {
-            font-size: 0.875em; /* 14px relative to 16px base */
             line-height: 1.5;
             font-weight: 400;
             opacity: 0.75;
@@ -985,7 +1029,6 @@ export class AssistantView extends LitElement {
         
         .content-type-code {
             font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
-            font-size: 1em; /* Use base font size */
             line-height: 1.7;
             letter-spacing: 0.03em;
             background: var(--code-background, rgba(0, 0, 0, 0.3));
@@ -2722,7 +2765,7 @@ export class AssistantView extends LitElement {
             this._addBreathingCues(container);
             
             // Add rhythm markers
-            this._addRhythmMarkers(container);
+            //this._addRhythmMarkers(container);
             
             // Monitor reading progress for completion signaling
             const progressMonitor = () => {

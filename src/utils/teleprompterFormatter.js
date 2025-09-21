@@ -281,7 +281,6 @@ export class TeleprompterFormatter {
             }
             
             .priority-primary {
-                font-size: ${typography.primary.fontSize}; /* Relative to container font size */
                 line-height: ${typography.primary.lineHeight};
                 font-weight: ${typography.primary.fontWeight};
                 letter-spacing: ${typography.primary.letterSpacing};
@@ -297,7 +296,6 @@ export class TeleprompterFormatter {
             }
             
             .priority-tertiary {
-                font-size: ${typography.tertiary.fontSize}; /* Relative to container font size */
                 line-height: ${typography.tertiary.lineHeight};
                 font-weight: ${typography.tertiary.fontWeight};
                 opacity: ${typography.tertiary.opacity};
@@ -306,7 +304,6 @@ export class TeleprompterFormatter {
             
             .content-type-code {
                 font-family: var(--code-font-family, 'SF Mono', 'Monaco', 'Cascadia Code', monospace);
-                font-size: ${typography.code.fontSize}; /* Relative to container font size */
                 line-height: ${typography.code.lineHeight};
                 letter-spacing: ${typography.code.letterSpacing};
                 background: var(--code-background, rgba(0, 0, 0, 0.3));
