@@ -141,7 +141,7 @@ export class AssistantView extends LitElement {
         .response-container ul,
         .response-container ol,
         .response-container blockquote,
-        .response-container div:not(.code-block):not([class*="code"]) {
+        .response-container div:not(.code-block):not([class*="code"]):not(.language-java) {
             max-width: 100%;
         }
 
@@ -157,7 +157,7 @@ export class AssistantView extends LitElement {
             .response-container ul,
             .response-container ol,
             .response-container blockquote,
-            .response-container div:not(.code-block):not([class*="code"]) {
+            .response-container div:not(.code-block):not([class*="code"]):not(.language-java) {
                 max-width: 75%;
                 margin-left: auto;
                 margin-right: auto;
