@@ -439,8 +439,8 @@ export class CustomizeView extends LitElement {
         this.keybinds = this.getDefaultKeybinds();
         this.googleSearchEnabled = false;
         this.advancedMode = false;
-        this.backgroundTransparency = 0.45;
-        this.fontSize = 11;
+        this.backgroundTransparency = 0.80;
+        this.fontSize = 13;
         this.selectedFontFamily = 'Inter';
         this.selectedCodeFontFamily = 'Fira Code';
         

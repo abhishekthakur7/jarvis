@@ -408,10 +408,10 @@ export class AdvancedView extends LitElement {
 
         try {
             // Clear localStorage
-            localStorage.clear();
+            //localStorage.clear();
 
             // Clear sessionStorage
-            sessionStorage.clear();
+            //sessionStorage.clear();
 
             // Clear IndexedDB databases
             const databases = await indexedDB.databases();
