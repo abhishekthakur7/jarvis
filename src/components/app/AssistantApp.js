@@ -202,6 +202,9 @@ export class AssistantApp extends LitElement {
             ipcRenderer.on('toggle-auto-scroll', () => {
                 this.toggleAutoScroll();
             });
+            ipcRenderer.on('trigger-auto-scroll', (_, data) => {
+                this.handleTriggerAutoScroll(data);
+            });
             ipcRenderer.on('microphone-transcription-update', (_, data) => {
                 this.handleMicrophoneTranscriptionUpdate(data);
             });
@@ -230,6 +233,7 @@ export class AssistantApp extends LitElement {
             ipcRenderer.removeAllListeners('update-status');
             ipcRenderer.removeAllListeners('click-through-toggled');
             ipcRenderer.removeAllListeners('toggle-auto-scroll');
+            ipcRenderer.removeAllListeners('trigger-auto-scroll');
         }
         
         // Remove keyboard event listener
@@ -850,6 +854,15 @@ export class AssistantApp extends LitElement {
             }
         } catch (error) {
             console.error('Failed to initialize speaker detection state:', error);
+        }
+    }
+
+    handleTriggerAutoScroll(data) {
+        const jarvisView = this.shadowRoot.querySelector('jarvis-view');
+        if (jarvisView && jarvisView.scrollToBottom) {
+            // Force immediate scroll for new responses
+            jarvisView._isNewResponse = data?.isNewResponse || false;
+            jarvisView.scrollToBottom();
         }
     }
 

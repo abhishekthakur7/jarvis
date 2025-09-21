@@ -11,9 +11,10 @@
 class EnhancedDebounceManager {
     constructor() {
         // Preserve existing constants but make them dynamic bounds
-        this.baseDebounceMs = 6000;      // Keep current as maximum safety
-        this.minDebounceMs = 1500;       // New minimum for clear questions
-        this.mediumDebounceMs = 3000;    // Medium complexity questions
+        this.baseDebounceMs = 8000;      // Increased from 6000 to handle longer speech
+        this.minDebounceMs = 2000;       // Increased from 1500 for better stability
+        this.mediumDebounceMs = 4000;    // Increased from 3000 for medium complexity
+        this.longSpeechDebounceMs = 12000; // New: for very long explanations (40-50s)
         this.currentDebounceMs = this.baseDebounceMs;
         
         // Interview-specific optimization
@@ -268,6 +269,15 @@ class EnhancedDebounceManager {
     combineFactors(complexityScore, interviewContext, vadBasedDelay, pendingInput) {
         let baseDelay = vadBasedDelay;
         
+        // Check for very long speech patterns (problem explanations)
+        const wordCount = pendingInput.trim().split(/\s+/).length;
+        const hasLongExplanationPatterns = this.detectLongExplanationPatterns(pendingInput);
+        
+        if (wordCount > 100 || hasLongExplanationPatterns) {
+            // Use extended delay for long explanations (40-50 second speech)
+            baseDelay = Math.max(baseDelay, this.longSpeechDebounceMs);
+        }
+        
         // Adjust based on interview context
         switch (interviewContext.type) {
             case 'clarification':
@@ -294,12 +304,32 @@ class EnhancedDebounceManager {
     }
     
     /**
+     * Detect patterns indicating long problem explanations
+     */
+    detectLongExplanationPatterns(text) {
+        const lowerText = text.toLowerCase();
+        const longExplanationPatterns = [
+            'so let\'s say', 'for example', 'given a string', 'you are given',
+            'the problem is', 'problem statement', 'algorithm', 'complexity',
+            'time complexity', 'space complexity', 'approach', 'solution',
+            'implement', 'write a function', 'coding problem', 'leetcode'
+        ];
+        
+        const patternMatches = longExplanationPatterns.filter(pattern => 
+            lowerText.includes(pattern)
+        ).length;
+        
+        // If multiple explanation patterns are detected, likely a long explanation
+        return patternMatches >= 2;
+    }
+    
+    /**
      * Apply safety bounds and validation
      */
     applySafetyBounds(delay) {
-        // Enforce absolute bounds
+        // Enforce absolute bounds - allow longer delays for long speech
         delay = Math.max(this.minDebounceMs, delay);
-        delay = Math.min(this.baseDebounceMs, delay);
+        delay = Math.min(this.longSpeechDebounceMs, delay); // Use longSpeechDebounceMs as max
         
         this.currentDebounceMs = delay;
         return delay;

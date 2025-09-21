@@ -51,7 +51,7 @@ const MAX_MICROPHONE_WORDS = 200;
 // Input debouncing variables to prevent interrupted responses
 let inputDebounceTimer = null;
 let pendingInput = '';
-const INPUT_DEBOUNCE_DELAY = 5000; // 5 seconds delay to wait for complete input (FALLBACK)
+const INPUT_DEBOUNCE_DELAY = 8000; // 8 seconds delay to wait for complete input (FALLBACK)
 
 // Enhanced debounce system for technical interview optimization
 let vadAdaptiveData = null; // VAD data from AudioWorklet
@@ -62,11 +62,16 @@ let vadIntegration = null; // Hybrid VAD strategy instance
 let hybridVadEnabled = true; // Feature flag to enable hybrid VAD processing
 
 // Context and question queue management variables
+// Enhanced context management for 2-minute window
+const CONTEXT_WINDOW_MS = 2 * 60 * 1000; // 2 minutes
 let contextAccumulator = '';
 let lastQuestionTime = null;
 let isAiResponding = false;
 let questionQueue = [];
-const CONTEXT_RESET_TIMEOUT = 60000; // 1 minute context window
+let lastProcessedTranscription = '';
+let transcriptionBuffer = ''; // Buffer for accumulating transcription chunks
+let transcriptionTimer = null;
+const TRANSCRIPTION_DEBOUNCE_MS = 10000; // 10 seconds for transcription completion (increased from 5 seconds)
 const QUESTION_WORDS = ['what', 'how', 'why', 'when', 'where', 'who', 'which', 'can', 'could', 'would', 'should', 'is', 'are', 'do', 'does', 'did', 'will', 'have', 'has', 'define'];
 const REFERENCE_WORDS = ['it', 'this', 'that', 'they', 'them', 'these', 'those', 'also', 'and', 'but', 'however', 'moreover', 'furthermore'];
 
@@ -105,9 +110,9 @@ function sanitizeText(text) {
     }
     
     const sanitized = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
-                         .replace(/[\uFFFD\uFEFF]/g, '')
-                         .replace(/[\u200B-\u200D\uFEFF]/g, '')
-                         .trim();
+        .replace(/[\uFFFD\uFEFF]/g, '')
+        .replace(/[\u200B-\u200D\uFEFF]/g, '')
+        .trim();
     
     return sanitized;
 }
@@ -225,7 +230,38 @@ function shouldResetContext() {
     if (!lastQuestionTime) return false;
     
     const timeSinceLastQuestion = Date.now() - lastQuestionTime;
-    return timeSinceLastQuestion > CONTEXT_RESET_TIMEOUT;
+    return timeSinceLastQuestion > CONTEXT_WINDOW_MS;
+}
+
+// New function to get recent transcriptions within 2-minute window
+function getRecentTranscriptions(windowMs = CONTEXT_WINDOW_MS, conversationArray = speakerConversationHistory) {
+    const cutoffTime = Date.now() - windowMs;
+    return conversationArray
+        .filter(entry => entry.timestamp >= cutoffTime)
+        .sort((a, b) => a.timestamp - b.timestamp); // Maintain chronological order
+}
+
+// New function to build complete context from recent transcriptions
+function buildContextFromRecentTranscriptions() {
+    const recentMicrophoneHistory = getRecentTranscriptions(CONTEXT_WINDOW_MS, microphoneConversationHistory);
+    const recentSpeakerHistory = getRecentTranscriptions(CONTEXT_WINDOW_MS, speakerConversationHistory);
+    
+    // Merge and sort all transcriptions by timestamp
+    const allRecentTranscriptions = [
+        ...recentMicrophoneHistory.map(entry => ({ ...entry, speaker: 'Candidate' })),
+        ...recentSpeakerHistory.map(entry => ({ ...entry, speaker: 'Interviewer' }))
+    ].sort((a, b) => a.timestamp - b.timestamp);
+    
+    // Build context string maintaining chronological order
+    let contextText = '';
+    for (const entry of allRecentTranscriptions) {
+        const cleanText = sanitizeText(entry.transcription);
+        if (cleanText && cleanText.trim().length > 0) {
+            contextText += `${entry.speaker}: ${cleanText}\n`;
+        }
+    }
+    
+    return contextText.trim();
 }
 
 function shouldInterrupt(newInput) {
@@ -236,43 +272,59 @@ function shouldInterrupt(newInput) {
 async function processQuestionQueue(geminiSession) {
     if (questionQueue.length === 0 || isAiResponding) return;
     
-    //console.log('🔍 [QUEUE_VALIDATION] Validating question queue before processing');
+    debugLog('🔍 [QUEUE_VALIDATION] Processing question queue with 2-minute context');
     
     // Enforce complete context boundary before processing new questions
     enforceContextBoundary();
     
-    // Validate and clean question queue
-    const validQuestions = questionQueue.filter(q => q && q.trim().length > 0);
-    if (validQuestions.length === 0) {
-        //console.log('⚠️ [QUEUE_VALIDATION] No valid questions found in queue');
+    // Get the most recent question from the queue
+    const latestQuestion = questionQueue[questionQueue.length - 1];
+    if (!latestQuestion || latestQuestion.trim().length === 0) {
+        debugLog('⚠️ [QUEUE_VALIDATION] No valid latest question found in queue');
         questionQueue = [];
         return;
     }
     
-    // Combine all queued questions with proper separation
-    const combinedQuestions = validQuestions.join(' ').trim();
+    // Build complete 2-minute context
+    const completeContext = buildContextFromRecentTranscriptions();
     
     // Check for duplicate questions against recent conversation history
     const isDuplicateQuestion = conversationHistory.some(entry => {
-        const similarity = entry.transcription.trim() === combinedQuestions.trim() ||
-                          entry.transcription.includes(combinedQuestions.trim()) ||
-                          combinedQuestions.includes(entry.transcription.trim());
+        const similarity = entry.transcription.trim() === latestQuestion.trim() ||
+                          entry.transcription.includes(latestQuestion.trim()) ||
+                          latestQuestion.includes(entry.transcription.trim());
         const isRecent = (Date.now() - entry.timestamp) < 20000; // Within 20 seconds
         return similarity && isRecent;
     });
     
     if (isDuplicateQuestion) {
-        debugLog('🚫 [DUPLICATE_QUESTION] Skipping duplicate question processing:', combinedQuestions.substring(0, 100) + '...');
-        questionQueue = []; // Clear the queue
+        debugLog('🚫 [QUEUE_DUPLICATE] Skipping duplicate question processing');
+        questionQueue = [];
         return;
     }
     
-    questionQueue = []; // Clear the queue
+    // Clear the queue and process with full context
+    questionQueue = [];
     
-    //console.log('✅ [QUEUE_VALIDATION] Processing validated combined questions:', combinedQuestions.substring(0, 100) + '...');
+    // Send the latest question with complete 2-minute context to AI
+    await sendQuestionWithContext(latestQuestion, completeContext, geminiSession);
+}
+
+async function sendQuestionWithContext(question, context, geminiSession) {
+    debugLog('📤 [CONTEXT_SEND] Sending question with 2-minute context to Gemini');
+    debugLog('❓ [LATEST_QUESTION]', question);
+    debugLog('📋 [FULL_CONTEXT] Context length:', context.length, 'characters');
     
-    // Send combined questions to AI
-    await sendCombinedQuestionsToAI(combinedQuestions, geminiSession);
+    // Combine context and question
+    let completeTranscription = '';
+    if (context && context.trim().length > 0) {
+        completeTranscription = `Recent conversation context (last 2 minutes):\n${context}\n\nLatest question to answer: ${question}`;
+    } else {
+        completeTranscription = question;
+    }
+    
+    // Send to AI with the complete context
+    await sendCombinedQuestionsToAI(completeTranscription, geminiSession);
 }
 
 async function sendCombinedQuestionsToAI(combinedText, geminiSession) {
@@ -1395,179 +1447,110 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                 clearTimeout(inputDebounceTimer);
                             }
 
-                            // Accumulate input instead of processing immediately
-                            pendingInput += transcriptionText + ' ';
+                            // Clear existing transcription timer
+                            if (transcriptionTimer) {
+                                clearTimeout(transcriptionTimer);
+                            }
+
+                            // Add to transcription buffer instead of processing immediately
+                            transcriptionBuffer += transcriptionText + ' ';
 
                             // Check if this should interrupt current AI response
                             if (shouldInterrupt(transcriptionText)) {
                                 debugLog('🚨 [INTERRUPTION_DETECTED] Follow-up question during AI response:', transcriptionText);
                                 
-                                // Validate and log current response buffer before interruption
-                                if (messageBuffer) {
-                                    const integrity = validateResponseIntegrity(messageBuffer);
-                                    debugLog('📊 [INTERRUPTION_ANALYSIS] Current response buffer length:', messageBuffer.length);
-                                    debugLog('📊 [INTERRUPTION_ANALYSIS] Buffer integrity:', integrity.isValid ? 'VALID' : 'CORRUPTED');
-                                    if (!integrity.isValid) {
-                                        console.warn('⚠️ [INTERRUPTION_ANALYSIS] Buffer issues:', integrity.issues);
-                                    }
-                                }
+                                // Process the buffered transcription immediately for interruptions
+                                const completeTranscription = transcriptionBuffer.trim();
+                                transcriptionBuffer = '';
                                 
                                 // Clean up interrupted response
                                 cleanupResponseBuffer();
                                 
-                                // Add current context and new input to queue
-                                if (contextAccumulator.trim()) {
-                                    debugLog('📝 [QUEUE_MANAGEMENT] Adding context to queue:', contextAccumulator.trim());
-                                    questionQueue.push(contextAccumulator.trim());
-                                }
-                                debugLog('📝 [QUEUE_MANAGEMENT] Adding follow-up question to queue:', transcriptionText.trim());
-                                questionQueue.push(transcriptionText.trim());
-                                
-                                // Reset context and process immediately
-                                contextAccumulator = '';
-                                pendingInput = '';
+                                // Add to question queue and process immediately
+                                questionQueue.push(completeTranscription);
                                 isAiResponding = false;
                                 
-                                debugLog('🔄 [QUEUE_PROCESSING] Processing combined questions immediately');
-                                // Process the combined questions immediately
+                                debugLog('🔄 [INTERRUPTION_PROCESSING] Processing interruption immediately');
                                 processQuestionQueue(session);
                                 return;
                             }
                             
-                            // Set new timer to process after delay (wait for complete input)
-                            // ENHANCED: Calculate adaptive debounce delay based on context and VAD data
-                            let adaptiveDelay = INPUT_DEBOUNCE_DELAY; // Fallback to original 8 seconds
-                            
-                            if (enhancedDebounceEnabled) {
-                                try {
-                                    // Use enhanced debounce manager for interview optimization
-                                    adaptiveDelay = enhancedDebounceManager.calculateDynamicDebounce(
-                                        pendingInput,
-                                        vadAdaptiveData,
-                                        {
-                                            isComplete: isSemanticallyComplete(pendingInput.trim()),
-                                            hasQuestionWords: isCompleteQuestion(pendingInput.trim())
-                                        }
-                                    );
+                            // Set timer to process complete transcription after debounce
+                            transcriptionTimer = setTimeout(() => {
+                                if (transcriptionBuffer.trim()) {
+                                    const completeTranscription = transcriptionBuffer.trim();
+                                    debugLog('⏰ [TRANSCRIPTION_COMPLETE] Processing complete transcription:', completeTranscription.substring(0, 100) + '...');
                                     
-                                    debugLog(`⚡ [ENHANCED_DEBOUNCE] Adaptive delay: ${adaptiveDelay}ms (vs fixed ${INPUT_DEBOUNCE_DELAY}ms)`);
-                                } catch (error) {
-                                    console.warn('⚠️ [ENHANCED_DEBOUNCE] Error calculating adaptive delay, using fallback:', error.message);
-                                    adaptiveDelay = INPUT_DEBOUNCE_DELAY;
-                                }
-                            }
-                            
-                            inputDebounceTimer = setTimeout(() => {
-                                if (pendingInput.trim()) {
-                                    debugLog('⏰ [DEBOUNCE_PROCESSING] Processing complete input after delay:', pendingInput.trim());
-                                    
-                                    // Double-check speaker detection is still enabled before processing
+                                    // Double-check speaker detection is still enabled
                                     if (!isSpeakerDetectionEnabled) {
-                                        debugLog('🚫 [DEBOUNCE_SKIP] Speaker detection disabled during debounce, skipping processing');
-                                        pendingInput = '';
+                                        debugLog('🚫 [TRANSCRIPTION_SKIP] Speaker detection disabled, skipping processing');
+                                        transcriptionBuffer = '';
                                         return;
                                     }
                                     
-                                    // CRITICAL FIX: Check if AI is currently responding to prevent duplicate processing
+                                    // Check if AI is currently responding
                                     if (isAiResponding) {
-                                        debugLog('🚫 [DEBOUNCE_SKIP] AI is currently responding, skipping debounce processing to prevent duplication');
-                                        pendingInput = '';
+                                        debugLog('🚫 [TRANSCRIPTION_SKIP] AI is responding, skipping to prevent duplication');
+                                        transcriptionBuffer = '';
                                         return;
                                     }
                                     
-                                    // Enhanced duplicate check before processing
-                                    const isDuplicateInDebounce = speakerConversationHistory.some(entry => {
-                                        const similarity = entry.transcription.trim() === pendingInput.trim() ||
-                                                          entry.transcription.includes(pendingInput.trim()) ||
-                                                          pendingInput.includes(entry.transcription.trim());
-                                        const isRecent = (Date.now() - entry.timestamp) < 6000; // Within 6 seconds
+                                    // Check for duplicates against recent history
+                                    const isDuplicate = speakerConversationHistory.some(entry => {
+                                        const similarity = entry.transcription.includes(completeTranscription) ||
+                                                          completeTranscription.includes(entry.transcription);
+                                        const isRecent = (Date.now() - entry.timestamp) < 10000; // Within 10 seconds
                                         return similarity && isRecent;
                                     });
                                     
-                                    if (isDuplicateInDebounce) {
-                                        debugLog('🚫 [DEBOUNCE_DUPLICATE] Skipping duplicate content in debounce processing');
-                                        pendingInput = '';
+                                    if (isDuplicate) {
+                                        debugLog('🚫 [TRANSCRIPTION_DUPLICATE] Skipping duplicate transcription');
+                                        transcriptionBuffer = '';
                                         return;
                                     }
                                     
-                                    // CRITICAL FIX: Check against conversation history to prevent reprocessing recently processed content
-                                    const isRecentlyProcessed = conversationHistory.some(entry => {
-                                        const similarity = entry.transcription.trim() === pendingInput.trim() ||
-                                                          entry.transcription.includes(pendingInput.trim()) ||
-                                                          pendingInput.includes(entry.transcription.trim());
-                                        const isRecent = (Date.now() - entry.timestamp) < 15000; // Within 15 seconds
-                                        return similarity && isRecent;
+                                    // Save to conversation history
+                                    speakerConversationHistory.push({
+                                        timestamp: Date.now(),
+                                        transcription: completeTranscription,
+                                        type: 'speaker'
                                     });
                                     
-                                    if (isRecentlyProcessed) {
-                                        debugLog('🚫 [DEBOUNCE_ALREADY_PROCESSED] Skipping content that was already processed recently:', pendingInput.trim());
-                                        pendingInput = '';
-                                        return;
-                                    }
-                                    
-                                    // Check if context should be reset
-                                    if (shouldResetContext()) {
-                                        debugLog('🔄 [CONTEXT_RESET] Resetting context due to timeout');
-                                        contextAccumulator = '';
-                                        questionQueue = [];
-                                    }
-                                    
-                                    // Add to context accumulator
-                                    contextAccumulator += pendingInput + ' ';
-                                    
-                                    // Check if this is a complete question
-                                    if (isSemanticallyComplete(pendingInput.trim())) {
-                                        debugLog('❓ [COMPLETE_QUESTION] Complete question detected:', pendingInput.trim());
+                                    // Check if this is a complete question that should be processed
+                                    if (isSemanticallyComplete(completeTranscription)) {
+                                        debugLog('❓ [COMPLETE_QUESTION] Adding complete question to queue:', completeTranscription.substring(0, 100) + '...');
                                         
                                         // Add to question queue
-                                        questionQueue.push(contextAccumulator.trim());
+                                        questionQueue.push(completeTranscription);
                                         
-                                        // Process the queue if AI is not responding
+                                        // Process if AI is not responding
                                         if (!isAiResponding) {
                                             processQuestionQueue(session);
                                         }
-                                        
-                                        // Reset context for next question
-                                        contextAccumulator = '';
                                     } else {
-                                        debugLog('📝 [INCOMPLETE_INPUT] Incomplete input, accumulating in context:', pendingInput.trim());
+                                        // For incomplete transcriptions, check if we should still process after a longer delay
+                                        const wordCount = completeTranscription.trim().split(/\s+/).length;
+                                        if (wordCount >= 8) { // If we have at least 8 words, it might be worth processing
+                                            debugLog('📝 [PARTIAL_PROCESSING] Processing partial transcription with sufficient content:', completeTranscription.substring(0, 100) + '...');
+                                            
+                                            // Add to question queue even if not semantically complete
+                                            questionQueue.push(completeTranscription);
+                                            
+                                            // Process if AI is not responding
+                                            if (!isAiResponding) {
+                                                processQuestionQueue(session);
+                                            }
+                                        } else {
+                                            debugLog('📝 [INCOMPLETE_TRANSCRIPTION] Transcription too short, waiting for more input:', completeTranscription);
+                                        }
                                     }
                                     
-                                    // Save to speaker transcription and conversation history
-                                    speakerTranscription += pendingInput;
-                                    
-                                    // Send speaker transcription update to renderer
-                                    sendToRenderer('speaker-transcription-update', {
-                                        text: pendingInput.trim(),
-                                        isFinal: false,
-                                        timestamp: Date.now()
-                                    });
-                                    
-                                    // Count words and manage cleanup to retain most recent words
-                                    const words = speakerTranscription.trim().split(/\s+/);
-                                    speakerWordCount = words.length;
-                                    
-                                    // Clean up if exceeding word limit, keep only the most recent words
-                                    if (speakerWordCount > MAX_MICROPHONE_WORDS) {
-                                        const remainingWords = words.slice(-MAX_MICROPHONE_WORDS); // Keep last N words
-                                        speakerTranscription = remainingWords.join(' ') + ' ';
-                                    }
-                                    
-                                    // Save the complete accumulated input to conversation history
-                                    speakerConversationHistory.push({
-                                        timestamp: Date.now(),
-                                        transcription: pendingInput.trim(),
-                                        type: 'speaker'
-                                    });
-
-                                    debugLog('✅ [DEBOUNCE_SAVED] Saved complete transcription:', pendingInput.trim());
-                                    
-                                    // Reset pending input
-                                    pendingInput = '';
+                                    // Clear the buffer
+                                    transcriptionBuffer = '';
                                 }
-                            }, adaptiveDelay); // Use adaptive delay instead of fixed INPUT_DEBOUNCE_DELAY
+                            }, TRANSCRIPTION_DEBOUNCE_MS);
 
-                            // Don't process immediately - wait for debounce timer
+                            // Don't process immediately - wait for complete transcription
                             return;
                         }
                     }
@@ -1586,6 +1569,8 @@ async function initializeGeminiSession(apiKeys, customPrompt = '', profile = 'in
                                     // This ensures proper response counter regardless of input path
                                     if (!isSuppressingRender) {
                                         sendToRenderer('new-response-starting');
+                                        // Also trigger immediate scroll to new response
+                                        sendToRenderer('trigger-auto-scroll', { isNewResponse: true });
                                     }
                                 }
                                 
@@ -2381,19 +2366,12 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
         }
     });
 
-    function getRecentTranscriptions(windowMs = TRANSCRIPTION_WINDOW_MS, transcriptionArray) {
-        const cutoffTime = Date.now() - windowMs;
-        return transcriptionArray
-            .filter(entry => entry.timestamp > cutoffTime)
-            .sort((a, b) => a.timestamp - b.timestamp);
-    }
-
     ipcMain.handle('process-context-with-screenshot', async (event) => {
         if (!geminiSessionRef.current) return { success: false, error: 'No active Gemini session' };
         try {
             let completeTranscription = '\n';
 
-            // Get recent transcriptions (last 1 minute only)
+            // Get recent transcriptions (last 1 minute only) - use our main function
             const recentMicrophoneHistory = getRecentTranscriptions(60 * 1000, microphoneConversationHistory);
             const recentSpeakerHistory = getRecentTranscriptions(60 * 1000, speakerConversationHistory);
 

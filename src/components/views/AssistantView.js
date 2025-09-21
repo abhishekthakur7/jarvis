@@ -127,8 +127,6 @@ export class AssistantView extends LitElement {
             margin: 0.05em 0;
             line-height: 1.3;
             letter-spacing: 0.005em;
-            margin-right: -80px;
-            margin-left: -20px;
         }
 
         /* Constrain text content width but keep code blocks full width */
@@ -166,7 +164,7 @@ export class AssistantView extends LitElement {
             .response-container ol,
             .response-container blockquote,
             .response-container div:not(.code-block):not([class*="code"]):not(.language-java) {
-                max-width: 75%;
+                max-width: 95%;
                 margin-left: auto;
                 margin-right: auto;
             }
@@ -1095,6 +1093,7 @@ export class AssistantView extends LitElement {
         .segment-boundary {
             border-bottom: 1px solid var(--segment-border, rgba(255, 255, 255, 0.1));
             margin-bottom: 1em;
+            padding-right:10%;
         }
         
         .natural-pause {
@@ -2167,7 +2166,9 @@ export class AssistantView extends LitElement {
             return;
         }
         
-        // Wait 7 seconds before starting auto-scroll to let user see some content
+        // Immediate scroll for new responses, shorter delay for streaming updates
+        const delay = this._isNewResponse ? 500 : 2000; // 0.5s for new, 2s for streaming
+        
         setTimeout(() => {
             // Check again if auto-scroll is still enabled and not paused
             if (this.autoScrollEnabled && !this._autoScrollPaused) {
@@ -2176,7 +2177,7 @@ export class AssistantView extends LitElement {
                     this.smoothScrollToBottom(container);
                 }
             }
-        }, 7000);
+        }, delay);
     }
 
     smoothScrollToBottom(container) {
@@ -3021,6 +3022,9 @@ export class AssistantView extends LitElement {
             
             // Update the tracked response content
             this._lastResponseContent = currentResponse;
+            
+            // Track if this is a new response for scroll behavior
+            this._isNewResponse = isNewResponseStart;
             
             // Always reset scroll position to top only when navigating
             requestAnimationFrame(() => {
