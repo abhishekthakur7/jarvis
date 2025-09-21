@@ -127,6 +127,8 @@ export class AssistantView extends LitElement {
             margin: 0.05em 0;
             line-height: 1.3;
             letter-spacing: 0.005em;
+            margin-right: -80px;
+            margin-left: -20px;
         }
 
         /* Constrain text content width but keep code blocks full width */
@@ -143,6 +145,12 @@ export class AssistantView extends LitElement {
         .response-container blockquote,
         .response-container div:not(.code-block):not([class*="code"]):not(.language-java) {
             max-width: 100%;
+        }
+        
+        /* Ensure pre elements with Java code are not constrained */
+        .response-container pre,
+        .response-container pre code {
+            max-width: 100% !important;
         }
 
         /* Only constrain to 75% when container is wider than 300px */
@@ -161,6 +169,14 @@ export class AssistantView extends LitElement {
                 max-width: 75%;
                 margin-left: auto;
                 margin-right: auto;
+            }
+            
+            /* Ensure pre elements with Java code are not constrained even in wider containers */
+            .response-container pre,
+            .response-container pre code {
+                max-width: 100% !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
             }
         }
 
@@ -2682,7 +2698,7 @@ export class AssistantView extends LitElement {
             
             if (sentences.length > 2) {
                 // Add breathing cues between sentences
-                element.classList.add('paragraph-breathing');
+                //element.classList.add('paragraph-breathing');
                 
                 // Add subtle breathing markers
                 const breathingCue = document.createElement('span');
@@ -2695,7 +2711,7 @@ export class AssistantView extends LitElement {
                     breathingCue.classList.add('short-pause');
                 }
                 
-                element.appendChild(breathingCue);
+                //element.appendChild(breathingCue);
             }
         });
     }
@@ -2762,7 +2778,7 @@ export class AssistantView extends LitElement {
         const container = this.shadowRoot.querySelector('.response-container');
         if (container) {
             // Add breathing cues
-            this._addBreathingCues(container);
+            //this._addBreathingCues(container);
             
             // Add rhythm markers
             //this._addRhythmMarkers(container);

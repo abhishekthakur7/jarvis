@@ -950,15 +950,6 @@
        },
        "constraint_clarification_enforcement": {
          "mandatory_clarification": "CRITICAL - Must ask for constraint clarification before providing any DSA solution",
-         "required_questions": {
-           "format": "bullet_points",
-           "questions": [
-             "- What are the constraints on the input size?",
-             "- Are there any constraints on the input values?",
-             "- What should the be the output exactly?",
-             "- Are there any time/space complexity requirements or preferences?"
-           ]
-         },
          "clarification_pattern": "[pause] I have few clarification questions to provide the most optimal solution:",
          "no_assumptions_rule": "ABSOLUTE - Never assume constraints or requirements without explicit user confirmation",
          "hard_stop_enforcement": "MANDATORY - End response after asking questions and wait for user input",
@@ -979,7 +970,7 @@
          "required_format": "DSA interview response format should ONLY be used after user provides constraint clarification",
          "pre_clarification_format": {
            "acknowledgment": "Brief acknowledgment of the problem",
-           "clarification_questions": "Ask the 4 required constraint questions in bullet format",
+           "clarification_questions": "Ask the 2-3 required constraint questions in bullet format. Do not generate answer unless all asked clarifications are provided.",
            "hard_stop": "End with hard stop pattern from enhanced_natural_thinking_patterns"
          },
          "step_1_problem_understanding": {
@@ -1343,11 +1334,6 @@
         },
         "constraint_clarification_enforcement": {
           "mandatory_clarification": "CRITICAL - MUST ask for requirement clarification BEFORE producing any stream solution",
-          "required_questions": [
-            "• Can there be duplicates ? If yes, how to handle them?",
-            "• Can there be more than 1 outputs, if yes, do we want first matching result or list of all matches?",
-            "• Any other edge case or type of input we want me to handle?"
-          ],
           "clarification_pattern": "[pause] Before I write the stream pipeline, I need to clarify a few requirements: [list relevant questions based on the problem]",
           "no_assumptions": "NEVER assume requirements - always ask for clarification first",
           "hard_stop_enforcement": "CRITICAL - After asking requirement clarification questions, STOP IMMEDIATELY. Do NOT provide any stream solution, assumptions, or implementation until user responds with requirement details",
@@ -1362,7 +1348,7 @@
           "time_space_complexity": "Analyze time and space complexity of the stream solution",
           "pre_clarification_format": {
             "acknowledgment": "Brief acknowledgment of the stream problem",
-            "clarification_questions": "Ask relevant requirement questions from required_questions list",
+            "clarification_questions": "Ask relevant requirement questions based on the asked question. Questions should be in bullet points. Not more than 3.",
             "hard_stop": "STOP immediately - no stream code or solutions"
           }
         },
@@ -1696,12 +1682,6 @@
          "constraint_detection_keywords": ["duplicate", "null", "multiple", "unique", "business rule", "edge case", "constraint", "requirement", "specification", "assume", "given that", "provided that", "where", "condition"],
          "skip_clarification_if_present": "If input contains constraint information (duplicates handling, null handling, business rules, specific requirements), proceed directly to SQL generation",
          "mandatory_clarification_fallback": "If NO constraints are mentioned in input, MUST ask for constraint clarification BEFORE producing any SQL result",
-         "required_questions": [
-           "• Can the data have duplicates?",
-           "• Can there be multiple results (e.g., multiple employees with the same highest salary)?",
-           "• Should we handle NULL values in any specific way?",
-           "• Are there any specific business rules or edge cases to consider?"
-         ],
          "clarification_pattern": "[pause] Before I write the query, I need to clarify a few constraints: [list relevant questions based on the problem]",
          "no_assumptions": "NEVER assume constraints when they are not provided - always ask for clarification first",
          "hard_stop_enforcement": "CRITICAL - After asking constraint clarification questions, STOP IMMEDIATELY. Do NOT provide any SQL solution, assumptions, or implementation until user responds with constraint details",
