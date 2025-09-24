@@ -22,7 +22,7 @@ export class AssistantView extends LitElement {
             overflow-x: hidden;
             overflow-y: auto;
             border-radius: 8px;
-            font-size: 12px !important;
+            font-size: 11px !important;
             line-height: 1.3;
             background: var(--main-content-background);
             padding: 3px;
@@ -36,7 +36,7 @@ export class AssistantView extends LitElement {
         /* Use media query as fallback since container queries might not be working */
         @media (min-width: 300px) {
             .response-container {
-                font-size: 15px !important;
+                font-size: 13px !important;
             }
         }
 
