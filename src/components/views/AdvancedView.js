@@ -439,17 +439,17 @@ export class AdvancedView extends LitElement {
             this.statusType = 'success';
 
             // Notify user that app will close
-            setTimeout(() => {
-                this.statusMessage = '🔄 Closing application...';
-                this.requestUpdate();
-                setTimeout(async () => {
-                    // Close the entire application
-                    if (window.require) {
-                        const { ipcRenderer } = window.require('electron');
-                        await ipcRenderer.invoke('quit-application');
-                    }
-                }, 1000);
-            }, 2000);
+            // setTimeout(() => {
+            //     this.statusMessage = '🔄 Closing application...';
+            //     this.requestUpdate();
+            //     setTimeout(async () => {
+            //         // Close the entire application
+            //         if (window.require) {
+            //             const { ipcRenderer } = window.require('electron');
+            //             await ipcRenderer.invoke('quit-application');
+            //         }
+            //     }, 1000);
+            // }, 2000);
         } catch (error) {
             console.error('Error clearing data:', error);
             this.statusMessage = `❌ Error clearing data: ${error.message}`;
