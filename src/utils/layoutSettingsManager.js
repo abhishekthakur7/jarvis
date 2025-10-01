@@ -137,7 +137,7 @@ export class LayoutSettingsManager {
      */
     static DIMENSION_CONSTRAINTS = {
         normal: {
-            width: { min: 300, max: 800, step: 10 },
+            width: { min: 300, max: 1100, step: 10 },
             height: { min: 300, max: 700, step: 10 }
         },
         compact: {
