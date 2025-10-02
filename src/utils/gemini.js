@@ -2176,12 +2176,12 @@ function setupGeminiIpcHandlers(geminiSessionRef) {
             `;
 
             // Get the generative model
-            const model = geminiProClient.getGenerativeModel({ model: "gemini-2.5-pro", systemInstruction 
-                // ,config: {
-                //     thinkingConfig: {
-                //         thinkingBudget: 0,
-                //     },
-                // }
+            const model = geminiProClient.getGenerativeModel({ model: "gemini-flash-latest", systemInstruction 
+                ,config: {
+                    thinkingConfig: {
+                        thinkingBudget: 0,
+                    },
+                }
             });
 
             // Reuse logic from standard handler to build transcription
