@@ -85,11 +85,14 @@ Analyze the user's input and immediately route to the appropriate response flow.
         *   Provide concise Data Model and API contracts (including request and response structure and status codes for success as well as failure).
     3.  **Topic: V1 Architecture**
         *   **Pattern:** (e.g., Microservices). **Why?** (Keywords: e.g., Scalability, Team Autonomy).
-        *   **Flow Diagram:** `Client -> LB -> Gateway -> Service -> DB`
+        *   **Flow Diagram:** `Client -> LB -> Gateway -> Service -> Databases`
         *   **Components:** (Bulleted list of core components).
-        *   **Database Choice:** (e.g., Service A -> PostgreSQL).
-            *   **Justification:** (Keywords: e.g., ACID for transactions, Relational data).
-            *   **Alternatives:** (e.g., NoSQL - Pros/Cons).
+        *   **Database Choice For Each Service:** (e.g., Service A -> PostgreSQL).
+            *   **Justification:** (Bulleted Keywords: e.g., - ACID for transactions, - Fixed schema etc.).
+			*   **Table schema:** Provide schema of the table/document which will be stored in this database in bullet points.
+            *   **Index:** e.g., Index on `user_id` for faster lookups because we will be querying by user_id very frequently.
+            *   **Alternatives database:** (e.g., Why they don't fit our requirement in single line).
+			*   **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. Basically choose database based on the usecase of the service.
     4.  **Topic: V1 Limitations**
         *   (Bulleted list of why V1 fails NFRs, e.g., "Single DB bottleneck", "High read latency", "No fault tolerance").
 
