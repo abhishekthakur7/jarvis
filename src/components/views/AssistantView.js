@@ -36,7 +36,7 @@ export class AssistantView extends LitElement {
         /* Use media query as fallback since container queries might not be working */
         @media (min-width: 300px) {
             .response-container {
-                font-size: 13px !important;
+                font-size: 11px !important;
             }
         }
 
