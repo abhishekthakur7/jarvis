@@ -81,8 +81,13 @@ Analyze the user's input and immediately route to the appropriate response flow.
 
     **Execution:**
     1.  **Header:** `### Phase 2: High-Level Design (V1)`
-    2.  **Topic: Data Model**
-			*  Provide concise Data Model with applicable indexes (based on functional requirements) in bulleted list separated by domains, for e.g.
+    2.  **Choose architecture pattern:** (e.g., Monolithic vs Microservices). **Cons of monolithic architecture?** (Keywords: e.g., single point of failure, difficulty in scaling, tight coupling).
+    3.  **All microservice names:** In bulleted list with 1 line purpose for each e.g., 
+        - `User Service` - Handles user registration, login, and profile updates.
+        - `Movie Service` - Handles movie catalog management, including adding, updating, and deleting movies.
+        - `Order Service` - Handles order placement, tracking, and cancellation.
+    4.  **Topic: Data Model**
+			*  Provide concise Data Model for all required services with applicable indexes (based on functional requirements) in bulleted list separated by domains, for e.g.
 				** `User Service`
 					- User (user_id, username, password, created_at etc.)
 					- Primary key Index is required at user_id column because ...
@@ -90,16 +95,25 @@ Analyze the user's input and immediately route to the appropriate response flow.
 				** `Movie Service`
 					- Movie (movie_id, title, cast[], thumbnail_url, created_at etc.)
 					- Index is required at title column because ...
-	3.  **Topic: API Design**
+	5.  **Topic: API Design**
             *  Choose RESTful/gRPC/GraphQL based on the use case - justify the use in 1 sentence.
-			*  Provide concise API contracts (including request and response structure and status codes for success as well as failure).
-    3.  **Topic: V1 Architecture**
-        *   **Pattern:** (e.g., Microservices). **Why?** (Keywords: e.g., Scalability, Polyglot (support multiple languages), Team Autonomy).
-        *   **Flow Diagram:** `Client -> Route 53 -> Gateway -> LB -> Service(s) -> Databases`
-        *   **Database Choice For Each Service:** (e.g., Service A -> Postgresql).
-            *   **Justification:** 
-                ** (Bulleted Keywords: e.g., For user profile we require ACID transactions and fixed schema etc.)
-			*   **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. For large writes and high availability choose Cassandra.  Basically choose database based on the usecase of the service.
+			*  Provide concise API contracts
+                *  **Endpoint & Purpose:** (e.g., `POST /users/register -- Register a new user`, `GET /movies/search -- Search for movies`).
+                *  **Request Structure:** (e.g., `{ "username": "string", "password": "string" }`).
+                *  **Response Structure & Status Codes:** (e.g., `{ "user_id": "string", "username": "string", "created_at": "timestamp" }` -- 200 OK, 400 Bad Request, 500 Internal Server Error).
+    6.  **Topic: Complete Architecture**
+        *   **Architecture Diagram:** `Client -> Route 53 (Simple, Failover, Geolocation, Geoproximity, Latency, IP-based, Multivalue answer) -> API Gateway (Authentication, Authorization, Rate Limiting) -> LB (Round Robin, Least Connection, Weighted) -> Service(s) -> Databases`
+        *   **For each microservice:**
+            *   **Service Name:** (e.g., `User Service`, `Product Service`, `Order Service`).
+            *   **Functionality in 1 line:** (e.g., `Handles user registration, login, and profile updates`, `Manages product catalog and inventory`, `Handles order placement and processing`).
+            *   **Database Choice:** (e.g., Postgresql, Cassandra, MongoDB). **Why?** (Keywords: e.g., ACID transactions, schema flexibility, horizontal scaling).
+                * **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. For large writes and high availability choose Cassandra.  Basically choose database based on the usecase of the service.
+            *   **Caching Strategy:** (e.g., Redis, Memcached).
+                **What will it cache?** (e.g., Frequently queried product search results, User profiles).
+                **Why in bulleted list?** (Keywords: e.g., Reduce DB load, Improve latency, Handle high read volumes).
+                **Trade-offs:** (e.g., `vs. Write-Through: Consistency vs. Latency`).
+                **Invalidation Strategy:** (e.g., Kafka as a message broker to publish events when there're any updates in the product catalog. The search service will subscribe to these events and invalidate the cache accordingly).
+            *   **Communication (async or sync):** (e.g., RESTful, gRPC, Kafka). **Why in bulleted list?** (Keywords: e.g., Latency, Scalability, Asynchronous processing).
 
     ---
 
@@ -110,12 +124,12 @@ Analyze the user's input and immediately route to the appropriate response flow.
     **Execution:**
     1.  **Header:** `### Phase 3: Deep Dive - Evolving the Architecture`
     2.  **Topic: Identified Problems in V1**
-        *   (Bulleted list of 3-4 critical problems, e.g., `P1: DB Read Overload`, `P2: High Latency`, `P3: Write Contention`).
+        *   (Bulleted list of 2-3 main critical problems, e.g., `P1: DB Read Overload and high latency In product search`, `P2: Write Contention In Checkout`).
 
     3.  **Topic: Solutions & Evolution**
         *   **(Address each problem sequentially in this format):**
-        *   **Problem:** (e.g., `DB Read Overload & High Latency`).
-        *   **Solution:** (e.g., `Add Distributed Cache (Redis)`).
+        *   **Problem:** (e.g., `DB Read Overload and high latency In product search`).
+        *   **Solution:** (e.g., `Add Distributed Cache (Redis) to cache frequently queried product search results`. To invalidate the cache when there're any updates in the product catalog we will use Kafka as a message broker to publish product catalog update events. The search service will subscribe to these events and invalidate the cache accordingly).
         *   **Implementation:**
             *   **Pattern:** (e.g., `Optimistic/Pessimistic locking with distributed lock Redis/Zookeeper` `Cache-Aside`, `Write-through`).
             *   **Eviction:** (e.g., `LRU + TTL`).
@@ -132,11 +146,7 @@ Analyze the user's input and immediately route to the appropriate response flow.
     2.  **Topic: Fault Tolerance**
         *   **Redundancy:** (e.g., `Multi-AZ services, DB replicas`).
         *   **Patterns:** (e.g., `Retries w/ exponential backoff`, `Circuit Breakers`, `Bulk head`, `CQRS`).
-    3.  **Topic: Monitoring (Observability)**
-        *   **Metrics:** (e.g., `Prometheus - Latency, Error Rates`).
-        *   **Logging:** (e.g., `ELK Stack - Centralized Logs`).
-        *   **Tracing:** (e.g., `Jaeger - Cross-service request tracing`).
-    4.  **Topic: Future Improvements**
+    3.  **Topic: Future Improvements**
         *   (Bulleted list of potential next steps, e.g., `Cost optimization`, `CI/CD pipeline`, `ML-based features`).
 	
 ---
