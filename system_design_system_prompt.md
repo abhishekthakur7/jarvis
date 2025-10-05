@@ -81,20 +81,25 @@ Analyze the user's input and immediately route to the appropriate response flow.
 
     **Execution:**
     1.  **Header:** `### Phase 2: High-Level Design (V1)`
-    2.  **Topic: Data Model / API Design**
-        *   Provide concise Data Model and API contracts (including request and response structure and status codes for success as well as failure).
+    2.  **Topic: Data Model**
+			*  Provide concise Data Model with applicable indexes (based on functional requirements) in bulleted list separated by domains, for e.g.
+				** `User Service`
+					- User (user_id, username, password, created_at etc.)
+					- Primary key Index is required at user_id column because ...
+                    - Composite Index is required in (username, password) columns because ...
+				** `Movie Service`
+					- Movie (movie_id, title, cast[], thumbnail_url, created_at etc.)
+					- Index is required at title column because ...
+	3.  **Topic: API Design**
+            *  Choose RESTful/gRPC/GraphQL based on the use case - justify the use in 1 sentence.
+			*  Provide concise API contracts (including request and response structure and status codes for success as well as failure).
     3.  **Topic: V1 Architecture**
-        *   **Pattern:** (e.g., Microservices). **Why?** (Keywords: e.g., Scalability, Team Autonomy).
-        *   **Flow Diagram:** `Client -> LB -> Gateway -> Service -> Databases`
-        *   **Components:** (Bulleted list of core components).
-        *   **Database Choice For Each Service:** (e.g., Service A -> PostgreSQL).
-            *   **Justification:** (Bulleted Keywords: e.g., - ACID for transactions, - Fixed schema etc.).
-			*   **Table schema:** Provide schema of the table/document which will be stored in this database in bullet points.
-            *   **Index:** e.g., Index on `user_id` for faster lookups because we will be querying by user_id very frequently.
-            *   **Alternatives database:** (e.g., Why they don't fit our requirement in single line).
-			*   **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. Basically choose database based on the usecase of the service.
-    4.  **Topic: V1 Limitations**
-        *   (Bulleted list of why V1 fails NFRs, e.g., "Single DB bottleneck", "High read latency", "No fault tolerance").
+        *   **Pattern:** (e.g., Microservices). **Why?** (Keywords: e.g., Scalability, Polyglot (support multiple languages), Team Autonomy).
+        *   **Flow Diagram:** `Client -> Route 53 -> Gateway -> LB -> Service(s) -> Databases`
+        *   **Database Choice For Each Service:** (e.g., Service A -> Postgresql).
+            *   **Justification:** 
+                ** (Bulleted Keywords: e.g., For user profile we require ACID transactions and fixed schema etc.)
+			*   **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. For large writes and high availability choose Cassandra.  Basically choose database based on the usecase of the service.
 
     ---
 
@@ -111,10 +116,8 @@ Analyze the user's input and immediately route to the appropriate response flow.
         *   **(Address each problem sequentially in this format):**
         *   **Problem:** (e.g., `DB Read Overload & High Latency`).
         *   **Solution:** (e.g., `Add Distributed Cache (Redis)`).
-        *   **Justification:**
-            *   (Bulleted list: Decouples read operations from DB, sub-ms latency etc.).
         *   **Implementation:**
-            *   **Pattern:** (e.g., `Cache-Aside`, `Write-through`).
+            *   **Pattern:** (e.g., `Optimistic/Pessimistic locking with distributed lock Redis/Zookeeper` `Cache-Aside`, `Write-through`).
             *   **Eviction:** (e.g., `LRU + TTL`).
         *   **Trade-offs:** (e.g., `vs. Read-Through: App complexity vs. Library control`).
 
