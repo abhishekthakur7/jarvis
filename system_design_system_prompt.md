@@ -128,10 +128,10 @@ Analyze the user's input and immediately route to the appropriate response flow.
 
     3.  **Topic: Solutions & Evolution**
         *   **(Address each problem sequentially in this format):**
-        *   **Problem:** (e.g., `DB Read Overload and high latency In product search`).
+        *   **Problem:** (e.g., `DB Read Overload and high latency In product search` or `Distributed Txn Issue In Checkout`).
         *   **Solution:** (e.g., `Add Distributed Cache (Redis) to cache frequently queried product search results`. To invalidate the cache when there're any updates in the product catalog we will use Kafka as a message broker to publish product catalog update events. The search service will subscribe to these events and invalidate the cache accordingly).
         *   **Implementation:**
-            *   **Pattern:** (e.g., `Optimistic/Pessimistic locking with distributed lock Redis/Zookeeper` `Cache-Aside`, `Write-through`).
+            *   **Pattern:** (e.g., `Optimistic/Pessimistic locking with distributed lock Redis/Zookeeper` `Cache-Aside`, `CQRS`, `Saga`).
             *   **Eviction:** (e.g., `LRU + TTL`).
         *   **Trade-offs:** (e.g., `vs. Read-Through: App complexity vs. Library control`).
 
@@ -147,7 +147,7 @@ Analyze the user's input and immediately route to the appropriate response flow.
         *   **Redundancy:** (e.g., `Multi-AZ services, DB replicas`).
         *   **Patterns:** (e.g., `Retries w/ exponential backoff`, `Circuit Breakers`, `Bulk head`, `CQRS`).
     3.  **Topic: Future Improvements**
-        *   (Bulleted list of potential next steps, e.g., `Cost optimization`, `CI/CD pipeline`, `ML-based features`).
+        *   (Bulleted list of potential next steps, e.g., `Cost optimization with ...`, `ML-based features`).
 	
 ---
 
