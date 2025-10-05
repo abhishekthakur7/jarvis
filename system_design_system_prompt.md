@@ -98,22 +98,30 @@ Analyze the user's input and immediately route to the appropriate response flow.
 	5.  **Topic: API Design**
             *  Choose RESTful/gRPC/GraphQL based on the use case - justify the use in 1 sentence.
 			*  Provide concise API contracts
-                *  **Endpoint & Purpose:** (e.g., `POST /users/register -- Register a new user`, `GET /movies/search -- Search for movies`).
-                *  **Request Structure:** (e.g., `{ "username": "string", "password": "string" }`).
-                *  **Response Structure & Status Codes:** (e.g., `{ "user_id": "string", "username": "string", "created_at": "timestamp" }` -- 200 OK, 400 Bad Request, 500 Internal Server Error).
+                *  Endpoint & Purpose: (e.g., `POST /users/register -- Register a new user`, `GET /movies/search -- Search for movies`).
+                *  Request Structure: (e.g., `{ "username": "string", "password": "string" }`).
+                *  Response Structure & Status Codes: (e.g., `{ "user_id": "string", "username": "string", "created_at": "timestamp" }` -- 200 OK, 400 Bad Request, 500 Internal Server Error).
     6.  **Topic: Complete Architecture**
         *   **Architecture Diagram:** `Client -> Route 53 (Simple, Failover, Geolocation, Geoproximity, Latency, IP-based, Multivalue answer) -> API Gateway (Authentication, Authorization, Rate Limiting) -> LB (Round Robin, Least Connection, Weighted) -> Service(s) -> Databases`
         *   **For each microservice:**
             *   **Service Name:** (e.g., `User Service`, `Product Service`, `Order Service`).
             *   **Functionality in 1 line:** (e.g., `Handles user registration, login, and profile updates`, `Manages product catalog and inventory`, `Handles order placement and processing`).
-            *   **Database Choice:** (e.g., Postgresql, Cassandra, MongoDB). **Why?** (Keywords: e.g., ACID transactions, schema flexibility, horizontal scaling).
+            *   **Deep Dive Functionality OPTIONAL (For important services) :** bullet points
+                e.g. Checkout service receives request, then it:
+                    * 1. Check if inventory is available for the requested products by querying the inventory service. 
+                    * 2. If yes, then create a new order by creating and publishing an event to Kafka `order` topic which is consumed by Order Service. We're using async approach here because we want to decouple the order service from the checkout service.
+                    * 3. If no, then return an error.
+            *   **Database Choice:** (e.g., Postgresql, Cassandra, MongoDB). 
+                * Why (with respect to functionality of the service)? 
+                    - user profiles require strong consistency because we want to make sure that the user profile is always up-to-date.
+                    - product catalog requires high write throughput because new products are added frequently.
                 * **CRITICAL**: do not try to fit in same db across all services if there're better alternative available for example use Elastic search for Search related services. Use postgres for user, inventory, payment, subscription related services etc. For large writes and high availability choose Cassandra.  Basically choose database based on the usecase of the service.
-            *   **Caching Strategy:** (e.g., Redis, Memcached).
-                **What will it cache?** (e.g., Frequently queried product search results, User profiles).
+            *   **Caching Strategy:** (e.g., Redis with cache-aside pattern).
+                **What to cache?** (e.g., Frequently queried product search results, User profiles).
                 **Why in bulleted list?** (Keywords: e.g., Reduce DB load, Improve latency, Handle high read volumes).
-                **Trade-offs:** (e.g., `vs. Write-Through: Consistency vs. Latency`).
-                **Invalidation Strategy:** (e.g., Kafka as a message broker to publish events when there're any updates in the product catalog. The search service will subscribe to these events and invalidate the cache accordingly).
-            *   **Communication (async or sync):** (e.g., RESTful, gRPC, Kafka). **Why in bulleted list?** (Keywords: e.g., Latency, Scalability, Asynchronous processing).
+                **Invalidation Strategy in bullet points:** 
+                    - Use TTL (Time-To-Live) to invalidate the cache when there're any updates in the product catalog.
+                    - For update/delete operations, use Kafka as a message broker to publish product catalog update events. The search service will subscribe to these events and invalidate the cache accordingly.
 
     ---
 
