@@ -208,46 +208,71 @@ Analyze the user's input and immediately route to the appropriate response flow.
 				* 6. proceed for payment 
 				* 7. receives notification for success or failure
 
-    2. **Objects/Entities and Enums**
+    2. **Core entities**
+		Hint: Core entities are the fundamental building blocks of our system. We identify them by analyzing the functional requirements and highlighting the key nouns and responsibilities that naturally map to object-oriented abstractions such as classes, enums, or interfaces.
+		
+		* Use bullets to list each core entity
+			*1. User*
+				*Represents:* a registered user of the platform. Holds `user ID`, `user name`, `email`, `password`
+			*2. Comment*
+				*Represents:* a comment made on a question or answer. Holds `content`, `author`, `timestamp`, and a `reference to the parent post`
 
-		* Use bullets to list each domain object and enum starting with enums first.
-		* For each item: one-line purpose.
-		* Keep only what the happy path requires.
+    3. **Classes Definitions — sequential**
+		**Enums**
+			- bulleted list of enums and their attributes
+		**Data classes**
+			- bulleted list of data containers with minimal logic
+		**Core classes**
+			- bulleted list of classes in SEQUENTIAL ORDER as per the functional requirement. These classes contains BUSINESS LOGIC and STRUCTURE of the application usually the service classes like UserService, NotificationService, MovieService and Main class etc.
+				- For each usecase, carefully analyze whether OOPS principles are applicable, if yes then structure classes in that manner. for e.g. For payment implementation, we will use inheritance so define so define like:
+					* `Payment` interface with doPayment() abstract method
+					* `CardPayment` class implements `Payment` interface
+				- For each class/interface:
+					- Class name e.g. abstract class Content, interface PaymentProcessor
+					- Functionalities in bulleted list (based on functional requirements) 
+						* user creation
+						* user authentication
+					- Class/instance variables in bulleted list, specify association (aggregation/composition) wherever applicable for e.g.
+						- List<Screen> screens; `Composition` - Theatre owns Screen(s)
+						- List<Booking> user; `Aggregation` - User has Booking(s)
+					- All method signatures in bulleted list
+						e.g. 
+							- public String getMovieName()
+							- public List<Movie> getAllMovies()
+	
+	4. **Classes Relationships (based on the defined classes) — sequential**
+		* Inheritance (is-A)
+			e.g. `Post` and `Comment` inherit from `Content` abtstract class
+		* Composition (owns-A)
+			e.g. StackOverflowService owns the collections of Users, Questions, and Answers. These objects are created and managed through the service.
+		*Aggregation (Has-A)
+			e.g. A Content object (like a Question or Answer) has an author (User). The User exists independently of the content they create.
+		etc.
+	
+	
+    5. **Design pattern implementation identification**
 
-    3. **Entities class structure (attributes) — sequential**
-
-    * For each entity (in the order they appear in the happy path), provide:
-
-        * Bullet: **Class name — one-line purpose**.
-        * Sub-bullets: attribute list with explicit types (e.g., `id: UUID`, `amountCents: long`, `createdAt: Timestamp`).
-        * Immediately after the attributes include:
-
-        1. **Relationship type** — bullet stating `association` / `composition` / `inheritance` / `aggregation` plus one-line reason.
-        2. **DB table mapping** — bullet list of columns and SQL types; call out special columns (`version`, `JSON`, `indexes`, `timestamps`).
-
-    4. **UML diagram for the classes**
+		* Bullet for each pattern used:
+			* `Pattern Name:` one-line why it helps.
+			*  Classes used:
+		* Bullet for patterns considered but **not required:** one-line reason (YAGNI).
+	
+    6. **UML diagram for the classes**
 
 		* Provide an ASCII UML/class diagram.
 		* Show classes, key fields (short), and relationships with cardinalities.
 		* Use `+` for public methods if needed.
 
-    5. **Design pattern implementation identification**
-
-		* Bullet for each pattern used:
-
-			* `Pattern Name:` one-line why it helps.
-		* Bullet for patterns considered but **not required:** one-line reason (YAGNI).
-
-    6. **Pseudocode Driver (main-style)**
+    7. **Pseudocode Driver (main-style)**
 
 		* demonstrates the happy path by showing a short main style snippet that wires objects (repositories, services, providers) and executes one happy-path UC. No frameworks, no web layer. Use clear method names.
 
-    7. **Edge Cases, Invariants & Recovery Story**
+    8. **Edge Cases, Invariants & Recovery Story**
 
 		* List 1–2 most important edge cases / FAQ (e.g. concurrency conflicts, race condition).
 		* For each, give a bulleted single line solution (e.g., idempotency key for re-processing payemnt, distributed lock with redis, outbox pattern, compensating actions).
 
-    8. **Micro-Checklist (final)**
+    9. **Micro-Checklist (final)**
 
         * [ ] Gated on requirements
         * [ ] Entities minimal and justified
