@@ -212,11 +212,19 @@ Analyze the user's input and immediately route to the appropriate response flow.
 		Hint: Core entities are the fundamental building blocks of our system. We identify them by analyzing the functional requirements and highlighting the key nouns and responsibilities that naturally map to object-oriented abstractions such as classes, enums, or interfaces.
 		
 		* Use bullets to list each core entity
-			*1. User*
-				*Represents:* a registered user of the platform. Holds `user ID`, `user name`, `email`, `password`
-			*2. Comment*
-				*Represents:* a comment made on a question or answer. Holds `content`, `author`, `timestamp`, and a `reference to the parent post`
-
+			*1. City*
+				*Represents:* a city which can have theatres. 
+                * Holds:*
+                 - int cityId (Primary key)
+                 - String cityName
+                 - String state
+			*2. Theatre*
+				*Represents:* a theatre which can have screens.
+                * Holds:* bulleted list
+                 - int theatreId (Primary key)
+                 - String theatreName
+                 - List<Screen> screens //OneToMany relationship
+                 - int cityId (Foreign Key cityId Table city)
     3. **Classes Definitions — sequential**
 		**Enums**
 			- bulleted list of enums and their attributes
